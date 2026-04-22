@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <style>
+    text { fill: #000; font: 500 18px 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: -0.02em; }
+    @media (prefers-color-scheme: dark) {
+      text { fill: #fff; }
+    }
+  </style>
+  <text x="16" y="22" text-anchor="middle">af.</text>
+</svg>

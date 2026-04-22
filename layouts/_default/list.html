@@ -1,0 +1,26 @@
+{{ define "main" }}
+  <h1 class="wf-h1">{{ .Title }}</h1>
+  {{ with .Content }}
+    <div class="wf-prose">{{ . }}</div>
+  {{ end }}
+
+  {{ $pages := where .RegularPages "Params.draft" "ne" true }}
+  {{ if $pages }}
+    <div class="wf-post-list">
+      {{ range $pages.ByDate.Reverse }}
+        <a href="{{ .RelPermalink }}" class="wf-post-item">
+          <div class="title">{{ .Title }}</div>
+          <div class="meta">
+            <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006-01-02" }}</time>
+            {{ with .Params.tags }}
+              &nbsp;·&nbsp;
+              {{ delimit . ", " }}
+            {{ end }}
+          </div>
+        </a>
+      {{ end }}
+    </div>
+  {{ else }}
+    <p class="wf-caption">no posts yet.</p>
+  {{ end }}
+{{ end }}

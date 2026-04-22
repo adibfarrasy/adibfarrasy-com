@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }} — {{ .Site.Title }}{{ end }}</title>
+    <meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ .Site.Params.description }}{{ end }}" />
+    <link rel="icon" type="image/svg+xml" href="{{ "favicon.svg" | relURL }}" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{{ "css/chroma-light.css" | relURL }}" />
+    <link rel="stylesheet" href="{{ "css/chroma-dark.css" | relURL }}" />
+    <link rel="stylesheet" href="{{ "css/style.css" | relURL }}" />
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('theme');
+          if (t === 'dark' || t === 'light') {
+            document.documentElement.setAttribute('data-theme', t);
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <canvas id="backdrop"></canvas>
+
+    <header class="wf-appbar">
+      <a href="{{ "/" | relURL }}" class="wf-brand">af.</a>
+      <nav class="wf-nav">
+        {{ $current := .RelPermalink }}
+        {{ range .Site.Menus.main }}
+          {{ $active := or (eq $current .URL) (and (ne .URL "/") (hasPrefix $current .URL)) }}
+          <a href="{{ .URL | relURL }}"{{ if $active }} class="active" aria-current="page"{{ end }}>{{ .Name }}</a>
+        {{ end }}
+        <button type="button" class="wf-theme-toggle" id="theme-toggle" aria-label="toggle theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke-linecap="round" />
+          </svg>
+        </button>
+      </nav>
+    </header>
+
+    <main class="wf-main">
+      {{ block "main" . }}{{ end }}
+    </main>
+
+    <footer class="wf-footer">
+      © {{ now.Format "2006" }} adibfarrasy
+    </footer>
+
+    <script src="{{ "js/backdrop.js" | relURL }}" defer></script>
+    <script src="{{ "js/theme.js" | relURL }}" defer></script>
+  </body>
+</html>

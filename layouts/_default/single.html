@@ -1,0 +1,22 @@
+{{ define "main" }}
+  <article>
+    <h1 class="wf-h1">{{ .Title }}</h1>
+    {{ if and (not .IsHome) (not (eq .Section "")) (not .Params.hide_meta) }}
+      {{ if not .Date.IsZero }}
+        <div class="wf-post-meta">
+          <time datetime="{{ .Date.Format "2006-01-02" }}">{{ .Date.Format "2006-01-02" }}</time>
+        </div>
+      {{ end }}
+    {{ end }}
+    <div class="wf-prose">
+      {{ .Content }}
+    </div>
+    {{ with .Params.tags }}
+      <div class="wf-tags">
+        {{ range . }}
+          <a href="{{ printf "/tags/%s/" (. | urlize) | relURL }}" class="wf-chip">{{ . }}</a>
+        {{ end }}
+      </div>
+    {{ end }}
+  </article>
+{{ end }}

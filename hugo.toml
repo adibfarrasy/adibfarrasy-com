@@ -1,0 +1,24 @@
+baseURL = "https://adibfarrasy.com/"
+languageCode = "en-us"
+title = "adibfarrasy"
+
+[params]
+  description = "Personal site of adibfarrasy"
+
+[markup.goldmark.renderer]
+  unsafe = true
+
+[markup.highlight]
+  noClasses = false
+  lineNos = false
+  tabWidth = 2
+
+[menu]
+  [[menu.main]]
+    name = "bio"
+    url = "/bio/"
+    weight = 1
+  [[menu.main]]
+    name = "posts"
+    url = "/posts/"
+    weight = 2
