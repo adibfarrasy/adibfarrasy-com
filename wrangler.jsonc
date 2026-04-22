@@ -1,0 +1,8 @@
+{
+  "$schema": "https://unpkg.com/wrangler/config-schema.json",
+  "name": "adibfarrasy-com",
+  "compatibility_date": "2026-04-22",
+  "assets": {
+    "directory": "./public"
+  }
+}
