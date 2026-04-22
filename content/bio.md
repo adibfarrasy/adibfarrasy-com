@@ -7,14 +7,16 @@ hide_meta: true
 
 my favorite phrase is "skill issue".
 
-hi, i'm adib. i work on software, tinker with side projects, and an olympic-level overthinker.
-i spend time thinking, reading, talking, and (now attempt to) writing about systems, big and small.
+hi, i'm adib. i work on software by day and tinker by night — 
+lately that means writing my own lsp server nobody asked for.
+
+i spend my time thinking, reading, talking, and now writing about systems, big and small.
 
 ## interests
 
 - complex backend distributed systems
 - design thinking, ui/ux
-- low-level programming
+- low-level programming — parsers, language servers, editor internals
 - productivity tools that make me just 1% better
 
 ## elsewhere
