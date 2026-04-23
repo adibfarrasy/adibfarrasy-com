@@ -657,6 +657,27 @@ a:hover {
   overflow: hidden;
 }
 
+.wf-ascii-face-frame--dark {
+  display: none;
+}
+
+:root[data-theme='dark'] .wf-ascii-face-frame--light {
+  display: none;
+}
+
+:root[data-theme='dark'] .wf-ascii-face-frame--dark {
+  display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .wf-ascii-face-frame--light {
+    display: none;
+  }
+  :root:not([data-theme='light']) .wf-ascii-face-frame--dark {
+    display: block;
+  }
+}
+
 .wf-footer {
   flex-shrink: 0;
   padding: var(--s4) var(--s5);
