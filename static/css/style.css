@@ -6,10 +6,16 @@
   --surface-alt: #FAFAFA;
   --border: #000000;
   --muted-border: #BFBFBF;
-  --accent: #C9A227;
-  --accent-start: #F1DE8F;
-  --accent-mid: #D4AE36;
-  --accent-end: #B48A28;
+  --accent: #B8860B;
+  --accent-start: #E8C36A;
+  --accent-mid: #B8860B;
+  --accent-end: #7A5A0F;
+  --accent-gradient: linear-gradient(
+    135deg,
+    var(--accent-start) 0%,
+    var(--accent-mid) 55%,
+    var(--accent-end) 100%
+  );
 
   --s1: 4px;
   --s2: 8px;
@@ -36,10 +42,10 @@
   --surface-alt: #1A1A1A;
   --border: #FFFFFF;
   --muted-border: #404040;
-  --accent: #E6C35C;
-  --accent-start: #F8E9A4;
-  --accent-mid: #EACC6A;
-  --accent-end: #D0A94E;
+  --accent: #D4AF37;
+  --accent-start: #F4D88B;
+  --accent-mid: #D4AF37;
+  --accent-end: #9C7A1E;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -50,10 +56,10 @@
     --surface-alt: #1A1A1A;
     --border: #FFFFFF;
     --muted-border: #404040;
-    --accent: #E6C35C;
-    --accent-start: #F8E9A4;
-    --accent-mid: #EACC6A;
-    --accent-end: #D0A94E;
+    --accent: #D4AF37;
+    --accent-start: #F4D88B;
+    --accent-mid: #D4AF37;
+    --accent-end: #9C7A1E;
   }
 }
 
@@ -89,7 +95,12 @@ a {
 }
 
 a:hover {
-  color: var(--accent);
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  text-decoration-color: var(--accent-mid);
 }
 
 #backdrop {
@@ -142,7 +153,12 @@ a:hover {
 }
 
 .wf-nav a:hover {
-  color: var(--accent);
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  text-decoration-color: var(--accent-mid);
   border-color: var(--muted-border);
 }
 
@@ -164,13 +180,13 @@ a:hover {
   align-items: center;
   justify-content: center;
   padding: 0;
-  transition: border-width 100ms ease;
+  transition: box-shadow 100ms ease;
   font-family: inherit;
   margin-left: var(--s2);
 }
 
 .wf-theme-toggle:hover {
-  border-width: 2px;
+  box-shadow: inset 0 0 0 1px var(--border);
 }
 
 .wf-theme-toggle svg {
@@ -242,12 +258,11 @@ a:hover {
   background: var(--bg);
   text-decoration: none;
   color: var(--fg);
-  transition: border-width 100ms ease, padding 100ms ease;
+  transition: box-shadow 100ms ease;
 }
 
 .wf-card:hover {
-  border-width: 2px;
-  padding: 23px;
+  box-shadow: inset 0 0 0 1px var(--border);
   color: var(--fg);
 }
 
@@ -288,14 +303,13 @@ a:hover {
 
 .wf-btn:hover,
 .wf-btn:active {
-  background: linear-gradient(
-    135deg,
-    var(--accent-start) 0%,
-    var(--accent-mid) 55%,
-    var(--accent-end) 100%
-  );
-  color: #ffffff;
-  border-color: transparent;
+  background-image: var(--accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  border-color: var(--accent-mid);
+  box-shadow: inset 0 0 0 1px var(--accent-mid);
 }
 
 .wf-chip {
@@ -311,8 +325,12 @@ a:hover {
 }
 
 .wf-chip:hover {
-  color: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  border-color: var(--accent-mid);
 }
 
 .wf-post-list {
@@ -329,7 +347,11 @@ a:hover {
 }
 
 .wf-post-item:hover {
-  color: var(--accent);
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 .wf-post-item .title {
