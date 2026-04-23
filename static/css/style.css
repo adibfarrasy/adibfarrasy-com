@@ -167,7 +167,6 @@ a:hover {
   border-color: var(--border);
   border-width: 2px;
   padding: 7px 11px;
-  text-decoration: none;
 }
 
 .wf-theme-toggle {
@@ -398,10 +397,23 @@ a:hover {
 
 .wf-card-featured--plain:hover,
 .wf-card-featured--plain:hover .wf-card-title,
-.wf-card-featured--plain:hover .wf-caption {
+.wf-card-featured--plain:hover .wf-caption,
+:root[data-theme='dark'] .wf-card-featured--plain:hover,
+:root[data-theme='dark'] .wf-card-featured--plain:hover .wf-card-title,
+:root[data-theme='dark'] .wf-card-featured--plain:hover .wf-caption {
   background: var(--bg);
   -webkit-text-fill-color: var(--fg);
   color: var(--fg);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .wf-card-featured--plain:hover,
+  :root:not([data-theme='light']) .wf-card-featured--plain:hover .wf-card-title,
+  :root:not([data-theme='light']) .wf-card-featured--plain:hover .wf-caption {
+    background: var(--bg);
+    -webkit-text-fill-color: var(--fg);
+    color: var(--fg);
+  }
 }
 
 @keyframes wf-shimmer {
