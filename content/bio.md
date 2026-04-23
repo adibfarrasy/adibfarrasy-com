@@ -3,6 +3,36 @@ title: "bio"
 hide_meta: true
 ---
 
+<div class="wf-ascii-face" aria-hidden="true">
+<pre class="wf-ascii-face-frame wf-ascii-face-frame--neutral">
+     .........
+   ..         ..
+  ..           ..
+ ..    ..  ..   ..
+ ..             ..
+ ..             ..
+ ..   ..   ..   ..
+ ..    .....    ..
+  ..           ..
+   ..         ..
+     .........
+</pre>
+<pre class="wf-ascii-face-frame wf-ascii-face-frame--wink">
+     .........
+   ..         ..
+  ..           ..
+ ..   ....  ..   ..
+ ..             ..
+ ..             ..
+ ..   ..        ..
+ ..   .......   ..
+ ..     .....   ..
+  ..           ..
+   ..         ..
+     .........
+</pre>
+</div>
+
 ## about
 
 my favorite phrase is "skill issue".

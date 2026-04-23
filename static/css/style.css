@@ -416,9 +416,59 @@ a:hover {
   }
 }
 
+@media (hover: none) {
+  .wf-card-featured:not(.wf-card-featured--plain) {
+    color: #ffffff;
+  }
+
+  .wf-card-featured:not(.wf-card-featured--plain)::before {
+    opacity: 1;
+  }
+
+  .wf-card-featured:not(.wf-card-featured--plain)::after {
+    animation: wf-shimmer-loop 3s ease-in-out infinite;
+    opacity: 1;
+  }
+
+  .wf-card-featured:not(.wf-card-featured--plain) .wf-card-title,
+  .wf-card-featured:not(.wf-card-featured--plain) .wf-caption {
+    background: none;
+    -webkit-text-fill-color: #ffffff;
+    color: #ffffff;
+  }
+
+  :root[data-theme='dark'] .wf-card-featured:not(.wf-card-featured--plain),
+  :root[data-theme='dark'] .wf-card-featured:not(.wf-card-featured--plain) .wf-card-title,
+  :root[data-theme='dark'] .wf-card-featured:not(.wf-card-featured--plain) .wf-caption {
+    -webkit-text-fill-color: #000000;
+    color: #000000;
+  }
+}
+
+@media (hover: none) and (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .wf-card-featured:not(.wf-card-featured--plain),
+  :root:not([data-theme='light']) .wf-card-featured:not(.wf-card-featured--plain) .wf-card-title,
+  :root:not([data-theme='light']) .wf-card-featured:not(.wf-card-featured--plain) .wf-caption {
+    -webkit-text-fill-color: #000000;
+    color: #000000;
+  }
+}
+
 @keyframes wf-shimmer {
   0% {
     left: -75%;
+  }
+  100% {
+    left: 125%;
+  }
+}
+
+@keyframes wf-shimmer-loop {
+  0% {
+    left: -75%;
+  }
+  20% {
+    left: 125%;
   }
   100% {
     left: 125%;
@@ -580,6 +630,46 @@ a:hover {
   margin-top: var(--s6);
   padding-top: var(--s4);
   border-top: 1px solid var(--muted-border);
+}
+
+.wf-ascii-face {
+  position: relative;
+  display: block;
+  margin: 0 0 var(--s6);
+  font-family: inherit;
+  line-height: 1.05;
+  color: var(--fg);
+  cursor: pointer;
+  user-select: none;
+}
+
+.wf-ascii-face-frame {
+  margin: 0;
+  font-family: inherit;
+  font-size: var(--fs-body);
+  line-height: 1.05;
+  white-space: pre;
+  transition: color 180ms ease, transform 180ms ease;
+}
+
+.wf-ascii-face-frame--wink {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.wf-ascii-face:hover .wf-ascii-face-frame--neutral {
+  opacity: 0;
+}
+
+.wf-ascii-face:hover .wf-ascii-face-frame--wink {
+  opacity: 1;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
 }
 
 .wf-footer {
