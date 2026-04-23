@@ -633,43 +633,28 @@ a:hover {
 }
 
 .wf-ascii-face {
-  position: relative;
-  display: block;
-  margin: 0 0 var(--s6);
-  font-family: inherit;
-  line-height: 1.05;
+  display: flex;
+  justify-content: center;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto var(--s2);
+  border: 1px solid var(--muted-border);
   color: var(--fg);
-  cursor: pointer;
   user-select: none;
+  overflow: hidden;
 }
 
+.wf-prose .wf-ascii-face-frame,
 .wf-ascii-face-frame {
+  border: 0;
+  padding: 0;
+  background: none;
   margin: 0;
-  font-family: inherit;
-  font-size: var(--fs-body);
-  line-height: 1.05;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: clamp(0.23rem, 0.63vw, 0.42rem);
+  line-height: 0.82;
   white-space: pre;
-  transition: color 180ms ease, transform 180ms ease;
-}
-
-.wf-ascii-face-frame--wink {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.wf-ascii-face:hover .wf-ascii-face-frame--neutral {
-  opacity: 0;
-}
-
-.wf-ascii-face:hover .wf-ascii-face-frame--wink {
-  opacity: 1;
-  background: var(--accent-gradient);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
+  overflow: hidden;
 }
 
 .wf-footer {
