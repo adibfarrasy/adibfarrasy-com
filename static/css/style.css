@@ -6,14 +6,15 @@
   --surface-alt: #FAFAFA;
   --border: #000000;
   --muted-border: #BFBFBF;
-  --accent: #B8860B;
-  --accent-start: #E8C36A;
-  --accent-mid: #B8860B;
-  --accent-end: #7A5A0F;
+  --accent: #C9941E;
+  --accent-start: #F5E08C;
+  --accent-mid: #C9941E;
+  --accent-end: #E8C36A;
   --accent-gradient: linear-gradient(
     135deg,
     var(--accent-start) 0%,
-    var(--accent-mid) 55%,
+    var(--accent-mid) 30%,
+    var(--accent-mid) 70%,
     var(--accent-end) 100%
   );
 
@@ -42,10 +43,10 @@
   --surface-alt: #1A1A1A;
   --border: #FFFFFF;
   --muted-border: #404040;
-  --accent: #D4AF37;
-  --accent-start: #F4D88B;
-  --accent-mid: #D4AF37;
-  --accent-end: #9C7A1E;
+  --accent: #D4A017;
+  --accent-start: #F9E19A;
+  --accent-mid: #D4A017;
+  --accent-end: #F5D98A;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -56,10 +57,10 @@
     --surface-alt: #1A1A1A;
     --border: #FFFFFF;
     --muted-border: #404040;
-    --accent: #D4AF37;
-    --accent-start: #F4D88B;
-    --accent-mid: #D4AF37;
-    --accent-end: #9C7A1E;
+    --accent: #D4A017;
+    --accent-start: #F9E19A;
+    --accent-mid: #D4A017;
+    --accent-end: #F5D98A;
   }
 }
 
@@ -277,6 +278,139 @@ a:hover {
   grid-template-columns: 1fr 1fr;
   gap: var(--s3);
   margin-top: var(--s6);
+}
+
+.wf-card-featured {
+  position: relative;
+  display: block;
+  margin-top: var(--s3);
+  padding: var(--s5);
+  border: 3px solid transparent;
+  background:
+    linear-gradient(var(--bg), var(--bg)) padding-box,
+    var(--accent-gradient) border-box;
+  color: var(--fg);
+  text-decoration: none;
+  overflow: hidden;
+  isolation: isolate;
+  transition: color 180ms ease;
+}
+
+.wf-card-featured::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--accent-gradient);
+  opacity: 0;
+  transition: opacity 180ms ease;
+  z-index: -2;
+}
+
+.wf-card-featured::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -75%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0) 35%,
+    rgba(255, 255, 255, 0.55) 50%,
+    rgba(255, 255, 255, 0) 65%,
+    transparent 100%
+  );
+  transform: skewX(-18deg);
+  opacity: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.wf-card-featured:hover {
+  color: #ffffff;
+}
+
+.wf-card-featured:hover::before {
+  opacity: 1;
+}
+
+.wf-card-featured:hover::after {
+  animation: wf-shimmer 600ms ease-in-out 1;
+  opacity: 1;
+}
+
+.wf-card-featured .wf-card-title {
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  font-size: var(--fs-heading);
+  margin-bottom: var(--s2);
+  transition: background 180ms ease, -webkit-text-fill-color 180ms ease, color 180ms ease;
+}
+
+.wf-card-featured:hover .wf-card-title,
+.wf-card-featured:hover .wf-caption {
+  background: none;
+  -webkit-text-fill-color: #ffffff;
+  color: #ffffff;
+}
+
+:root[data-theme='dark'] .wf-card-featured:hover {
+  color: #000000;
+}
+
+:root[data-theme='dark'] .wf-card-featured:hover .wf-card-title,
+:root[data-theme='dark'] .wf-card-featured:hover .wf-caption {
+  -webkit-text-fill-color: #000000;
+  color: #000000;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .wf-card-featured:hover {
+    color: #000000;
+  }
+  :root:not([data-theme='light']) .wf-card-featured:hover .wf-card-title,
+  :root:not([data-theme='light']) .wf-card-featured:hover .wf-caption {
+    -webkit-text-fill-color: #000000;
+    color: #000000;
+  }
+}
+
+.wf-card-featured--plain {
+  border: 1px solid var(--border);
+  padding: calc(var(--s5) + 2px);
+  background: var(--bg);
+}
+
+.wf-card-featured--plain::before,
+.wf-card-featured--plain::after {
+  content: none;
+}
+
+.wf-card-featured--plain .wf-card-title {
+  background: none;
+  -webkit-text-fill-color: var(--fg);
+  color: var(--fg);
+}
+
+.wf-card-featured--plain:hover,
+.wf-card-featured--plain:hover .wf-card-title,
+.wf-card-featured--plain:hover .wf-caption {
+  background: var(--bg);
+  -webkit-text-fill-color: var(--fg);
+  color: var(--fg);
+}
+
+@keyframes wf-shimmer {
+  0% {
+    left: -75%;
+  }
+  100% {
+    left: 125%;
+  }
 }
 
 @media (max-width: 520px) {

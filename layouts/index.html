@@ -1,17 +1,27 @@
 {{ define "main" }}
-  <h1 class="wf-h1">{{ .Title }}</h1>
-  <div class="wf-prose">
+<h1 class="wf-h1">{{ .Title }}</h1>
+<div class="wf-prose">
     {{ .Content }}
-  </div>
+</div>
 
-  <div class="wf-card-grid">
-    <a href="{{ "/bio/" | relURL }}" class="wf-card">
-      <div class="wf-card-title">/bio</div>
-      <p class="wf-caption">who i am, what i work on.</p>
+<div class="wf-card-grid">
+    <a href="{{ " /bio/" | relURL }}" class="wf-card">
+        <div class="wf-card-title">/bio</div>
+        <p class="wf-caption">who i am, what i work on.</p>
     </a>
-    <a href="{{ "/posts/" | relURL }}" class="wf-card">
-      <div class="wf-card-title">/posts</div>
-      <p class="wf-caption">writing about software, systems, and side projects.</p>
+    <a href="{{ " /posts/" | relURL }}" class="wf-card">
+        <div class="wf-card-title">/posts</div>
+        <p class="wf-caption">writing about software, systems, and side projects.</p>
     </a>
-  </div>
+</div>
+
+<h2 class="wf-h2">/featured</h2>
+<a href="https://github.com/adibfarrasy/lspintar" class="wf-card wf-card-featured" target="_blank" rel="noopener">
+    <div class="wf-card-title">lspintar →</div>
+    <p class="wf-caption">a language server i'm building for many jvm languages.</p>
+</a>
+<a href="https://github.com/adibfarrasy/gymbud" class="wf-card wf-card-featured wf-card-featured--plain" target="_blank" rel="noopener">
+    <div class="wf-card-title">gymbud →</div>
+    <p class="wf-caption">a fully-offline workout companion. just you and your demons.</p>
+</a>
 {{ end }}

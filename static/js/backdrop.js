@@ -109,13 +109,15 @@
           ctx.rotate(t * 0.22 + phase);
           const grad = ctx.createLinearGradient(-12, -12, 12, 12);
           if (dark) {
-            grad.addColorStop(0, '#F4D88B');
-            grad.addColorStop(0.55, '#D4AF37');
-            grad.addColorStop(1, '#9C7A1E');
+            grad.addColorStop(0, '#F9E19A');
+            grad.addColorStop(0.3, '#D4A017');
+            grad.addColorStop(0.7, '#D4A017');
+            grad.addColorStop(1, '#F5D98A');
           } else {
-            grad.addColorStop(0, '#E8C36A');
-            grad.addColorStop(0.55, '#B8860B');
-            grad.addColorStop(1, '#7A5A0F');
+            grad.addColorStop(0, '#F5E08C');
+            grad.addColorStop(0.3, '#C9941E');
+            grad.addColorStop(0.7, '#C9941E');
+            grad.addColorStop(1, '#E8C36A');
           }
           ctx.fillStyle = grad;
           ctx.fillText(glyph, 0, 0);
