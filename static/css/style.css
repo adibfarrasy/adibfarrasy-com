@@ -651,8 +651,8 @@ a:hover {
   background: none;
   margin: 0;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: clamp(0.23rem, 0.63vw, 0.42rem);
-  line-height: 0.82;
+  font-size: clamp(0.3rem, 0.66vw, 0.42rem);
+  line-height: 1;
   white-space: pre;
   overflow: hidden;
 }
