@@ -159,7 +159,7 @@ hide_meta: true
 +++++++++++++++++++++++++++++++++++@+++++++++++++++++++++++++++++++++++++++++++++++++@+@+@+@@+@+++++@+++++++++++++++++++
 </pre>
 </div>
-<p style="text-align: center; margin-top: 0;">P.S: I look better in dark mode</p>
+<p style="text-align: center; margin-top: 0;">p.s: i look better in dark mode</p>
 
 ## about
 
