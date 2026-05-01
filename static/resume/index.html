@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Adib Farrasy - Resume</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap');
+
+    :root {
+      --bg: #f5f4f0;
+      --surface: #ffffff;
+      --text: #1a1a1a;
+      --muted: #5a5a5a;
+      --accent: #1a1a1a;
+      --rule: #d0cfc9;
+      --tag-bg: #eae9e3;
+      --mono: 'IBM Plex Mono', monospace;
+      --sans: 'Playfair Display', Georgia, serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      font-family: var(--sans);
+      color: var(--text);
+      font-size: 11.5px;
+      line-height: 1.45;
+    }
+
+    a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+    a:hover { opacity: 0.6; }
+
+    b { font-weight: 700; color: #000; }
+
+    /* ---- PAGE WRAPPER ---- */
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 40px auto;
+      background: var(--surface);
+      padding: 6mm 16mm 12mm;
+      border: 1px solid var(--rule);
+    }
+
+    /* ---- HEADER ---- */
+    header {
+      border-bottom: 2px solid var(--text);
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .name {
+      font-family: var(--mono);
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+
+    .contact-line {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 4px 16px;
+      font-size: 10.5px;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+
+    .contact-line span {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .contact-line svg {
+      width: 11px;
+      height: 11px;
+      fill: currentColor;
+      flex-shrink: 0;
+    }
+
+    /* ---- SECTIONS ---- */
+    section {
+      margin-bottom: 18px;
+    }
+
+    .section-title {
+      font-family: var(--mono);
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 4px;
+      margin-bottom: 8px;
+    }
+
+    /* ---- PROFILE ---- */
+    .profile-text {
+      font-size: 11.5px;
+      font-style: italic;
+      color: var(--muted);
+      max-width: 620px;
+      line-height: 1.5;
+    }
+
+    /* ---- EXPERIENCE / PROJECT ENTRIES ---- */
+    .entry {
+      margin-bottom: 6px;
+    }
+
+    .entry-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 2px;
+      margin-bottom: 4px;
+    }
+
+    .entry-org {
+      font-family: var(--mono);
+      font-weight: 600;
+      font-size: 11.5px;
+    }
+
+    .entry-role {
+      font-size: 11px;
+      color: var(--muted);
+      margin-left: 6px;
+    }
+
+    .entry-date {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .entry ul {
+      padding-left: 12px;
+      list-style: none;
+    }
+
+    .entry ul li {
+      position: relative;
+      padding-left: 10px;
+      margin-bottom: 3px;
+      color: #2a2a2a;
+      font-weight: 400;
+    }
+
+    .entry ul li::before {
+      content: '-';
+      position: absolute;
+      left: 0;
+      color: var(--muted);
+    }
+
+    /* ---- EDUCATION ---- */
+    .edu-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 2px;
+      margin-bottom: 4px;
+    }
+
+    .edu-org {
+      font-family: var(--mono);
+      font-weight: 600;
+      font-size: 11.5px;
+    }
+
+    .edu-date {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    /* ---- SKILLS ---- */
+    .skills-grid {
+      display: grid;
+      grid-template-columns: 100px 1fr;
+      gap: 5px 12px;
+    }
+
+    .skills-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--muted);
+      padding-top: 1px;
+    }
+
+    .skills-value {
+      font-size: 11.5px;
+      font-weight: 400;
+    }
+
+    /* ---- ADDITIONAL ---- */
+    .additional-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .additional-list li {
+      position: relative;
+      padding-left: 12px;
+      margin-bottom: 3px;
+      font-weight: 400;
+      font-size: 11.5px;
+    }
+
+    .additional-list li::before {
+      content: '-';
+      position: absolute;
+      left: 0;
+      color: var(--muted);
+    }
+
+    @page { size: A4; margin: 0; }
+    @media print {
+      body { background: white; }
+      .page { margin: 0; border: none; width: 210mm; min-height: 297mm; padding: 8mm 20mm 18mm; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <header>
+    <div class="name">Adib Farrasy</div>
+    <div class="contact-line">
+      <span>
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 4H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+        <a href="mailto:adibfarrasy@gmail.com">adibfarrasy@gmail.com</a>
+      </span>
+      <span>
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19 3a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14zm-1 2H6a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1V6a1 1 0 00-1-1zM8.5 17H6.5v-7h2v7zm-1-8a1 1 0 110-2 1 1 0 010 2zm9.5 8h-2v-3.5c0-1-.6-1.5-1.2-1.5s-1.3.6-1.3 1.5V17h-2v-7h2v1a2.7 2.7 0 012.2-1.1c1.6 0 2.8 1.1 2.8 3.1V17z"/></svg>
+        <a href="https://linkedin.com/in/adibfarrasy">adibfarrasy</a>
+      </span>
+      <span>
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.34-3.369-1.34-.454-1.154-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836a9.59 9.59 0 012.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+        <a href="https://github.com/adibfarrasy">github.com/adibfarrasy</a>
+      </span>
+      <span>
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2a10 10 0 100 20A10 10 0 0012 2zm-1 17.93V18a1 1 0 00-1-1H8l-1.93-1.93A8 8 0 014.07 13H6a1 1 0 001-1v-1a1 1 0 011-1h2a1 1 0 001-1V8a1 1 0 00-1-1H7.07A8 8 0 0119.93 11H19a1 1 0 00-1 1v2a1 1 0 001 1h.93A8.01 8.01 0 0111 19.93zM17 16h-1v2.46A8.05 8.05 0 0017.93 17H17a1 1 0 01-1-1z"/></svg>
+        <a href="https://adibfarrasy.com">adibfarrasy.com</a>
+      </span>
+    </div>
+    <div class="contact-line" style="margin-top:4px">
+      <span>
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24 11.47 11.47 0 003.58.57 1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.58a1 1 0 01-.25 1.01l-2.2 2.2z"/></svg>
+        +62 812 8224 9352
+      </span>
+      <span>
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/></svg>
+        Kota Jakarta Selatan, DKI Jakarta 12940
+      </span>
+    </div>
+  </header>
+
+  <!-- PERSONAL PROFILE -->
+  <section>
+    <p class="profile-text">
+      Software Engineer with a sharp eye for detail, a systems mindset, and a passion for scalable design;
+      driven by continuous learning and a long-term vision to lead and make an impact beyond code.
+    </p>
+  </section>
+
+  <!-- WORK EXPERIENCE -->
+  <section>
+    <div class="section-title">Work Experience</div>
+
+    <div class="entry">
+      <div class="entry-header">
+        <div>
+          <span class="entry-org">KreditPintar</span>
+          <span class="entry-role">Backend Engineer</span>
+        </div>
+        <div class="entry-date">Nov 2024 - Present</div>
+      </div>
+      <ul>
+        <li>Delivered a full system refactoring in <b>1</b> month for marketing campaign management system to improve the maintainability, covering <b>6+</b> integration points such as SMS, email, whatsapp, etc.</li>
+        <li>Wrote <b>15</b> custom browser scripts (via Tampermonkey) to improve the backend team's developer experience for faster log searching, faster data transformation, and less overall mistakes in operating internal tools.</li>
+        <li>In charge of development and maintenance for <b>20+</b> backend microservices e.g. payment gateway, pintar core backend, and promotion system across <b>3</b> tribes (payment, lending business, and ops).</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <div class="entry-header">
+        <div>
+          <span class="entry-org">Flik</span>
+          <span class="entry-role">Software Engineer</span>
+        </div>
+        <div class="entry-date">Oct 2023 - Nov 2024</div>
+      </div>
+      <ul>
+        <li>Identified the highest operational cost in vendor message-sending services and led the cost-reduction effort. The monthly operational cost for the services was reduced by <b>95%</b>.</li>
+        <li>Developed and maintained the Reward service backend, a cashback-like discount rule engine. Also integrated the service with <b>3</b> microservices and resolved all related production issues.</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <div class="entry-header">
+        <div>
+          <span class="entry-org">Agriaku</span>
+          <span class="entry-role">Software Backend Engineer</span>
+        </div>
+        <div class="entry-date">Nov 2021 - Oct 2023</div>
+      </div>
+      <ul>
+        <li>Developed and maintained Agriaku's highest traffic APIs and related services (most notably search inventory, product detail, checkout, cart, and coupon services).</li>
+        <li>Resolved <b>10+</b> critical production issues, such as high latency on discount and cart APIs (reduced latency by <b>~85%</b>), Redis connection error due to too many connections, and slow SQL queries.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- PERSONAL PROJECTS -->
+  <section>
+    <div class="section-title">Personal Projects</div>
+
+    <div class="entry">
+      <div class="entry-header">
+        <div>
+          <span class="entry-org"><a href="https://github.com/adibfarrasy/lspintar">lspintar</a></span>
+          <span class="entry-role">Developer</span>
+        </div>
+      </div>
+      <ul>
+        <li>A language server provider (LSP) written in Rust for Groovy, Java and Kotlin powered by custom tree-sitter parser libraries, supporting IDE features such as go to definition and go to implementation. Featuring other projects: <a href="https://github.com/adibfarrasy/tree-sitter-groovy">tree-sitter-groovy</a>, <a href="https://github.com/adibfarrasy/tree-sitter-java">tree-sitter-java</a>, and <a href="https://github.com/adibfarrasy/tree-sitter-kotlin">tree-sitter-kotlin</a>.</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <div class="entry-header">
+        <div>
+          <span class="entry-org">Minima</span>
+          <span class="entry-role">Agentic Systems Engineer</span>
+        </div>
+      </div>
+      <ul>
+        <li>Designed the Whatsapp backend integration written in Go, and co-wrote an AI healthcare coach agent service using Python and Langgraph.</li>
+      </ul>
+    </div>
+
+    <div class="entry">
+      <div class="entry-header">
+        <div>
+          <span class="entry-org"><a href="https://github.com/adibfarrasy/simpanan.nvim">simpanan.nvim</a></span>
+          <span class="entry-role">Developer</span>
+        </div>
+      </div>
+      <ul>
+        <li>My own convenient Neovim plugin to execute chain queries for MongoDB, PostgreSQL, and Redis on one file right in Neovim.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- EDUCATION -->
+  <section>
+    <div class="section-title">Education</div>
+    <div class="edu-header">
+      <div class="edu-org">Singapore University of Technology and Design (SUTD)</div>
+      <div class="edu-date">May 2015 - Aug 2018</div>
+    </div>
+    <ul class="entry"><ul>
+      <li>GPA <b>3.98</b> (Magna Cum Laude) in B. Eng, Engineering Product Development major.</li>
+      <li>Recipient of Wilmar Scholarship, a full scholarship for students with academic excellence.</li>
+    </ul></ul>
+  </section>
+
+  <!-- SKILLS -->
+  <section>
+    <div class="section-title">Tools &amp; Skill Sets</div>
+    <div class="skills-grid">
+      <div class="skills-label">Languages</div>
+      <div class="skills-value">Bash, <b>Go</b>, Java, Javascript, <b>Kotlin</b>, Lua, Python, <b>Rust</b>, Typescript</div>
+      <div class="skills-label">Databases</div>
+      <div class="skills-value">Algolia, MongoDB, MySQL, PostgreSQL, Redis</div>
+      <div class="skills-label">Misc</div>
+      <div class="skills-value">Docker, Git, GCP, AWS, RabbitMQ, Linux, Puppeteer, Langgraph</div>
+    </div>
+  </section>
+
+  <!-- ADDITIONAL -->
+  <section>
+    <div class="section-title">Additional Information</div>
+    <ul class="additional-list">
+      <li>Fluent in English and Bahasa Indonesia; basic understanding in Chinese, Japanese, and German.</li>
+      <li>Top <b>1%</b> typing speed in the world (<b>120+</b> words per minute).</li>
+      <li>Familiar with domain-driven design, event-driven architecture and microservice best practices.</li>
+    </ul>
+  </section>
+
+</div>
+</body>
+</html>
