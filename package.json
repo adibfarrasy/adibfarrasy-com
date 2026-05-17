@@ -1,0 +1,8 @@
+{
+  "name": "adibfarrasy-com",
+  "private": true,
+  "scripts": {
+    "build": "rm -rf public && hugo --minify",
+    "dev": "hugo server"
+  }
+}

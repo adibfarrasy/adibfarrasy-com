@@ -12,6 +12,9 @@
   const GLYPH_SIZE = 24;
   const PRESS_RADIUS = 160;
   const PRESS_FORCE = 14;
+  const FRAME_MS = 1000 / 30;
+
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
   function isDark() {
     const attr = document.documentElement.getAttribute('data-theme');
@@ -54,8 +57,15 @@
   }
 
   const start = performance.now();
+  let lastFrame = 0;
+  let rafId = 0;
+  let running = false;
 
-  function frame(now) {
+  function drawStatic() {
+    renderAt(performance.now());
+  }
+
+  function renderAt(now) {
     const t = (now - start) / 1000;
     ctx.clearRect(0, 0, w, h);
     ctx.font = `${GLYPH_SIZE}px 'JetBrains Mono', ui-monospace, monospace`;
@@ -128,7 +138,44 @@
         }
       }
     }
-    requestAnimationFrame(frame);
   }
-  requestAnimationFrame(frame);
+
+  function frame(now) {
+    if (!running) return;
+    if (now - lastFrame >= FRAME_MS) {
+      lastFrame = now;
+      renderAt(now);
+    }
+    rafId = requestAnimationFrame(frame);
+  }
+
+  function start_loop() {
+    if (running || reducedMotion.matches) return;
+    running = true;
+    lastFrame = 0;
+    rafId = requestAnimationFrame(frame);
+  }
+
+  function stop_loop() {
+    running = false;
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = 0;
+  }
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) stop_loop();
+    else start_loop();
+  });
+
+  reducedMotion.addEventListener('change', function () {
+    if (reducedMotion.matches) {
+      stop_loop();
+      drawStatic();
+    } else {
+      start_loop();
+    }
+  });
+
+  if (reducedMotion.matches) drawStatic();
+  else start_loop();
 })();
