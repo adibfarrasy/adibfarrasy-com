@@ -8,7 +8,7 @@
   Cache-Control: public, max-age=604800
 
 /*.html
-  Cache-Control: public, max-age=0, must-revalidate
+  Cache-Control: public, max-age=0, must-revalidate, s-maxage=300
 
 /
-  Cache-Control: public, max-age=0, must-revalidate
+  Cache-Control: public, max-age=0, must-revalidate, s-maxage=300
