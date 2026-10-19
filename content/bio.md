@@ -1,5 +1,5 @@
 ---
-title: "bio"
+title: "Bio"
 hide_meta: true
 ---
 
@@ -159,25 +159,25 @@ hide_meta: true
 +++++++++++++++++++++++++++++++++++@+++++++++++++++++++++++++++++++++++++++++++++++++@+@+@+@@+@+++++@+++++++++++++++++++
 </pre>
 </div>
-<p style="text-align: center; margin-top: 0;">p.s: i look better in dark mode</p>
+<p style="text-align: center; margin-top: 0;">P.S. I look better in dark mode</p>
 
-## about
+## About
 
-my favorite phrase is "skill issue".
+My favorite phrase is "skill issue".
 
-hi, i'm adib. i work on software by day and tinker by night — 
-lately that means writing my own lsp server nobody asked for.
+Hi, I'm Adib. I work on software by day and tinker by night.
+Lately that means writing my own LSP server nobody asked for.
 
-i spend my time thinking, reading, talking, and now writing about systems, big and small.
+I spend my time thinking, reading, talking, and now writing about systems, big and small.
 
-## interests
+## Interests
 
-- complex backend distributed systems
-- design thinking, ui/ux
-- low-level programming — parsers, language servers, editor internals
-- productivity tools that make me just 1% better
+- Complex backend distributed systems
+- Design thinking, UI/UX
+- Low-level programming: parsers, language servers, editor internals
+- Productivity tools that make me just 1% better
 
-## elsewhere
+## Elsewhere
 
-- github — [@adibfarrasy](https://github.com/adibfarrasy)
-- email — adibfarrasy@gmail.com
+- GitHub: [@adibfarrasy](https://github.com/adibfarrasy)
+- Email: adibfarrasy@gmail.com

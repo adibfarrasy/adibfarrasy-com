@@ -1,0 +1,21 @@
+<figure>
+<div class="frame">
+<svg class="ve-svg" viewBox="0 0 800 230" role="img" aria-label="The state, which is the prompt plus the tokens so far, goes into the policy. The policy samples the next token as its action. The token is appended to the state again. Only at the end of the response does a single reward arrive.">
+<path class="ve-e" d="M160 95H230"/><text class="ve-el" x="195" y="86">reads</text>
+<path class="ve-e is-hot" d="M370 95H440"/><text class="ve-el" x="405" y="86">samples</text>
+<path class="ve-e is-async" d="M580 95H660"/><text class="ve-el" x="620" y="86">at EOS</text>
+<path class="ve-e" d="M510 130V185H90V130"/><text class="ve-el" x="300" y="176">appends the token</text>
+<g class="ve-n" transform="translate(20 60)"><rect class="sh" width="140" height="70" rx="6"/><text x="70" y="26">State</text><text class="sub" x="70" y="48">(x, y&lt;t)</text></g>
+<g class="ve-n is-key" transform="translate(230 60)"><rect class="sh" width="140" height="70" rx="6"/><text x="70" y="26">Policy πθ</text><text class="sub" x="70" y="48">the LLM</text></g>
+<g class="ve-n" transform="translate(440 60)"><rect class="sh" width="140" height="70" rx="6"/><text x="70" y="26">Action</text><text class="sub" x="70" y="48">next token</text></g>
+<g class="ve-n" transform="translate(660 60)"><rect class="sh" width="120" height="70" rx="6"/><text x="60" y="26">Reward</text><text class="sub" x="60" y="48">one scalar</text></g>
+<path class="ann" d="M510 60V36"/><g class="ve-co" transform="translate(510 24)"><circle r="11"/><text>1</text></g>
+<path class="ann" d="M720 60V36"/><g class="ve-co" transform="translate(720 24)"><circle r="11"/><text>2</text></g>
+</svg>
+</div>
+<figcaption><span class="fig-n">Fig. 1</span>The MDP of LLM generation: the transition is plain concatenation, so all the randomness sits in the policy.</figcaption>
+<ol class="callouts">
+<li><span class="co-n">1</span>About 100k to 200k tokens to choose from at every step.</li>
+<li><span class="co-n">2</span>Sparse and terminal: zero at every token except the last (reward model score, or "answer correct").</li>
+</ol>
+</figure>

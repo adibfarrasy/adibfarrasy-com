@@ -1,0 +1,16 @@
+<figure>
+<div class="frame">
+<svg class="ve-svg" viewBox="0 0 800 240" role="img" aria-label="The forward pass of the from-scratch layer. The input x, N by d_in, is multiplied by A transposed to give an N by r intermediate, then by B transposed to give N by d_out, and added to the frozen base output. The full d_out by d_in update is never built.">
+<path class="ve-e" d="M130 110H220"/><text class="ve-el" x="175" y="101">@ Aᵀ</text>
+<path class="ve-e" d="M350 110H440"/><text class="ve-el" x="395" y="101">@ Bᵀ</text>
+<path class="ve-e is-hot" d="M580 110H670"/><text class="ve-el" x="625" y="101">adds</text>
+<path class="ve-e" d="M75 75V30H730V75"/><text class="ve-el" x="400" y="21">base(x): the frozen W0 path</text>
+<g class="ve-n" transform="translate(20 75)"><rect class="sh" width="110" height="70" rx="6"/><text x="55" y="26">x</text><text class="sub" x="55" y="48">N × d_in</text></g>
+<g class="ve-n is-key" transform="translate(220 75)"><rect class="sh" width="130" height="70" rx="6"/><text x="65" y="26">x Aᵀ</text><text class="sub" x="65" y="48">N × r</text></g>
+<g class="ve-n" transform="translate(440 75)"><rect class="sh" width="140" height="70" rx="6"/><text x="70" y="26">x Aᵀ Bᵀ</text><text class="sub" x="70" y="48">N × d_out</text></g>
+<g class="ve-n" transform="translate(670 75)"><rect class="sh" width="120" height="70" rx="6"/><text x="60" y="26">out</text><text class="sub" x="60" y="48">× scaling</text></g>
+<g class="ve-dim is-key"><path class="ext" d="M220 152V196M350 152V196"/><path class="ln" d="M220 190H350"/><text x="285" y="220">N × r, ΔW never built</text></g>
+</svg>
+</div>
+<figcaption><span class="fig-n">Fig. 10</span>Multiplying by A first keeps the intermediate at width r, so training never materializes the d_out × d_in update.</figcaption>
+</figure>

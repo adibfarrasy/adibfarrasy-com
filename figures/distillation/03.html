@@ -1,0 +1,20 @@
+<figure>
+<div class="frame">
+<svg class="ve-svg" viewBox="0 0 800 210" role="img" aria-label="Teacher logits 8, 2, 1. At T equals 1 the probabilities are 0.997, 0.0025 and 0.0009. Dividing by 4 gives 0.71, 0.16 and 0.13.">
+<text class="ve-tick l" x="20" y="26">Teacher, T = 1</text>
+<text class="ve-tick l" x="460" y="26">Teacher, T = 4</text>
+<path class="ve-e is-hot" d="M365 105H435"/><text class="ve-el" x="400" y="95">z / 4</text>
+<text class="ve-tick l" x="20" y="75">z = 8</text><rect class="ve-bar" x="80" y="61" width="199" height="18" rx="2"/><text class="ve-bar-v" x="287" y="70">0.997</text>
+<text class="ve-tick l" x="20" y="115">z = 2</text><rect class="ve-bar hot" x="80" y="101" width="2" height="18" rx="1"/><text class="ve-bar-v" x="90" y="110">0.0025</text>
+<text class="ve-tick l" x="20" y="155">z = 1</text><rect class="ve-bar hot" x="80" y="141" width="2" height="18" rx="1"/><text class="ve-bar-v" x="90" y="150">0.0009</text>
+<text class="ve-tick l" x="460" y="75">z = 8</text><rect class="ve-bar" x="520" y="61" width="142" height="18" rx="2"/><text class="ve-bar-v" x="670" y="70">0.71</text>
+<text class="ve-tick l" x="460" y="115">z = 2</text><rect class="ve-bar hot" x="520" y="101" width="32" height="18" rx="2"/><text class="ve-bar-v" x="560" y="110">0.16</text>
+<text class="ve-tick l" x="460" y="155">z = 1</text><rect class="ve-bar hot" x="520" y="141" width="26" height="18" rx="2"/><text class="ve-bar-v" x="554" y="150">0.13</text>
+<path class="ann" d="M598 110H618V150H598M618 130H629"/><g class="ve-co" transform="translate(640 130)"><circle r="11"/><text>1</text></g>
+</svg>
+</div>
+<figcaption><span class="fig-n">Fig. 3</span>Temperature lifts the tail so the student can learn how the teacher ranks the wrong answers.</figcaption>
+<ol class="callouts">
+<li><span class="co-n">1</span>At T = 1, classes 2 and 3 differ in the fourth decimal. At T = 4 the gap (0.16 vs 0.13) gives a real gradient.</li>
+</ol>
+</figure>

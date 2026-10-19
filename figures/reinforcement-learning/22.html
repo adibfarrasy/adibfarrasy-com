@@ -1,0 +1,22 @@
+<figure>
+<div class="frame">
+<svg class="ve-svg" viewBox="0 0 800 285" role="img" aria-label="Top, outcome reward model: a four-step solution gets one score at the end, wrong, and no signal on the steps. Bottom, process reward model: each step is scored; steps 1 and 2 are ok, step 3 is flagged wrong, step 4 ok, and the answer is wrong.">
+<text class="ve-tick l" x="20" y="48">ORM</text>
+<path class="ve-e" d="M230 42H260"/><path class="ve-e" d="M360 42H390"/><path class="ve-e" d="M490 42H520"/><path class="ve-e" d="M620 42H650"/>
+<g class="ve-n"><rect class="sh" x="130" y="20" width="100" height="44" rx="6"/><text x="180" y="42">step 1</text><rect class="sh" x="260" y="20" width="100" height="44" rx="6"/><text x="310" y="42">step 2</text><rect class="sh" x="390" y="20" width="100" height="44" rx="6"/><text x="440" y="42">step 3</text><rect class="sh" x="520" y="20" width="100" height="44" rx="6"/><text x="570" y="42">step 4</text></g>
+<g class="ve-n is-key"><rect class="sh" x="650" y="20" width="110" height="44" rx="6"/><text x="705" y="42">answer</text></g>
+<text class="ve-tick l" x="130" y="100">no signal on the steps</text>
+<text class="ve-tick" x="705" y="100">one score: wrong</text>
+<text class="ve-tick l" x="20" y="158">PRM</text>
+<path class="ve-e" d="M230 152H260"/><path class="ve-e" d="M360 152H390"/><path class="ve-e" d="M490 152H520"/><path class="ve-e" d="M620 152H650"/>
+<g class="ve-n"><rect class="sh" x="130" y="130" width="100" height="44" rx="6"/><text x="180" y="152">step 1</text><rect class="sh" x="260" y="130" width="100" height="44" rx="6"/><text x="310" y="152">step 2</text><rect class="sh" x="390" y="130" width="100" height="44" rx="6"/><text x="440" y="152">step 3</text><rect class="sh" x="520" y="130" width="100" height="44" rx="6"/><text x="570" y="152">step 4</text></g>
+<g class="ve-n is-key"><rect class="sh" x="650" y="130" width="110" height="44" rx="6"/><text x="705" y="152">answer</text></g>
+<rect class="ve-bar" x="162" y="212" width="36" height="40"/><text class="ve-bar-v" text-anchor="middle" x="180" y="270">ok</text>
+<rect class="ve-bar" x="292" y="212" width="36" height="40"/><text class="ve-bar-v" text-anchor="middle" x="310" y="270">ok</text>
+<rect class="ve-bar hot" x="422" y="240" width="36" height="12"/><text class="ve-bar-v" text-anchor="middle" x="440" y="270">wrong</text>
+<rect class="ve-bar" x="552" y="212" width="36" height="40"/><text class="ve-bar-v" text-anchor="middle" x="570" y="270">ok</text>
+<rect class="ve-bar" x="687" y="240" width="36" height="12"/><text class="ve-bar-v" text-anchor="middle" x="705" y="270">wrong</text>
+</svg>
+</div>
+<figcaption><span class="fig-n">Fig. 22</span>An ORM scores the final answer (a rule-based verifier is a perfect ORM). A PRM scores every step and can point at where the solution broke.</figcaption>
+</figure>

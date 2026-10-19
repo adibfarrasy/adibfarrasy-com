@@ -1,0 +1,22 @@
+<figure>
+<div class="frame">
+<svg class="ve-svg" viewBox="0 0 800 240" role="img" aria-label="For an image of a 2, the one-hot label puts 1.0 on the class 2 and nothing elsewhere. The teacher puts 0.90 on 2, 0.08 on 7, 0.01 on 3 and tiny values on the rest.">
+<text class="ve-tick l" x="20" y="26">One-hot label</text>
+<text class="ve-tick l" x="480" y="26">Teacher soft target</text>
+<path class="ve-grid" d="M400 10V230"/>
+<text class="ve-tick l" x="20" y="75">class 2</text><rect class="ve-bar" x="110" y="61" width="240" height="18" rx="2"/><text class="ve-bar-v" x="358" y="70">1.0</text>
+<text class="ve-tick l" x="20" y="115">class 7</text><text class="ve-bar-v" x="116" y="110">0</text>
+<text class="ve-tick l" x="20" y="155">class 3</text><text class="ve-bar-v" x="116" y="150">0</text>
+<text class="ve-tick l" x="20" y="195">rest</text><text class="ve-bar-v" x="116" y="190">0</text>
+<text class="ve-tick l" x="480" y="75">class 2</text><rect class="ve-bar" x="560" y="61" width="162" height="18" rx="2"/><text class="ve-bar-v" x="730" y="70">0.90</text>
+<text class="ve-tick l" x="480" y="115">class 7</text><rect class="ve-bar hot" x="560" y="101" width="14" height="18" rx="2"/><text class="ve-bar-v" x="582" y="110">0.08</text>
+<text class="ve-tick l" x="480" y="155">class 3</text><rect class="ve-bar" x="560" y="141" width="3" height="18" rx="1"/><text class="ve-bar-v" x="571" y="150">0.01</text>
+<text class="ve-tick l" x="480" y="195">rest</text><rect class="ve-bar" x="560" y="181" width="2" height="18" rx="1"/><text class="ve-bar-v" x="570" y="190">tiny</text>
+<path class="ann" d="M628 110H669"/><g class="ve-co" transform="translate(680 110)"><circle r="11"/><text>1</text></g>
+</svg>
+</div>
+<figcaption><span class="fig-n">Fig. 1</span>The label says "2". The teacher also says how much this 2 looks like other digits.</figcaption>
+<ol class="callouts">
+<li><span class="co-n">1</span>The 0.08 on class 7 is dark knowledge: this 2 looks a bit like a 7. A one-hot label drops it.</li>
+</ol>
+</figure>

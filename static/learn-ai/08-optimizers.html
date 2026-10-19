@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<!--
+  CHAPTER PAGE KIT (reference page, placeholder content).
+
+  How to build a chapter page from this file:
+  1. Copy everything from <!DOCTYPE html> through </head> verbatim (change only <title> and the meta description).
+  2. Copy the <svg class="ve-defs"> block at the top of <body> and the final <script> block verbatim.
+  3. Write only the body content: .topbar, .page > nav.toc + main (header + one section.sec per course section).
+  Do not add CSS. If a page needs something the kit lacks, add it to this kit first so every page stays identical.
+
+  Component class names:
+    chrome     .topbar .crumbs .pager  .page  nav.toc (scroll-spy: links point at section ids)
+    header     .ch-head .eyebrow h1 .lead .meta
+    section    section.sec#sNN > .sec-head > p.sec-num(span.n) + h2   (12-col grid; text spans 8, figures 12)
+    figure     figure > .frame > svg.ve-svg[role=img][aria-label] + figcaption > span.fig-n
+               svg parts: g.ve-n[.is-key] > rect.sh + text + text.sub   path.ve-e[.is-hot|.is-async|.no-ah]
+                          text.ve-el[.l|.r] (edge verb)  g.ve-dim[.is-key] (dimension)  g.ve-co + path.ann (callout)
+                          g.ve-zone (dashed boundary)  .ve-tick (axis text)  .ve-bar[.hot] + .ve-bar-v (inline bars)
+               ol.callouts > li > span.co-n   (one-line notes under a figure with callouts)
+               svg.ve-svg min-width: viewBox width x 0.86 (inline style) so 14-unit labels stay >= 12px.
+    stepper    figure.ve-steps: parts carry data-s="N"; .ve-player > ol.ve-cap > li[data-n="1/4"] + button[data-go] + input[type=range]
+    linked     .ve-ref[data-ref][tabindex=0] in prose + [data-ref] on svg parts
+    multiples  .cases > .case[data-st=ok|warn|risk] > .chip + h3 + svg.ve-mini (.is-st marks the changed part)
+    chips      .chip.ok (circle) .chip.warn (triangle) .chip.risk (square) .chip.info (diamond) .chip.plain (no shape)
+    equation   figure > .eq > .eq-math ($$ ... $$) + dl.symbols > div > dt + dd   (write < as &lt; inside math)
+    code       .code > .code-bar(span.ve-label + button.copy) + pre[tabindex=0] > code; tokens .tk-k .tk-s .tk-n .tk-f .tk-c
+    callouts   .callout.confusions > .chip.warn + ul > li > p.myth + p.fact
+               .callout.quiz > .chip.info + ol > li > p + details > summary + p
+    resources  .resources > .res-col > h3 + ul.res-list > li.res-item[.is-start] > .res-top(a + .start-here) + .res-meta(.chip.plain) + p
+    project    .project > .chip.info + h3 + p + ol + ul.done + p.meta
+    index only .ch-cards > a.ch-card (.pips > i)   ol.howto
+  Motion: JS adds .js-motion to <html> only when motion is allowed; without it every block shows its final state.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Optimizers</title>
+<meta name="description" content="From SGD to Adam to Muon: how each optimizer works, what it costs in memory, and how to compare them fairly.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23282828'/%3E%3Cpath d='M14 20h14M36 20h14M14 44h14M36 44h14M28 20l8 24' stroke='%23fe8019' stroke-width='5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body, { delimiters: [{ left: '$$', right: '$$', display: true }, { left: '\\(', right: '\\)', display: false }], throwOnError: false })"></script>
+<script>
+  // Runs before first paint so a saved theme choice never flashes the other scheme.
+  try { const t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+<style>
+  /* tokens: gruvbox-dark by default, gruvbox-light when the reader's system asks for light */
+  :root {
+    color-scheme: dark;
+    --bg: #282828; --surface: #3c3836; --border: rgba(255,255,255,.08); --border-bright: #afa18e;
+    --text: #ebdbb2; --text-dim: #afa18e; --accent: #fe8019; --accent-dim: #fe80191f;
+    --ok: #b8bb26; --warn: #fabd2f; --risk: #fc7c6d; --info: #88a99c;
+    --syn-k: #fc7c6d; --syn-s: #b8bb26; --syn-n: #d3869b; --syn-f: #fabd2f; --syn-c: #afa18e;
+    --node-top: color-mix(in srgb, var(--text) 7%, var(--surface)); --lift: rgb(0 0 0 / .45); --halo: 32%;
+    --font-body: 'JetBrains Mono', ui-monospace, monospace;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    --t-label: .75rem; --t-small: .875rem; --t-body: 1rem; --t-lead: 1.25rem; --t-h2: 1.625rem; --t-h1: clamp(2.25rem, 5.5vw, 4rem);
+    --s-1: .25rem; --s-2: .5rem; --s-3: .75rem; --s-4: 1rem; --s-5: 1.5rem; --s-6: 2rem; --s-7: 3rem; --s-8: 4.5rem;
+    --r-1: 4px; --r-2: 10px;
+    --ease: cubic-bezier(.16,1,.3,1); --fast: 150ms; --med: 300ms; --slow: 500ms;
+  }
+  :root[data-theme="light"] {
+      color-scheme: light;
+      --bg: #fbf1c7; --surface: #ebdbb2; --border: rgba(0,0,0,.08); --border-bright: #6b5f56;
+      --text: #3c3836; --text-dim: #6b5f56; --accent: #ad3903; --accent-dim: #ad39031f;
+      --ok: #67630c; --warn: #7a5200; --risk: #9d0006; --info: #076678;
+      --syn-k: #9d0006; --syn-s: #67630c; --syn-n: #8f3f71; --syn-f: #076678; --syn-c: #6b5f56;
+      --node-top: var(--surface); --lift: rgb(60 56 54 / .14); --halo: 22%;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      color-scheme: light;
+      --bg: #fbf1c7; --surface: #ebdbb2; --border: rgba(0,0,0,.08); --border-bright: #6b5f56;
+      --text: #3c3836; --text-dim: #6b5f56; --accent: #ad3903; --accent-dim: #ad39031f;
+      --ok: #67630c; --warn: #7a5200; --risk: #9d0006; --info: #076678;
+      --syn-k: #9d0006; --syn-s: #67630c; --syn-n: #8f3f71; --syn-f: #076678; --syn-c: #6b5f56;
+      --node-top: var(--surface); --lift: rgb(60 56 54 / .14); --halo: 22%;
+    }
+  }
+
+  /* base */
+  html { font-size: 17px; }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--text); font: 400 var(--t-body)/1.6 var(--font-body); text-wrap: pretty; font-kerning: normal; font-synthesis: none; -webkit-font-smoothing: antialiased; }
+  ::selection { background: var(--accent-dim); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  a { color: var(--text); text-decoration: underline 1px var(--accent); text-underline-offset: .22em; transition: color var(--fast) var(--ease); }
+  a:hover { color: var(--accent); }
+  code { font: .875em var(--font-mono); font-variant-ligatures: none; }
+  h1, h2 { text-box: trim-both cap alphabetic; }
+  h1 { font-size: var(--t-h1); line-height: 1.08; font-weight: 600; letter-spacing: -.035em; text-wrap: balance; max-width: 20ch; }
+  h1 .num { color: var(--accent); font-variant-numeric: tabular-nums; }
+  h2 { font-size: var(--t-h2); line-height: 1.2; font-weight: 600; letter-spacing: -.015em; text-wrap: balance; }
+  h3 { font-size: var(--t-body); line-height: 1.3; font-weight: 600; }
+  p, li { max-width: 66ch; }
+  ul, ol { padding-left: 1.25em; }
+  .eyebrow { display: flex; align-items: center; gap: var(--s-2); font: 600 var(--t-label) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+  .eyebrow::before { content: ''; width: 1.25rem; height: 2px; background: currentColor; }
+  .ve-label { font: 600 var(--t-label) var(--font-mono); color: var(--text-dim); }
+  .caps { text-transform: uppercase; letter-spacing: .08em; }
+  .lead { font-size: var(--t-lead); line-height: 1.5; color: var(--text-dim); max-width: 48ch; }
+  .lead b { color: var(--text); font-weight: 600; }
+  .meta { font: 400 var(--t-label) var(--font-mono); color: var(--text-dim); font-variant-numeric: tabular-nums; }
+
+  /* top bar: course breadcrumb left, chapter pager right */
+  .topbar { border-bottom: 1px solid var(--border); }
+  .topbar-in { max-width: 82rem; margin: 0 auto; padding: var(--s-3) var(--s-5); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-2) var(--s-5); font: 400 var(--t-small) var(--font-mono); }
+  .topbar a { text-decoration: none; }
+  .topbar a:hover { color: var(--accent); }
+  .crumbs { display: flex; flex-wrap: wrap; list-style: none; padding: 0; gap: var(--s-2); color: var(--text-dim); }
+  .crumbs li + li::before { content: '/'; margin-right: var(--s-2); color: var(--text-dim); }
+  .crumbs [aria-current] { color: var(--text); font-weight: 600; }
+  .pager { display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-5); }
+  .pager a { color: var(--text-dim); }
+
+  /* page: sticky TOC column + main; below 1000px the TOC becomes a sticky bar */
+  .page { max-width: 82rem; margin: 0 auto; padding: 0 var(--s-5); }
+  main { min-width: 0; max-width: 64rem; padding: var(--s-7) 0 var(--s-8); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-8); }
+  .toc { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--border); margin: 0 calc(-1 * var(--s-5)); padding: var(--s-2) var(--s-5); }
+  .toc > .ve-label { display: none; }
+  .toc ol { list-style: none; padding: 0; display: flex; gap: var(--s-4); overflow-x: auto; scrollbar-width: none; mask-image: linear-gradient(90deg, #000 85%, transparent); }
+  .toc ol::-webkit-scrollbar { display: none; }
+  .toc li { max-width: none; }
+  .toc a { display: block; white-space: nowrap; font: 400 var(--t-small) var(--font-mono); color: var(--text-dim); text-decoration: none; padding: var(--s-1) 0; border-bottom: 2px solid transparent; }
+  .toc a .n { color: var(--text-dim); margin-right: var(--s-1); }
+  .toc a:hover { color: var(--text); }
+  .toc a[aria-current] { color: var(--text); border-color: var(--accent); }
+  .toc a[aria-current] .n { color: var(--accent); }
+  @media (min-width: 1000px) {
+    .page { display: grid; grid-template-columns: 12rem minmax(0, 1fr); column-gap: var(--s-7); }
+    .toc { align-self: start; margin: 0; padding: var(--s-7) 0 var(--s-5); border: 0; background: none; max-height: 100vh; overflow-y: auto; }
+    .toc > .ve-label { display: block; margin-bottom: var(--s-3); }
+    .toc ol { flex-direction: column; gap: 0; overflow: visible; mask-image: none; }
+    .toc a { white-space: normal; border-bottom: 0; border-left: 2px solid var(--border); padding: var(--s-1) 0 var(--s-1) var(--s-3); }
+    .toc a[aria-current] { border-left-color: var(--accent); }
+  }
+
+  /* chapter header */
+  .ch-head { display: grid; gap: var(--s-4); }
+  .ch-head h1 { margin-bottom: var(--s-2); }
+  .ch-head + figure { margin-top: calc(var(--s-6) - var(--s-8)); }
+
+  /* sections: a 12-column grid on one flush-left axis; prose spans 8 columns, figures all 12 */
+  .sec { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--s-5); row-gap: var(--s-5); scroll-margin-top: 4rem; }
+  .sec > * { grid-column: 1 / -1; min-width: 0; }
+  @media (min-width: 52rem) { .sec > :is(p, ul, ol, h3) { grid-column: 1 / span 8; } }
+  .sec > h3 { margin-top: var(--s-5); }
+  /* section opener (kicker head): section number + name above the takeaway h2 */
+  .sec-head { display: grid; gap: var(--s-3); border-top: 1px solid var(--border); padding-top: var(--s-5); margin-bottom: var(--s-2); }
+  .sec-num { font: 600 var(--t-label) var(--font-mono); color: var(--text-dim); letter-spacing: .04em; }
+  .sec-num .n { color: var(--accent); margin-right: var(--s-2); font-variant-numeric: tabular-nums; }
+
+  /* figure: the stage is a faint dot grid, so nodes read as objects placed on it */
+  figure { min-width: 0; }
+  .frame { background: radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--text) 13%, transparent) 1px, transparent 1.5px) 0 0 / 20px 20px, var(--bg); border: 1px solid var(--border); border-radius: var(--r-2); padding: var(--s-5); overflow-x: auto; }
+  .ve-svg { overflow: visible; }
+  figcaption { font-size: var(--t-small); color: var(--text-dim); margin-top: var(--s-3); }
+  .fig-n { font: 600 var(--t-label) var(--font-mono); color: var(--text); margin-right: var(--s-2); }
+  .callouts { list-style: none; padding: 0; margin-top: var(--s-3); display: grid; gap: var(--s-2); color: var(--text-dim); }
+  .co-n { display: inline-grid; place-items: center; width: 1.4rem; height: 1.4rem; margin-right: var(--s-2); border: 1.5px solid var(--accent); border-radius: 50%; font: 600 var(--t-label) var(--font-mono); color: var(--accent); }
+
+  /* diagram kit */
+  /* min-width keeps 14-unit labels >= 12px as rendered; narrow screens scroll the frame instead. Wider viewBoxes set min-width inline (viewBox width x 0.86). */
+  .ve-svg { width: 100%; min-width: 700px; height: auto; display: block; font: 600 15px var(--font-mono); }
+  .ve-n .sh { fill: url(#ve-node); stroke: var(--border-bright); stroke-width: 1.5; filter: drop-shadow(0 6px 14px var(--lift)); transition: stroke var(--fast) var(--ease), opacity var(--med) var(--ease); }
+  .ve-n .lid { fill: var(--node-top); }
+  .ve-n.is-key .sh { fill: color-mix(in srgb, var(--accent) 11%, var(--surface)); stroke: var(--accent); stroke-width: 2; filter: drop-shadow(0 0 16px color-mix(in srgb, var(--accent) var(--halo), transparent)); }
+  .ve-n text { fill: var(--text); text-anchor: middle; dominant-baseline: central; font-weight: 600; }
+  .ve-n .sub { fill: var(--text-dim); font: 400 14px var(--font-mono); }
+  .ve-n .is-off { stroke-dasharray: 5 4; fill: none; filter: none; }
+  .ve-e { fill: none; stroke: var(--text-dim); stroke-width: 1.75; marker-end: url(#ve-ah); }
+  .ve-e.no-ah { marker-end: none; }
+  .ve-e.is-hot { stroke: var(--accent); stroke-width: 2.75; filter: drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 55%, transparent)); }
+  .ve-e.is-async { stroke-dasharray: 6 5; }
+  .ve-el { fill: var(--text-dim); font: 400 14px var(--font-mono); text-anchor: middle; paint-order: stroke; stroke: var(--bg); stroke-width: 5px; stroke-linejoin: round; }
+  .ve-el.l { text-anchor: end; } .ve-el.r { text-anchor: start; }
+  .ve-tick { fill: var(--text-dim); font: 400 14px var(--font-mono); text-anchor: middle; }
+  .ve-tick.l { text-anchor: start; }
+  .ve-grid { stroke: var(--border); stroke-width: 1; }
+  .ve-zone rect { fill: none; stroke: var(--border-bright); stroke-width: 1; stroke-dasharray: 4 4; }
+  .ve-zone text { fill: var(--text-dim); font: 600 14px var(--font-mono); letter-spacing: .08em; }
+  .ve-bar { fill: var(--border-bright); }
+  .ve-bar.hot { fill: var(--accent); }
+  .ve-bar-v { fill: var(--text-dim); font: 400 14px var(--font-mono); dominant-baseline: central; }
+  .ve-dim path { fill: none; stroke-width: 1; } .ve-dim .ext { stroke: var(--border-bright); } .ve-dim .ln { stroke: var(--text-dim); }
+  .ve-dim text { fill: var(--text); font: 600 14px var(--font-mono); text-anchor: middle; }
+  .ve-dim .ln { marker-start: url(#ve-ah2); marker-end: url(#ve-ah2); } .ve-dim .ln.ticks { marker-start: none; marker-end: none; }
+  .ve-dim.is-key .ln { stroke: var(--accent); } .ve-dim.is-key text { fill: var(--accent); }
+  .ann { fill: none; stroke: var(--text-dim); stroke-width: 1; }
+  .ve-co circle { fill: var(--surface); stroke: var(--accent); stroke-width: 1.75; }
+  .ve-co text { fill: var(--accent); font: 600 14px var(--font-mono); text-anchor: middle; dominant-baseline: central; }
+  .ve-co.now circle { fill: var(--accent); } .ve-co.now text { fill: var(--surface); }
+
+  /* linked highlighting: same data-ref lights up together; unlit labels drop to --text-dim instead of fading */
+  .ve-ref { text-decoration: underline dotted var(--text-dim) 1px; text-underline-offset: .22em; border-radius: var(--r-1); transition: background var(--fast) var(--ease); }
+  .ve-ref.is-lit { background: var(--accent-dim); text-decoration-color: var(--accent); }
+  svg [data-ref] { transition: opacity var(--med) var(--ease); }
+  svg.has-lit path[data-ref]:not(.is-lit), svg.has-lit g[data-ref]:not(.is-lit) .sh, svg.has-lit rect[data-ref]:not(.is-lit) { opacity: .25; }
+  svg.has-lit g[data-ref]:not(.is-lit) text, svg.has-lit text[data-ref]:not(.is-lit) { fill: var(--text-dim); }
+  .ve-n.is-lit .sh { stroke: var(--accent); }
+  .ve-e.is-lit { stroke: var(--accent); }
+  .ve-el.is-lit { fill: var(--text); }
+  .case.is-lit, .ch-card.is-lit { border-color: var(--accent); }
+
+  /* stepper / scene player: future parts stay a faint outline, their labels hidden */
+  .ve-steps [data-s] { transition: opacity var(--slow) var(--ease), stroke-dashoffset var(--slow) var(--ease); }
+  .ve-steps [data-s]:not(.on) { opacity: .15; }
+  .ve-steps g[data-s]:not(.on) text, .ve-steps text[data-s]:not(.on) { opacity: 0; }
+  .ve-steps path[pathLength][data-s] { stroke-dasharray: 1; stroke-dashoffset: 1; }
+  .ve-steps path[pathLength][data-s].on { stroke-dashoffset: 0; }
+  .ve-steps .ve-n.now > .sh { stroke: var(--accent); }
+  .ve-steps:not(.is-full) .ve-e.now { stroke: var(--accent); stroke-width: 2.75; }
+  .ve-player { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: center; gap: var(--s-2) var(--s-3); margin-top: var(--s-4); }
+  .ve-cap { grid-column: 1 / -1; list-style: none; padding: 0; min-height: 3.2em; }
+  .ve-cap li::before { content: attr(data-n); font: 600 var(--t-label) var(--font-mono); color: var(--accent); margin-right: var(--s-3); font-variant-numeric: tabular-nums; }
+  .ve-player input { accent-color: var(--accent); min-width: 0; }
+  button { font: 400 var(--t-small) var(--font-mono); color: var(--text); background: var(--surface); border: 1px solid var(--border-bright); border-radius: var(--r-1); padding: var(--s-2) var(--s-3); cursor: pointer; transition: border-color var(--fast) var(--ease); }
+  button:hover, button:focus-visible { border-color: var(--accent); }
+
+  /* small multiples: one mini diagram per case; the changed part takes the case's status color */
+  .cases { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14.5rem), 1fr)); gap: var(--s-4); }
+  .case { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-2); padding: var(--s-4); display: grid; gap: var(--s-3); align-content: start; min-width: 0; transition: border-color var(--fast) var(--ease); }
+  .case[data-st=ok] { --st: var(--ok); } .case[data-st=warn] { --st: var(--warn); } .case[data-st=risk] { --st: var(--risk); }
+  .ve-mini { width: 100%; height: auto; font: 600 15px var(--font-mono); }
+  .ve-mini .ve-n .sh { filter: none; }
+  .ve-mini .is-st.ve-e { stroke: var(--st); stroke-width: 2.75; }
+  .ve-mini .is-st .sh { stroke: var(--st); stroke-width: 2; }
+  .ve-mini .ve-el { stroke: var(--surface); }
+
+  /* chips: shape and word, never color alone */
+  .chip { display: inline-flex; align-items: center; gap: var(--s-2); font: 600 var(--t-label) var(--font-mono); padding: 2px var(--s-2); border: 1px solid currentColor; border-radius: var(--r-1); white-space: nowrap; justify-self: start; }
+  .chip::before { content: ''; width: .5rem; height: .5rem; background: currentColor; }
+  .chip.ok { color: var(--ok); } .chip.ok::before { border-radius: 50%; }
+  .chip.warn { color: var(--warn); } .chip.warn::before { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+  .chip.risk { color: var(--risk); }
+  .chip.info { color: var(--info); } .chip.info::before { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+  .chip.plain { color: var(--text-dim); font-weight: 400; } .chip.plain::before { display: none; }
+
+  /* equation + symbols legend */
+  .eq { display: grid; gap: var(--s-4) var(--s-6); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-2); padding: var(--s-5); }
+  @media (min-width: 52rem) { .eq { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); align-items: center; } }
+  .eq-math { min-width: 0; overflow-x: auto; overflow-y: hidden; }
+  .eq-math .katex-display { margin: var(--s-2) 0; }
+  .symbols { display: grid; gap: var(--s-2); }
+  .symbols > div { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr); gap: var(--s-3); align-items: baseline; }
+  .symbols dd { margin: 0; color: var(--text-dim); }
+
+  /* code: scroll container, copy button, gruvbox syntax tokens; code sits on --bg so every token reaches 4.5:1 */
+  .code { border: 1px solid var(--border); border-radius: var(--r-2); background: var(--bg); min-width: 0; }
+  .code-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); padding: var(--s-2) var(--s-2) var(--s-2) var(--s-4); background: var(--surface); border-bottom: 1px solid var(--border); border-radius: var(--r-2) var(--r-2) 0 0; }
+  .code pre { margin: 0; padding: var(--s-4); overflow-x: auto; font: 400 var(--t-small)/1.6 var(--font-mono); font-variant-ligatures: none; tab-size: 4; }
+  .code pre code { font: inherit; }
+  .tk-k { color: var(--syn-k); } .tk-s { color: var(--syn-s); } .tk-n { color: var(--syn-n); } .tk-f { color: var(--syn-f); } .tk-c { color: var(--syn-c); }
+
+  /* callouts: common confusions and check yourself */
+  .callout { background: var(--surface); border-radius: var(--r-2); padding: var(--s-5); display: grid; gap: var(--s-4); }
+  .confusions ul { list-style: none; padding: 0; display: grid; gap: var(--s-4); }
+  .confusions p { padding-left: 1.5em; text-indent: -1.5em; }
+  .confusions .myth { color: var(--text-dim); }
+  .confusions .myth::before { content: '✕'; display: inline-block; width: 1.5em; text-indent: 0; color: var(--risk); font-weight: 600; }
+  .confusions .fact::before { content: '✓'; display: inline-block; width: 1.5em; text-indent: 0; color: var(--ok); font-weight: 600; }
+  .quiz ol { display: grid; gap: var(--s-4); padding-left: 1.75em; }
+  .quiz li::marker { font: 600 var(--t-label) var(--font-mono); color: var(--accent); }
+  .quiz details { margin-top: var(--s-2); }
+  .quiz summary { cursor: pointer; font: 600 var(--t-small) var(--font-mono); color: var(--accent); width: fit-content; }
+  .quiz details p { margin-top: var(--s-2); padding-left: var(--s-3); border-left: 1px solid var(--border-bright); }
+
+  /* resources: Read and Watch columns; "start here" = star shape + word + accent frame */
+  .resources { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: var(--s-5) var(--s-6); }
+  .res-col { min-width: 0; }
+  .res-col > h3 { font: 600 var(--t-label) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--text-dim); padding-bottom: var(--s-2); border-bottom: 1px solid var(--border-bright); }
+  .res-list { list-style: none; padding: 0; }
+  .res-item { padding: var(--s-3) 0; border-bottom: 1px solid var(--border); display: grid; gap: var(--s-1); }
+  .res-item.is-start { border: 1px solid var(--accent); border-radius: var(--r-2); padding: var(--s-3) var(--s-4); margin: var(--s-2) 0; }
+  .res-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-1) var(--s-3); }
+  .res-top a { font-weight: 600; overflow-wrap: anywhere; }
+  .res-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); font: 400 var(--t-label) var(--font-mono); color: var(--text-dim); }
+  .res-item p { color: var(--text-dim); }
+  .start-here { display: inline-flex; align-items: center; gap: var(--s-1); font: 600 var(--t-label) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); white-space: nowrap; }
+  .start-here::before { content: ''; width: .8rem; height: .8rem; background: currentColor; clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+
+  /* chapter project */
+  .project { border: 1px solid var(--border-bright); border-radius: var(--r-2); padding: var(--s-5); display: grid; gap: var(--s-4); }
+  .project h3 { font-size: var(--t-lead); }
+  .project ol, .project ul { display: grid; gap: var(--s-2); }
+  .project .done { list-style: none; padding: 0; }
+  .project .done li::before { content: '□'; color: var(--accent); margin-right: var(--s-2); }
+
+  /* index only: chapter cards and how-to steps */
+  .ch-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14.5rem), 1fr)); gap: var(--s-4); }
+  .ch-card { display: grid; gap: var(--s-3); align-content: start; min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-2); padding: var(--s-4); color: var(--text); text-decoration: none; transition: border-color var(--fast) var(--ease); }
+  .ch-card:hover, .ch-card:focus-visible { border-color: var(--accent); color: var(--text); }
+  .ch-card h3 { font-size: var(--t-lead); }
+  .ch-card p, .ch-card ol { color: var(--text-dim); }
+  .ch-card .go { font: 600 var(--t-label) var(--font-mono); color: var(--accent); }
+  .pips { display: flex; flex-wrap: wrap; gap: var(--s-1); }
+  .pips i { width: .55rem; height: .55rem; background: var(--text-dim); }
+  .howto { list-style: none; padding: 0; counter-reset: step; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); gap: var(--s-5) var(--s-4); }
+  .howto li { counter-increment: step; border-top: 1px solid var(--border-bright); padding-top: var(--s-3); }
+  .howto li::before { content: counter(step, decimal-leading-zero); display: block; font: 600 var(--t-label) var(--font-mono); color: var(--accent); margin-bottom: var(--s-2); }
+
+  /* entrance: blocks rise in once (JS adds .js-motion only when motion is allowed) */
+  .js-motion :is(.ch-head, .sec > *) { transition: opacity var(--slow) var(--ease), transform var(--slow) var(--ease); }
+  .js-motion :is(.ch-head, .sec > *):not(.in) { opacity: 0; transform: translateY(1rem); }
+  .topbar-in .pager { margin-left: auto; }
+  .icon-btn { background: none; border: 0; padding: var(--s-1); color: var(--text-dim); display: inline-flex; line-height: 0; }
+  .icon-btn:hover { color: var(--text); }
+  .icon-btn svg { width: 1.1rem; height: 1.1rem; }
+  .icon-btn .i-moon, .icon-btn[data-mode="light"] .i-sun { display: none; }
+  .icon-btn[data-mode="light"] .i-moon { display: block; }
+  .toc-head { display: none; }
+  .toc-btn { background: none; border: 0; padding: var(--s-1); color: var(--text-dim); display: inline-flex; line-height: 0; }
+  .toc-btn:hover { color: var(--text); }
+  .toc-btn svg { width: 1rem; height: 1rem; transition: transform var(--fast) var(--ease); }
+  @media (min-width: 1000px) {
+    .toc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--s-3); }
+    .toc-head .ve-label { margin: 0; }
+    html.toc-hidden .page { grid-template-columns: 2rem minmax(0, 1fr); }
+    html.toc-hidden .toc-head .ve-label, html.toc-hidden .toc ol { display: none; }
+    html.toc-hidden .toc-btn svg { transform: rotate(180deg); }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  @media print {
+    :root { --bg: #fff; --surface: #fff; --border: #ebdbb2; --border-bright: #6b5f56; --text: #3c3836; --text-dim: #6b5f56; --accent: #ad3903; --ok: #67630c; --warn: #7a5200; --risk: #9d0006; --info: #076678;
+      --syn-k: #9d0006; --syn-s: #67630c; --syn-n: #8f3f71; --syn-f: #076678; --syn-c: #6b5f56; --node-top: #fff; }
+    .toc, .toc-btn, .icon-btn, .pager, .copy, .ve-player button, .ve-player input { display: none; }
+    .page { display: block; }
+    .frame { overflow: visible; background: #fff; } .ve-svg { min-width: 0 !important; }
+    .frame, .case, .ch-card, .callout, .project, .eq, .code { break-inside: avoid; } h2 { break-after: avoid; }
+    svg * { filter: none !important; }
+    .js-motion :is(.ch-head, .sec > *) { opacity: 1 !important; transform: none !important; }
+    .ve-steps [data-s]:not(.on), .ve-steps g[data-s]:not(.on) text, .ve-steps text[data-s]:not(.on) { opacity: 1; }
+    .ve-steps path[pathLength][data-s] { stroke-dashoffset: 0; }
+  }
+</style>
+</head>
+<body>
+<!-- Shared defs: one arrowhead (context-stroke follows each edge's color), the node fill, and the section pip. -->
+<svg class="ve-defs" width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <marker id="ve-ah" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker>
+    <marker id="ve-ah2" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker>
+    <linearGradient id="ve-node" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--node-top)"/><stop offset="1" style="stop-color:var(--surface)"/></linearGradient>
+    <pattern id="ve-pip" width="13" height="9" patternUnits="userSpaceOnUse"><rect width="9" height="9" style="fill:var(--text-dim)"/></pattern>
+  </defs>
+</svg>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <nav aria-label="Breadcrumb">
+      <ol class="crumbs">
+        <li><a href="index.html">Learn AI Fundamentals</a></li>
+        <li>LLM Advanced</li>
+        <li aria-current="page">Optimizers</li>
+      </ol>
+    </nav>
+    <nav class="pager" aria-label="Chapters">
+      <a href="07-mixture-of-experts.html" rel="prev">← Previous: Mixture of experts</a>
+      <a href="09-reinforcement-learning.html" rel="next">Next: Reinforcement learning →</a>
+    </nav>
+    <button type="button" class="icon-btn" id="theme-toggle" aria-label="Switch to light mode"><svg class="i-sun" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1"/></svg><svg class="i-moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 9.6A5.8 5.8 0 0 1 6.4 2.5a5.8 5.8 0 1 0 7.1 7.1z"/></svg></button>
+  </div>
+</header>
+
+<div class="page">
+  <nav class="toc" aria-label="Sections"><div class="toc-head"><p class="ve-label caps">On this page</p><button type="button" class="toc-btn" id="toc-toggle" aria-controls="toc-list" aria-expanded="true" aria-label="Hide sidebar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg></button></div><ol id="toc-list"><li><a href="#s01"><span class="n">01</span>Setting</a></li><li><a href="#s02"><span class="n">02</span>SGD and momentum</a></li><li><a href="#s03"><span class="n">03</span>Adaptive</a></li><li><a href="#s04"><span class="n">04</span>Adam</a></li><li><a href="#s05"><span class="n">05</span>AdamW</a></li><li><a href="#s06"><span class="n">06</span>Stability</a></li><li><a href="#s07"><span class="n">07</span>Code: AdamW</a></li><li><a href="#s08"><span class="n">08</span>Memory</a></li><li><a href="#s09"><span class="n">09</span>Beyond Adam</a></li><li><a href="#s10"><span class="n">10</span>Muon</a></li><li><a href="#s11"><span class="n">11</span>Code: Muon</a></li><li><a href="#s12"><span class="n">12</span>Schedules</a></li><li><a href="#s13"><span class="n">13</span>Comparing</a></li><li><a href="#s14"><span class="n">14</span>Wrap-up</a></li></ol></nav>
+
+  <main>
+    <header class="ch-head">
+      <p class="eyebrow">Chapter 5 · LLM Advanced</p>
+      <h1>Optimizers: from SGD to Adam to <span class="num">Muon</span></h1>
+      <p class="lead">Every optimizer turns noisy gradients into a step. Adam adds <b>memory and a per-coordinate scale</b>; Muon equalizes the singular values of the whole update.</p>
+      <p class="meta">13 sections · needs: AdamW with warmup and cosine, pretraining objective, scaling laws, ZeRO/FSDP, transformer blocks</p>
+    </header>
+
+    <figure><div class="frame"><svg class="ve-svg" viewBox="0 0 800 240" role="img" aria-label="Lineage of optimizers. SGD gains momentum, which smooths the gradient. AdaGrad becomes RMSProp by forgetting old squared gradients. Momentum and RMSProp combine into Adam. Adam becomes AdamW by decoupling weight decay. For 2D weights, Muon replaces the per-coordinate scale with a whole-matrix update."><path class="ve-e" d="M140 62H220"/><text class="ve-el" x="180" y="50">smooths</text><path class="ve-e" d="M360 62H440"/><text class="ve-el" x="400" y="50">scales</text><path class="ve-e" d="M580 62H660"/><text class="ve-el" x="620" y="50">decays</text><path class="ve-e" d="M140 182H220"/><text class="ve-el" x="180" y="170">forgets</text><path class="ve-e is-hot" d="M360 182H510V94"/><text class="ve-el" x="435" y="170">divides by √v</text><path class="ve-e is-async" d="M730 94V150"/><text class="ve-el l" x="722" y="128">2D weights</text><g class="ve-n" transform="translate(0 30)"><rect class="sh" width="140" height="64" rx="6"/><text x="70" y="23.7">SGD</text><text class="sub" x="70" y="46.1">u = g</text></g><g class="ve-n" transform="translate(220 30)"><rect class="sh" width="140" height="64" rx="6"/><text x="70" y="23.7">Momentum</text><text class="sub" x="70" y="46.1">EMA of g</text></g><g class="ve-n is-key" transform="translate(440 30)"><rect class="sh" width="140" height="64" rx="6"/><text x="70" y="23.7">Adam</text><text class="sub" x="70" y="46.1">m over √v</text></g><g class="ve-n is-key" transform="translate(660 30)"><rect class="sh" width="140" height="64" rx="6"/><text x="70" y="23.7">AdamW</text><text class="sub" x="70" y="46.1">decoupled decay</text></g><g class="ve-n" transform="translate(0 150)"><rect class="sh" width="140" height="64" rx="6"/><text x="70" y="23.7">AdaGrad</text><text class="sub" x="70" y="46.1">sum of g²</text></g><g class="ve-n" transform="translate(220 150)"><rect class="sh" width="140" height="64" rx="6"/><text x="70" y="23.7">RMSProp</text><text class="sub" x="70" y="46.1">EMA of g²</text></g><g class="ve-n" transform="translate(660 150)"><rect class="sh" width="140" height="64" rx="6"/><text x="70" y="23.7">Muon</text><text class="sub" x="70" y="46.1">whole matrix</text></g></svg></div><figcaption><span class="fig-n">Fig. 1</span>Each arrow is one fix. Adam combines the two lines; AdamW fixes its decay; Muon changes what the update is built from.</figcaption></figure>
+
+    <section class="sec" id="s01" aria-labelledby="s01-h"><div class="sec-head"><p class="sec-num"><span class="n">01</span>The setting</p><h2 id="s01-h">Every optimizer answers: which direction, and how far?</h2></div><p>We minimize a loss over parameters using noisy minibatch gradients. The optimizer is the rule that turns past gradients into the next step.</p><figure><div class="eq"><div class="eq-math">$$\theta_t = \theta_{t-1} - \eta_t \, u_t(g_1, \dots, g_t)$$</div><dl class="symbols"><div><dt>\(\theta_t\)</dt><dd>parameters after step \(t\)</dd></div><div><dt>\(g_t\)</dt><dd>minibatch gradient at \(\theta_{t-1}\)</dd></div><div><dt>\(\eta_t\)</dt><dd>learning rate (the schedule)</dd></div><div><dt>\(u_t\)</dt><dd>update direction from current and past gradients</dd></div></dl></div><figcaption><span class="fig-n">Eq. 1</span>The one rule behind every optimizer in this chapter; only \(u_t\) changes.</figcaption></figure><figure><div class="cases"><div class="case" data-st="risk"><span class="chip risk">Ill-conditioning</span><h3>Steep one way, flat the other</h3><svg class="ve-mini" viewBox="0 0 240 120" role="img" aria-label="Elliptical loss contours, with a path that zigzags across the narrow direction while advancing slowly along the long one."><ellipse class="ann" cx="120" cy="62" rx="105" ry="34" fill="none"/><ellipse class="ann" cx="120" cy="62" rx="60" ry="19" fill="none"/><path class="ve-e is-st" d="M30 20L48 100L66 26L84 94L102 36L120 80L138 56"/><text class="ve-el" x="190" y="112">zigzags</text></svg><p>A step small enough for the steep direction crawls along the flat one.</p></div><div class="case" data-st="warn"><span class="chip warn">Noise</span><h3>A minibatch is only an estimate</h3><svg class="ve-mini" viewBox="0 0 240 120" role="img" aria-label="From one point, the true gradient arrow and three scattered minibatch gradient arrows around it."><g class="ve-n" transform="translate(0 78)"><rect class="sh" width="60" height="36" rx="6"/><text x="30" y="18">θ</text></g><path class="ve-e is-st" d="M60 96L210 22"/><text class="ve-el" x="150" y="44">true g</text><path class="ve-e" d="M60 100L205 70"/><path class="ve-e" d="M60 96L170 12"/><path class="ve-e" d="M60 102L225 52"/><text class="ve-el" x="160" y="112">minibatch g</text></svg><p>Following g blindly spends steps on noise.</p></div></div><figcaption><span class="fig-n">Fig. 2</span>Two reasons plain gradient descent struggles. Every optimizer here is a different answer to both.</figcaption></figure></section>
+    <section class="sec" id="s02" aria-labelledby="s02-h"><div class="sec-head"><p class="sec-num"><span class="n">02</span>SGD and momentum</p><h2 id="s02-h">Momentum averages away the oscillation and keeps the drift</h2></div><p><b>SGD</b> uses <code>u = g</code>: memoryless, one learning rate for everything. <b>Momentum</b> adds a velocity so consistent directions accumulate.</p><figure><div class="frame"><svg class="ve-svg" viewBox="0 0 800 240" role="img" aria-label="Left: SGD zigzags across a narrow valley and advances slowly. Right: momentum cancels the sideways oscillation and moves smoothly along the valley floor."><ellipse class="ann" cx="190" cy="135" rx="170" ry="52" fill="none"/><ellipse class="ann" cx="190" cy="135" rx="102" ry="31.2" fill="none"/><ellipse class="ann" cx="190" cy="135" rx="51" ry="15.6" fill="none"/><ellipse class="ann" cx="590" cy="135" rx="170" ry="52" fill="none"/><ellipse class="ann" cx="590" cy="135" rx="102" ry="31.2" fill="none"/><ellipse class="ann" cx="590" cy="135" rx="51" ry="15.6" fill="none"/><text class="ve-tick" x="190" y="18">SGD: crosses the valley</text><text class="ve-tick" x="590" y="18">Momentum: drifts along it</text><path class="ve-e" d="M30 92L58 182L86 96L114 172L142 108L166 160L190 135"/><text class="ve-el" x="60" y="214">oscillates</text><path class="ve-e is-hot" d="M430 100C500 108 540 122 590 135"/><text class="ve-el" x="590" y="222">accumulates the drift</text></svg></div><figcaption><span class="fig-n">Fig. 3</span>Across the valley the gradient flips sign, so averaging cancels it. Along the valley it keeps its sign, so averaging builds speed up to 1/(1-μ) = 10x.</figcaption></figure><figure><div class="eq"><div class="eq-math">$$m_t = \mu \, m_{t-1} + g_t, \qquad \theta_t = \theta_{t-1} - \eta \, m_t$$</div><dl class="symbols"><div><dt>\(m_t\)</dt><dd>momentum buffer (velocity)</dd></div><div><dt>\(\mu\)</dt><dd>momentum coefficient, typically 0.9</dd></div><div><dt>\(\kappa\)</dt><dd>condition number; momentum improves the rate from \(\kappa\) to \(\sqrt{\kappa}\) on a quadratic</dd></div></dl></div><figcaption><span class="fig-n">Eq. 2</span>Heavy-ball momentum.</figcaption></figure><p><b>Nesterov</b> evaluates the gradient at the look-ahead point \(\theta - \eta\mu m\). In the common PyTorch form the update is \(g_t + \mu m_t\) instead of \(m_t\). Muon uses it.</p></section>
+    <section class="sec" id="s03" aria-labelledby="s03-h"><div class="sec-head"><p class="sec-num"><span class="n">03</span>Adaptive methods</p><h2 id="s03-h">Dividing by a running RMS gives every coordinate its own step</h2></div><p>Transformer gradients differ by orders of magnitude: rare-token embedding rows, LayerNorm gains, attention projections. Adaptive methods rescale each coordinate. Large history means a small step; rare features get big ones.</p><figure><div class="frame"><svg class="ve-svg" viewBox="0 0 800 256" role="img" aria-label="Effective step multiplier for a constant gradient. RMSProp stays at 1. AdaGrad decays as one over the square root of t and approaches zero by step 1000."><path class="ve-grid" d="M80 220H760"/><path class="ve-e no-ah" d="M80.7 40L82 116.1L84.1 146.5L86.8 163.1L93.6 179.8L107.2 191.5L127.6 198.5L148 202L182 205.3L216 207.3L284 209.6L352 211L454 212.3L556 213.2L658 213.8L760 214.3"/><path class="ve-e no-ah is-hot" d="M80 40L760 40"/><text class="ve-tick l" x="0" y="24">step multiplier</text><text class="ve-tick" x="80" y="244">0</text><text class="ve-tick" x="420" y="244">500</text><text class="ve-tick" x="760" y="244">1000 steps</text><text class="ve-el" x="560" y="30">RMSProp: stays at 1</text><text class="ve-el" x="330" y="186">AdaGrad: 1/√t, heads to 0</text></svg></div><figcaption><span class="fig-n">Fig. 4</span>Same constant gradient, two denominators. A sum only grows, so AdaGrad's step shrinks forever; an EMA forgets, so RMSProp's does not.</figcaption></figure><figure><div class="eq"><div class="eq-math">$$s_t = s_{t-1} + g_t^2, \qquad \theta_t = \theta_{t-1} - \eta \, \frac{g_t}{\sqrt{s_t} + \epsilon}$$
+$$v_t = \beta \, v_{t-1} + (1 - \beta) \, g_t^2, \qquad \theta_t = \theta_{t-1} - \eta \, \frac{g_t}{\sqrt{v_t} + \epsilon}$$</div><dl class="symbols"><div><dt>\(s_t\)</dt><dd>AdaGrad: running sum of squared gradients, per coordinate</dd></div><div><dt>\(v_t\)</dt><dd>RMSProp: EMA estimate of \(\mathbb{E}[g^2]\)</dd></div><div><dt>\(\beta\)</dt><dd>decay, e.g. 0.99</dd></div></dl></div><figcaption><span class="fig-n">Eq. 3</span>AdaGrad on top, RMSProp below. All operations are elementwise.</figcaption></figure><p>RMSProp (Hinton, 2012) is a crude diagonal preconditioner: it uses gradient magnitude as a proxy for curvature.</p></section>
+    <section class="sec" id="s04" aria-labelledby="s04-h"><div class="sec-head"><p class="sec-num"><span class="n">04</span>Adam</p><h2 id="s04-h">Adam is momentum over RMSProp, with bias correction</h2></div><p>Adam (Kingma and Ba, 2014) = momentum in the numerator + RMSProp in the denominator + bias correction.</p><figure class="ve-steps"><div class="frame"><svg class="ve-svg" viewBox="0 0 800 266" role="img" aria-label="Adam pipeline. The gradient feeds two averages: m, the EMA of g, and v, the EMA of g squared. Each is divided by one minus beta to the t to correct its start-up bias. The parameter step is the corrected m over the root of the corrected v plus epsilon."><path class="ve-e" data-s="2" pathLength="1" d="M110 140H150V60H190"/><text class="ve-el" data-s="2" x="150" y="50">avg</text><path class="ve-e" data-s="3" pathLength="1" d="M110 140H150V220H190"/><text class="ve-el" data-s="3" x="150" y="210">avg g²</text><path class="ve-e" data-s="4" pathLength="1" d="M330 60H420"/><text class="ve-el" data-s="4" x="375" y="48">unbias</text><path class="ve-e" data-s="4" pathLength="1" d="M330 220H420"/><text class="ve-el" data-s="4" x="375" y="208">unbias</text><path class="ve-e is-hot" data-s="5" pathLength="1" d="M540 60H595V125H650"/><text class="ve-el" data-s="5" x="596" y="48">numerator</text><path class="ve-e is-hot" data-s="5" pathLength="1" d="M540 220H595V155H650"/><text class="ve-el" data-s="5" x="596" y="244">denominator</text><g class="ve-n" data-s="1" transform="translate(0 110)"><rect class="sh" width="110" height="60" rx="6"/><text x="55" y="22.2">g_t</text><text class="sub" x="55" y="43.2">gradient</text></g><g class="ve-n" data-s="2" transform="translate(190 30)"><rect class="sh" width="140" height="60" rx="6"/><text x="70" y="22.2">m_t</text><text class="sub" x="70" y="43.2">EMA of g</text></g><g class="ve-n" data-s="3" transform="translate(190 190)"><rect class="sh" width="140" height="60" rx="6"/><text x="70" y="22.2">v_t</text><text class="sub" x="70" y="43.2">EMA of g²</text></g><g class="ve-n" data-s="4" transform="translate(420 30)"><rect class="sh" width="120" height="60" rx="6"/><text x="60" y="22.2">m̂_t</text><text class="sub" x="60" y="43.2">corrected</text></g><g class="ve-n" data-s="4" transform="translate(420 190)"><rect class="sh" width="120" height="60" rx="6"/><text x="60" y="22.2">v̂_t</text><text class="sub" x="60" y="43.2">corrected</text></g><g class="ve-n is-key" data-s="5" transform="translate(650 110)"><rect class="sh" width="150" height="60" rx="6"/><text x="75" y="22.2">θ_t</text><text class="sub" x="75" y="43.2">m̂ / (√v̂ + ε)</text></g></svg></div><div class="ve-player"><ol class="ve-cap"><li data-n="1/5">Each step starts from the minibatch gradient \(g_t\).</li><li data-n="2/5">\(m_t\): EMA of gradients, \(\beta_1 = 0.9\). This is the momentum part.</li><li data-n="3/5">\(v_t\): EMA of squared gradients, \(\beta_2 = 0.999\) by default and 0.95 for most LLMs. This is the RMSProp part.</li><li data-n="4/5">Both start at 0, so early values are too small. Divide each by \(1-\beta^t\).</li><li data-n="5/5">Step by \(\eta \, \hat m_t / (\sqrt{\hat v_t} + \epsilon)\). With a steady gradient every coordinate moves by about \(\eta\).</li></ol><button data-go="-1" aria-label="Previous step">←</button><button data-play>Play</button><input type="range" min="0" value="0" aria-label="Step"><button data-go="1" aria-label="Next step">→</button></div><figcaption><span class="fig-n">Fig. 5</span>Momentum on top, RMSProp below, corrected, then divided. Step through it.</figcaption></figure><figure><div class="eq"><div class="eq-math">$$\begin{aligned}
+m_t &= \beta_1 m_{t-1} + (1 - \beta_1) g_t \\
+v_t &= \beta_2 v_{t-1} + (1 - \beta_2) g_t^2 \\
+\hat m_t &= \frac{m_t}{1 - \beta_1^t}, \qquad \hat v_t = \frac{v_t}{1 - \beta_2^t} \\
+\theta_t &= \theta_{t-1} - \eta \, \frac{\hat m_t}{\sqrt{\hat v_t} + \epsilon}
+\end{aligned}$$</div><dl class="symbols"><div><dt>\(m_t, v_t\)</dt><dd>first and second moment EMAs, initialized to 0</dd></div><div><dt>\(\beta_1\)</dt><dd>first-moment decay, typically 0.9</dd></div><div><dt>\(\beta_2\)</dt><dd>second-moment decay: 0.999 default, 0.95 for most LLMs</dd></div><div><dt>\(\beta^t\)</dt><dd>\(\beta\) to the power \(t\), the step count</dd></div><div><dt>\(\epsilon\)</dt><dd>numerical safety, default \(10^{-8}\)</dd></div></dl></div><figcaption><span class="fig-n">Eq. 4</span>Adam in full.</figcaption></figure><figure><div class="frame"><svg class="ve-svg" viewBox="0 0 800 200" role="img" aria-label="Share of the true second moment that v holds at step t when beta2 is 0.999: 0.001 at t=1, 0.010 at t=10, 0.095 at t=100, 0.632 at t=1000."><text class="ve-tick l" x="0" y="36">t = 1</text><rect class="ve-bar" x="110" y="18" width="440" height="26" rx="2"/><rect class="ve-bar hot" x="110" y="18" width="2" height="26" rx="2"/><text class="ve-bar-v" x="560" y="31">0.001  (1000x too small)</text><text class="ve-tick l" x="0" y="80">t = 10</text><rect class="ve-bar" x="110" y="62" width="440" height="26" rx="2"/><rect class="ve-bar hot" x="110" y="62" width="4.4" height="26" rx="2"/><text class="ve-bar-v" x="560" y="75">0.010</text><text class="ve-tick l" x="0" y="124">t = 100</text><rect class="ve-bar" x="110" y="106" width="440" height="26" rx="2"/><rect class="ve-bar hot" x="110" y="106" width="41.9" height="26" rx="2"/><text class="ve-bar-v" x="560" y="119">0.095</text><text class="ve-tick l" x="0" y="168">t = 1000</text><rect class="ve-bar" x="110" y="150" width="440" height="26" rx="2"/><rect class="ve-bar hot" x="110" y="150" width="278.2" height="26" rx="2"/><text class="ve-bar-v" x="560" y="163">0.632</text></svg></div><figcaption><span class="fig-n">Fig. 6</span>With v starting at 0, early estimates are tiny. Without correction the denominator is tiny and the first updates are enormous.</figcaption></figure><figure><div class="eq"><div class="eq-math">$$v_t = (1 - \beta_2) \sum_{i=1}^{t} \beta_2^{t-i} g_i^2$$
+$$\mathbb{E}[v_t] = \mathbb{E}[g^2] \, (1 - \beta_2) \sum_{i=1}^{t} \beta_2^{t-i} = \mathbb{E}[g^2] \, (1 - \beta_2^t)$$</div><dl class="symbols"><div><dt>\(\mathbb{E}[g^2]\)</dt><dd>true second moment, assumed stationary</dd></div><div><dt>geometric</dt><dd>\(\sum_{j=0}^{t-1} \beta^j = (1-\beta^t)/(1-\beta)\)</dd></div></dl></div><figcaption><span class="fig-n">Eq. 5</span>Why the factor \(1-\beta_2^t\) appears: unroll \(v_t\), take expectations, sum the geometric series. The same argument covers \(m_t\).</figcaption></figure><p>Adam's step is <b>scale-invariant</b>: multiply the loss by 1000 and the updates do not change, which is why one learning-rate range (about \(10^{-4}\) to \(10^{-3}\)) works across very different models. When gradients are noisy, \(|\hat m| \ll \sqrt{\hat v}\) and the step shrinks automatically: a per-coordinate signal-to-noise ratio.</p></section>
+    <section class="sec" id="s05" aria-labelledby="s05-h"><div class="sec-head"><p class="sec-num"><span class="n">05</span>AdamW</p><h2 id="s05-h">Decay must bypass the normalization</h2></div><p>With SGD, an L2 penalty and direct decay are identical: \(\theta - \eta(g + \lambda\theta) = (1-\eta\lambda)\theta - \eta g\). With Adam they are not, and <code>torch.optim.Adam(weight_decay=...)</code> does the coupled version.</p><figure><div class="frame"><svg class="ve-svg" viewBox="0 0 800 300" role="img" aria-label="Top lane, Adam with L2: the decay term is added to the gradient, passes through the moment estimates and is divided by the root of v, so parameters with large v decay less. Bottom lane, AdamW: the decay bypasses the moments and is applied directly to the weights."><text class="ve-tick l" x="0" y="22">ADAM + L2: the decay goes through m and v</text><text class="ve-tick l" x="0" y="182">ADAMW: the decay skips them</text><g class="ve-n" transform="translate(0 40)"><rect class="sh" width="90" height="56" rx="6"/><text x="45" y="28">θ</text></g><g class="ve-n is-key" transform="translate(172 40)"><rect class="sh" width="90" height="56" rx="6"/><text x="45" y="28">g + λθ</text></g><g class="ve-n" transform="translate(345 40)"><rect class="sh" width="90" height="56" rx="6"/><text x="45" y="28">m, v</text></g><g class="ve-n" transform="translate(517 40)"><rect class="sh" width="90" height="56" rx="6"/><text x="45" y="28">÷ √v̂</text></g><g class="ve-n" transform="translate(710 40)"><rect class="sh" width="90" height="56" rx="6"/><text x="45" y="28">θ′</text></g><path class="ve-e" d="M90 68H172"/><text class="ve-el" x="131" y="56">adds λθ</text><path class="ve-e" d="M262 68H345"/><text class="ve-el" x="303.5" y="56">feeds</text><path class="ve-e" d="M435 68H517"/><text class="ve-el" x="476" y="56">scales</text><path class="ve-e" d="M607 68H710"/><text class="ve-el" x="658.5" y="56">updates</text><g class="ve-n is-key" transform="translate(0 200)"><rect class="sh" width="90" height="56" rx="6"/><text x="45" y="28">θ</text></g><g class="ve-n" transform="translate(172 200)"><rect class="sh" width="90" height="56" rx="6"/><text x="45" y="28">g</text></g><g class="ve-n" transform="translate(345 200)"><rect class="sh" width="90" height="56" rx="6"/><text x="45" y="28">m, v</text></g><g class="ve-n" transform="translate(517 200)"><rect class="sh" width="90" height="56" rx="6"/><text x="45" y="28">÷ √v̂</text></g><g class="ve-n" transform="translate(710 200)"><rect class="sh" width="90" height="56" rx="6"/><text x="45" y="28">θ′</text></g><path class="ve-e" d="M90 228H172"/><text class="ve-el" x="131" y="216">reads</text><path class="ve-e" d="M262 228H345"/><text class="ve-el" x="303.5" y="216">feeds</text><path class="ve-e" d="M435 228H517"/><text class="ve-el" x="476" y="216">scales</text><path class="ve-e" d="M607 228H710"/><text class="ve-el" x="658.5" y="216">updates</text><text class="ve-tick" x="562" y="118">large v̂ divides the decay down</text><path class="ve-e is-hot" d="M45 256V288H755V258"/><text class="ve-el" x="400" y="280">decay −ηλθ, applied directly</text></svg></div><figcaption><span class="fig-n">Fig. 7</span>Where the λθ term enters decides who gets decayed. Through Adam's denominator, the decay depends on gradient history.</figcaption></figure><figure><div class="eq"><div class="eq-math">$$\theta_t = \theta_{t-1} - \eta_t \left( \frac{\hat m_t}{\sqrt{\hat v_t} + \epsilon} + \lambda \, \theta_{t-1} \right)$$</div><dl class="symbols"><div><dt>\(\lambda\)</dt><dd>weight decay coefficient; 0.1 is typical for LLM pretraining</dd></div><div><dt>\(\eta_t\)</dt><dd>multiplies both terms in PyTorch, so decay follows the schedule</dd></div></dl></div><figcaption><span class="fig-n">Eq. 6</span>AdamW (Loshchilov and Hutter, 2017).</figcaption></figure><ul><li>Every parameter decays at the same relative rate \(\eta\lambda\), so \(\lambda\) is a clean knob, less entangled with \(\eta\).</li><li>With Adam's roughly constant update size, decay creates an equilibrium weight norm, which keeps the effective learning rate of normalized layers in check.</li><li>Do not decay biases and norm gains, and often not embeddings. Use parameter groups.</li></ul></section>
+    <section class="sec" id="s06" aria-labelledby="s06-h"><div class="sec-head"><p class="sec-num"><span class="n">06</span>Stability knobs</p><h2 id="s06-h">Three knobs decide whether Adam spikes</h2></div><figure><div class="cases"><div class="case" data-st="warn"><span class="chip warn">ε too large</span><h3>Adam turns into SGD</h3><svg class="ve-mini" viewBox="0 0 240 120" role="img" aria-label="Bars: root of v-hat is smaller than epsilon, so the update is about m-hat over epsilon."><rect class="ve-bar" x="50" y="56" width="50" height="12" rx="2"/><rect class="ve-bar hot" x="150" y="32" width="50" height="36" rx="2"/><path class="ve-grid" d="M20 68H220"/><text class="ve-tick" x="75" y="92">√v̂</text><text class="ve-tick" x="175" y="92">ε</text><text class="ve-el" x="120" y="114">update ≈ m̂/ε</text></svg><p>When √v̂ ≪ ε the update is m̂/ε: momentum SGD with rate η/ε.</p></div><div class="case" data-st="risk"><span class="chip risk">β₂ = 0.999</span><h3>Slow to notice a spike</h3><svg class="ve-mini" viewBox="0 0 240 120" role="img" aria-label="Averaging window: 0.999 averages about 1000 steps, 0.95 about 20."><rect class="ve-bar" x="20" y="22" width="200" height="20" rx="2"/><rect class="ve-bar hot" x="20" y="62" width="4" height="20" rx="2"/><text class="ve-tick" x="120" y="56">0.999: ~1000 steps</text><text class="ve-tick" x="120" y="104">0.95: ~20 steps</text></svg><p>A sudden gradient jump overshoots for hundreds of steps.</p></div><div class="case" data-st="ok"><span class="chip ok">Clipping</span><h3>One bad batch cannot poison m, v</h3><svg class="ve-mini" viewBox="0 0 240 120" role="img" aria-label="A long gradient vector is rescaled to a circle of radius c."><circle class="ann" cx="90" cy="52" r="34" fill="none"/><path class="ve-e no-ah" d="M90 52L172 10" stroke-dasharray="4 4"/><path class="ve-e is-st" d="M90 52L120 37"/><text class="ve-el" x="120" y="112">g × min(1, c/‖g‖)</text></svg><p>Rescale g if its global norm exceeds c (1.0 is standard).</p></div></div><figcaption><span class="fig-n">Fig. 8</span>The three stability knobs. Defaults of \(10^{-8}\) for \(\epsilon\) suit most LLMs; some large-scale recipes go much smaller.</figcaption></figure><figure><div class="frame"><svg class="ve-svg" viewBox="0 0 800 266" role="img" aria-label="After the gradient grows 10 times at step 0, the update relative to a normal step stays above 3 times at step 100 for beta2 0.999, while for beta2 0.95 it returns to 1 times by about step 40."><path class="ve-grid" d="M80 230H760"/><path class="ve-grid" d="M80 210H760"/><path class="ve-e no-ah" d="M80 30L114 66.4L148 88.1L182 102.9L216 113.8L250 122.3L284 129.1L318 134.7L352 139.5L386 143.6L420 147.2L454 150.3L488 153.1L522 155.6L556 157.9L590 160L624 161.9L658 163.6L692 165.2L726 166.7L760 168.1"/><path class="ve-e no-ah is-hot" d="M80 30L114 188.7L148 198.7L182 202.8L216 205.1L250 206.5L284 207.5L318 208.1L352 208.6L386 208.9L420 209.2L454 209.4L488 209.5L522 209.6L556 209.7L590 209.8L624 209.8L658 209.9L692 209.9L726 209.9L760 209.9"/><text class="ve-tick l" x="200" y="24">update size vs. a normal step</text><text class="ve-tick" x="70" y="215">1x</text><text class="ve-tick" x="80" y="254">0</text><text class="ve-tick" x="420" y="254">50</text><text class="ve-tick" x="760" y="254">100 steps</text><text class="ve-el" x="520" y="120">β₂ = 0.999: still 3x too big at step 100</text><text class="ve-el" x="420" y="200">β₂ = 0.95: back to 1x by step 40</text></svg></div><figcaption><span class="fig-n">Fig. 9</span>Gradient jumps 10x at step 0 (m has already caught up, v has not). Update size is 10/√v relative to a normal step: v catches up in about \(1/(1-\beta_2)\) steps.</figcaption></figure><figure><div class="eq"><div class="eq-math">$$g \leftarrow g \cdot \min\left(1, \frac{c}{\|g\|_2}\right)$$</div><dl class="symbols"><div><dt>\(c\)</dt><dd>clip threshold, 1.0 is standard</dd></div><div><dt>\(\|g\|_2\)</dt><dd>global L2 norm of the full gradient</dd></div></dl></div><figcaption><span class="fig-n">Eq. 7</span>Global-norm clipping.</figcaption></figure><p>LLM pretraining almost universally uses \(\beta_2 = 0.95\) (GPT-3, Llama and successors). The cost is a noisier denominator, so smaller batches often want a larger \(\beta_2\). Adam is scale-invariant in steady state, so clipping mostly changes the <i>relative</i> weight of one batch inside \(m\) and \(v\). Watch the gradient norm: a steady rise or constant clipping means LR, \(\beta_2\), init or logit growth needs attention.</p></section>
+    <section class="sec" id="s07" aria-labelledby="s07-h"><div class="sec-head"><p class="sec-num"><span class="n">07</span>Code: AdamW</p><h2 id="s07-h">AdamW is five tensor ops, and it matches PyTorch</h2></div><figure><div class="frame"><svg class="ve-svg" viewBox="0 0 800 150" role="img" aria-label="One AdamW step in code order: decay the weights, update m, update v, compute the bias corrections, then step with m over the corrected denominator."><g class="ve-n is-key" transform="translate(0 30)"><rect class="sh" width="110" height="64" rx="6"/><text x="55" y="23.7">decay</text><text class="sub" x="55" y="46.1">p.mul_</text></g><g class="ve-n" transform="translate(172.5 30)"><rect class="sh" width="110" height="64" rx="6"/><text x="55" y="23.7">m</text><text class="sub" x="55" y="46.1">lerp_</text></g><g class="ve-n" transform="translate(345 30)"><rect class="sh" width="110" height="64" rx="6"/><text x="55" y="23.7">v</text><text class="sub" x="55" y="46.1">addcmul_</text></g><g class="ve-n" transform="translate(517.5 30)"><rect class="sh" width="110" height="64" rx="6"/><text x="55" y="23.7">bias</text><text class="sub" x="55" y="46.1">bc1, bc2</text></g><g class="ve-n is-key" transform="translate(690 30)"><rect class="sh" width="110" height="64" rx="6"/><text x="55" y="23.7">step</text><text class="sub" x="55" y="46.1">addcdiv_</text></g><path class="ve-e" d="M110 62H172.5"/><text class="ve-el" x="141.2" y="50">then</text><path class="ve-e" d="M282.5 62H345"/><text class="ve-el" x="313.8" y="50">then</text><path class="ve-e" d="M455 62H517.5"/><text class="ve-el" x="486.2" y="50">then</text><path class="ve-e" d="M627.5 62H690"/><text class="ve-el" x="658.8" y="50">then</text><text class="ve-tick l" x="0" y="128">never touches m or v</text><text class="ve-tick" x="700" y="128">−lr/bc1 · m / denom</text></svg></div><figcaption><span class="fig-n">Fig. 10</span>The lines of <code>step</code>, in order. PyTorch adds ε after dividing √v by √(1−β₂ᵗ), which is exactly √v̂ + ε.</figcaption></figure><div class="code"><div class="code-bar"><span class="ve-label">my_adamw.py</span><button class="copy" type="button">Copy</button></div><pre tabindex="0"><code><span class="tk-k">import</span> math
+<span class="tk-k">import</span> torch
+
+
+<span class="tk-k">class</span> <span class="tk-f">MyAdamW</span>(torch.optim.Optimizer):
+    <span class="tk-k">def</span> <span class="tk-f">__init__</span>(self, params, lr=<span class="tk-n">1e-3</span>, betas=(<span class="tk-n">0.9</span>, <span class="tk-n">0.999</span>), eps=<span class="tk-n">1e-8</span>, weight_decay=<span class="tk-n">1e-2</span>):
+        <span class="tk-f">super</span>().<span class="tk-f">__init__</span>(params, <span class="tk-f">dict</span>(lr=lr, betas=betas, eps=eps, weight_decay=weight_decay))
+
+    @torch.<span class="tk-f">no_grad</span>()
+    <span class="tk-k">def</span> <span class="tk-f">step</span>(self):
+        <span class="tk-k">for</span> group <span class="tk-k">in</span> self.param_groups:
+            lr, (b1, b2), eps, wd = group[<span class="tk-s">"lr"</span>], group[<span class="tk-s">"betas"</span>], group[<span class="tk-s">"eps"</span>], group[<span class="tk-s">"weight_decay"</span>]
+            <span class="tk-k">for</span> p <span class="tk-k">in</span> group[<span class="tk-s">"params"</span>]:
+                <span class="tk-k">if</span> p.grad is <span class="tk-k">None</span>:
+                    <span class="tk-k">continue</span>
+                state = self.state[p]
+                <span class="tk-k">if</span> <span class="tk-k">not</span> state:
+                    state[<span class="tk-s">"t"</span>] = <span class="tk-n">0</span>
+                    state[<span class="tk-s">"m"</span>] = torch.<span class="tk-f">zeros_like</span>(p)
+                    state[<span class="tk-s">"v"</span>] = torch.<span class="tk-f">zeros_like</span>(p)
+                state[<span class="tk-s">"t"</span>] += <span class="tk-n">1</span>
+                t, m, v, g = state[<span class="tk-s">"t"</span>], state[<span class="tk-s">"m"</span>], state[<span class="tk-s">"v"</span>], p.grad
+
+                <span class="tk-c"># Decoupled decay: applied to the weights, never routed through m or v.</span>
+                p.<span class="tk-f">mul_</span>(<span class="tk-n">1</span> - lr * wd)
+
+                m.<span class="tk-f">lerp_</span>(g, <span class="tk-n">1</span> - b1)
+                v.<span class="tk-f">mul_</span>(b2).<span class="tk-f">addcmul_</span>(g, g, value=<span class="tk-n">1</span> - b2)
+
+                bc1 = <span class="tk-n">1</span> - b1 ** t
+                bc2 = <span class="tk-n">1</span> - b2 ** t
+                denom = (v.<span class="tk-f">sqrt</span>() / math.<span class="tk-f">sqrt</span>(bc2)).<span class="tk-f">add_</span>(eps)
+                p.<span class="tk-f">addcdiv_</span>(m, denom, value=-lr / bc1)
+
+
+<span class="tk-k">if</span> __name__ == <span class="tk-s">"__main__"</span>:
+    torch.<span class="tk-f">manual_seed</span>(<span class="tk-n">0</span>)
+    make = <span class="tk-k">lambda</span>: torch.nn.<span class="tk-f">Sequential</span>(torch.nn.<span class="tk-f">Linear</span>(<span class="tk-n">10</span>, <span class="tk-n">32</span>), torch.nn.<span class="tk-f">GELU</span>(), torch.nn.<span class="tk-f">Linear</span>(<span class="tk-n">32</span>, <span class="tk-n">1</span>))
+    a = <span class="tk-f">make</span>()
+    b = <span class="tk-f">make</span>()
+    b.<span class="tk-f">load_state_dict</span>(a.<span class="tk-f">state_dict</span>())
+
+    opt_a = <span class="tk-f">MyAdamW</span>(a.<span class="tk-f">parameters</span>(), lr=<span class="tk-n">1e-2</span>, betas=(<span class="tk-n">0.9</span>, <span class="tk-n">0.95</span>), weight_decay=<span class="tk-n">0.1</span>)
+    opt_b = torch.optim.<span class="tk-f">AdamW</span>(b.<span class="tk-f">parameters</span>(), lr=<span class="tk-n">1e-2</span>, betas=(<span class="tk-n">0.9</span>, <span class="tk-n">0.95</span>), weight_decay=<span class="tk-n">0.1</span>)
+
+    <span class="tk-k">for</span> _ <span class="tk-k">in</span> <span class="tk-f">range</span>(<span class="tk-n">200</span>):
+        x, y = torch.<span class="tk-f">randn</span>(<span class="tk-n">64</span>, <span class="tk-n">10</span>), torch.<span class="tk-f">randn</span>(<span class="tk-n">64</span>, <span class="tk-n">1</span>)
+        <span class="tk-k">for</span> model, opt <span class="tk-k">in</span> ((a, opt_a), (b, opt_b)):
+            opt.<span class="tk-f">zero_grad</span>()
+            torch.nn.functional.<span class="tk-f">mse_loss</span>(<span class="tk-f">model</span>(x), y).<span class="tk-f">backward</span>()
+            opt.<span class="tk-f">step</span>()
+
+    <span class="tk-k">for</span> pa, pb <span class="tk-k">in</span> <span class="tk-k">zip</span>(a.<span class="tk-f">parameters</span>(), b.<span class="tk-f">parameters</span>()):
+        <span class="tk-k">assert</span> torch.<span class="tk-f">allclose</span>(pa, pb, atol=<span class="tk-n">1e-6</span>), (pa - pb).<span class="tk-f">abs</span>().<span class="tk-f">max</span>()
+    <span class="tk-f">print</span>(<span class="tk-s">"MyAdamW matches torch.optim.AdamW"</span>)</code></pre></div><p>Exercise: change <code>p.mul_(1 - lr * wd)</code> to <code>g = g + wd * p</code> (coupled L2), confirm it now matches <code>torch.optim.Adam(weight_decay=0.1)</code>, and plot the per-group weight norms of both over a longer run.</p></section>
+    <section class="sec" id="s08" aria-labelledby="s08-h"><div class="sec-head"><p class="sec-num"><span class="n">08</span>The memory bill</p><h2 id="s08-h">Optimizer state is 12 of the 16 bytes per parameter</h2></div><figure><div class="frame"><svg class="ve-svg" viewBox="0 0 800 230" role="img" aria-label="Bytes per parameter. AdamW with mixed precision holds 2 plus 2 plus 4 plus 4 plus 4, which is 16 bytes, of which 12 are optimizer state. 8-bit Adam stores m and v in 1 byte each, for 10 bytes in total."><text class="ve-tick l" x="0" y="102">AdamW</text><text class="ve-tick l" x="0" y="192">8-bit Adam</text><g class="ve-n" transform="translate(111 72)"><rect class="sh" width="78" height="50" rx="6"/><text x="39" y="18.5">bf16 w</text><text class="sub" x="39" y="36">2 B</text></g><g class="ve-n" transform="translate(191 72)"><rect class="sh" width="78" height="50" rx="6"/><text x="39" y="18.5">bf16 g</text><text class="sub" x="39" y="36">2 B</text></g><g class="ve-n is-key" transform="translate(271 72)"><rect class="sh" width="158" height="50" rx="6"/><text x="79" y="18.5">fp32 master</text><text class="sub" x="79" y="36">4 B</text></g><g class="ve-n is-key" transform="translate(431 72)"><rect class="sh" width="158" height="50" rx="6"/><text x="79" y="18.5">fp32 m</text><text class="sub" x="79" y="36">4 B</text></g><g class="ve-n is-key" transform="translate(591 72)"><rect class="sh" width="158" height="50" rx="6"/><text x="79" y="18.5">fp32 v</text><text class="sub" x="79" y="36">4 B</text></g><text class="ve-bar-v" x="758" y="97">16 B</text><g class="ve-dim is-key"><path class="ext" d="M270 34V68M750 34V68"/><path class="ln" d="M270 40H750"/><text x="510" y="26">optimizer state: 12 B</text></g><g class="ve-n" transform="translate(111 162)"><rect class="sh" width="78" height="50" rx="6"/><text x="39" y="18.5">bf16 w</text><text class="sub" x="39" y="36">2 B</text></g><g class="ve-n" transform="translate(191 162)"><rect class="sh" width="78" height="50" rx="6"/><text x="39" y="18.5">bf16 g</text><text class="sub" x="39" y="36">2 B</text></g><g class="ve-n is-key" transform="translate(271 162)"><rect class="sh" width="158" height="50" rx="6"/><text x="79" y="18.5">fp32 master</text><text class="sub" x="79" y="36">4 B</text></g><g class="ve-n is-key" transform="translate(431 162)"><rect class="sh" width="38" height="50" rx="6"/><text x="19" y="25">m</text></g><g class="ve-n is-key" transform="translate(471 162)"><rect class="sh" width="38" height="50" rx="6"/><text x="19" y="25">v</text></g><text class="ve-bar-v" x="518" y="187">10 B (m, v: 1 B each)</text></svg></div><figcaption><span class="fig-n">Fig. 11</span>Where the 16 bytes go, and what 8-bit Adam saves. A 70B model needs about 1.1 TB for this alone, before activations (ZeRO accounting), which is why ZeRO stage 1 shards optimizer state first.</figcaption></figure><p><b>8-bit Adam</b> (Dettmers et al., 2021) stores \(m\) and \(v\) in 8 bits. Optimizer states have outliers across many orders of magnitude, so it quantizes in blocks of 2048 values, each with its own scale, using a non-linear dynamic map that spends more codes near zero. States are dequantized, updated in 32 bits, and requantized every step. Available in <code>bitsandbytes</code>.</p><figure><div class="frame"><svg class="ve-svg" viewBox="0 0 800 206" role="img" aria-label="A full r by c second-moment matrix V is summarized by its row sums R and column sums C. Their outer product divided by the total gives a rank-1 reconstruction V-hat, so memory falls from r times c to r plus c."><path class="ve-e" d="M200 65H300"/><text class="ve-el" x="250" y="53">sums rows</text><path class="ve-e" d="M200 135H300"/><text class="ve-el" x="250" y="123">sums cols</text><path class="ve-e is-hot" d="M410 65H470V100H520"/><text class="ve-el" x="462" y="53">multiplies</text><path class="ve-e is-hot" d="M410 135H470V120H520"/><g class="ve-n" transform="translate(0 30)"><rect class="sh" width="200" height="120" rx="6"/><text x="100" y="44.4">V</text><text class="sub" x="100" y="86.4">r × c entries</text></g><g class="ve-n" transform="translate(300 40)"><rect class="sh" width="110" height="50" rx="6"/><text x="55" y="18.5">R</text><text class="sub" x="55" y="36">r numbers</text></g><g class="ve-n" transform="translate(300 110)"><rect class="sh" width="110" height="50" rx="6"/><text x="55" y="18.5">C</text><text class="sub" x="55" y="36">c numbers</text></g><g class="ve-n is-key" transform="translate(520 70)"><rect class="sh" width="280" height="80" rx="6"/><text x="140" y="29.6">V̂ = R Cᵀ / 1ᵀR</text><text class="sub" x="140" y="57.6">rank-1 rebuild</text></g><text class="ve-tick" x="100" y="190">memory O(rc)</text><text class="ve-tick" x="355" y="190">O(r + c)</text></svg></div><figcaption><span class="fig-n">Fig. 12</span>Adafactor keeps only row and column statistics of the second moment. It can also drop the first moment, clip updates by their RMS, and grow β₂ over time. It trained T5 and PaLM.</figcaption></figure><figure><div class="eq"><div class="eq-math">$$\hat V = \frac{R \, C^\top}{\mathbf{1}^\top R}$$</div><dl class="symbols"><div><dt>\(R_i\)</dt><dd>EMA of the sum of \(g^2\) in row \(i\)</dd></div><div><dt>\(C_j\)</dt><dd>EMA of the sum of \(g^2\) in column \(j\)</dd></div><div><dt>\(\mathbf{1}^\top R\)</dt><dd>total sum; gives \(\hat V\) the right scale</dd></div></dl></div><figcaption><span class="fig-n">Eq. 8</span>Adafactor's factored second moment (Shazeer and Stern, 2018).</figcaption></figure></section>
+    <section class="sec" id="s09" aria-labelledby="s09-h"><div class="sec-head"><p class="sec-num"><span class="n">09</span>Beyond Adam</p><h2 id="s09-h">Lion, Sophia, Shampoo and SOAP change what the step is built from</h2></div><figure><div class="cases"><div class="case" data-st="ok"><span class="chip ok">1 state buffer</span><h3>Lion: sign of a blend</h3><svg class="ve-mini" viewBox="0 0 240 120" role="img" aria-label="Five bars of equal height pointing up or down: every coordinate moves by exactly plus or minus eta."><rect class="ve-bar hot" x="24" y="35" width="28" height="30" rx="2"/><rect class="ve-bar hot" x="64" y="65" width="28" height="30" rx="2"/><rect class="ve-bar hot" x="104" y="35" width="28" height="30" rx="2"/><rect class="ve-bar hot" x="144" y="35" width="28" height="30" rx="2"/><rect class="ve-bar hot" x="184" y="65" width="28" height="30" rx="2"/><path class="ve-grid" d="M10 65H230"/><text class="ve-el" x="120" y="112">every step is ±η</text></svg><p>Half of Adam's memory. Needs a 3 to 10x smaller LR and a larger decay.</p></div><div class="case" data-st="warn"><span class="chip warn">Gains shrank</span><h3>Sophia: clipped Newton step</h3><svg class="ve-mini" viewBox="0 0 240 120" role="img" aria-label="A response curve that is flat at minus one, linear in the middle and flat at plus one."><path class="ve-grid" d="M10 65H230"/><path class="ve-e no-ah is-hot" d="M20 100L70 100L170 30L220 30"/><text class="ve-tick l" x="20" y="118">−1</text><text class="ve-tick" x="215" y="20">+1</text></svg><p>Reported 2x fewer steps; tuned benchmarks found much smaller gaps.</p></div><div class="case" data-st="ok"><span class="chip ok">Matrix-aware</span><h3>Shampoo and SOAP</h3><svg class="ve-mini" viewBox="0 0 240 120" role="img" aria-label="The gradient matrix G is preconditioned on the left by L to the minus one quarter and on the right by R to the minus one quarter."><g class="ve-n" transform="translate(0 34)"><rect class="sh" width="50" height="50" rx="6"/><text x="25" y="25">L</text></g><g class="ve-n is-key" transform="translate(95 34)"><rect class="sh" width="50" height="50" rx="6"/><text x="25" y="25">G</text></g><g class="ve-n" transform="translate(190 34)"><rect class="sh" width="50" height="50" rx="6"/><text x="25" y="25">R</text></g><path class="ve-e" d="M50 59H95"/><text class="ve-el" x="72" y="24">L⁻¼</text><path class="ve-e" d="M190 59H145"/><text class="ve-el" x="168" y="24">R⁻¼</text><text class="ve-tick" x="120" y="112">SOAP: Adam inside this basis</text></svg><p>Rows and columns are correlated; coordinates are not independent.</p></div></div><figcaption><span class="fig-n">Fig. 13</span>Four ways past a per-coordinate denominator. Section 13 explains why the claims shrink under careful tuning.</figcaption></figure><figure><div class="eq"><div class="eq-math">$$\begin{aligned}
+c_t &= \beta_1 m_{t-1} + (1 - \beta_1) g_t \\
+\theta_t &= \theta_{t-1} - \eta \left( \mathrm{sign}(c_t) + \lambda \theta_{t-1} \right) \\
+m_t &= \beta_2 m_{t-1} + (1 - \beta_2) g_t
+\end{aligned}$$
+$$\theta_t = \theta_{t-1} - \eta \, \mathrm{clip}\left( \frac{m_t}{\max(\gamma h_t, \epsilon)}, \, 1 \right)$$</div><dl class="symbols"><div><dt>Lion</dt><dd>found by program search (Chen et al., 2023); \(\beta_1 = 0.9\), \(\beta_2 = 0.99\)</dd></div><div><dt>\(h_t\)</dt><dd>Sophia: EMA of a diagonal Hessian estimate, refreshed every k steps (e.g. 10)</dd></div><div><dt>\(\gamma\)</dt><dd>scaling hyperparameter</dd></div><div><dt>clip</dt><dd>elementwise to \([-1, 1]\), guarding tiny or negative curvature</dd></div></dl></div><figcaption><span class="fig-n">Eq. 9</span>Lion (top) and Sophia (bottom).</figcaption></figure><figure><div class="eq"><div class="eq-math">$$L_t = L_{t-1} + G_t G_t^\top, \qquad R_t = R_{t-1} + G_t^\top G_t$$
+$$W_t = W_{t-1} - \eta \, L_t^{-1/4} \, G_t \, R_t^{-1/4}$$</div><dl class="symbols"><div><dt>\(L_t\)</dt><dd>\(r \times r\) row preconditioner</dd></div><div><dt>\(R_t\)</dt><dd>\(c \times c\) column preconditioner</dd></div><div><dt>\(G_t\)</dt><dd>gradient reshaped as a matrix</dd></div></dl></div><figcaption><span class="fig-n">Eq. 10</span>Shampoo: a Kronecker-factored approximation to full-matrix AdaGrad. A distributed implementation won the AlgoPerf external-tuning track.</figcaption></figure><p><b>SOAP</b> (Vyas et al., 2024) notes that Shampoo is close to running Adam in the eigenbasis of its preconditioners. So it does that: rotate the gradient into the eigenbasis of \(L\) and \(R\), run Adam there, rotate back, and recompute the basis only every \(f\) steps. More stable than Shampoo, with fewer hyperparameters.</p></section>
+    <section class="sec" id="s10" aria-labelledby="s10-h"><div class="sec-head"><p class="sec-num"><span class="n">10</span>Muon</p><h2 id="s10-h">Muon sets every singular value of the update to about 1</h2></div><p>Muon (Keller Jordan et al., 2024) set records in the NanoGPT speedrun, then was scaled by Moonshot AI. For a 2D weight, the momentum buffer \(B = U\Sigma V^\top\) is dominated by a few loud directions. Muon uses \(O = UV^\top\) instead: same directions, all singular values 1. One view: steepest descent under the spectral norm (Bernstein and Jordan).</p><figure><div class="frame"><svg class="ve-svg" viewBox="0 0 800 236" role="img" aria-label="Left: singular values of a badly conditioned momentum matrix, falling from 1 down to 0.001. Right: after five Newton-Schulz iterations the large and middle singular values are close to 1 and only the smallest lag behind."><path class="ve-grid" d="M10 200H360"/><rect class="ve-bar" x="20" y="50" width="30" height="150" rx="2"/><text class="ve-tick" x="35" y="220">σ1</text><rect class="ve-bar" x="62" y="144.1" width="30" height="55.9" rx="2"/><text class="ve-tick" x="77" y="220">σ2</text><rect class="ve-bar" x="104" y="179.2" width="30" height="20.8" rx="2"/><text class="ve-tick" x="119" y="220">σ3</text><rect class="ve-bar" x="146" y="192.2" width="30" height="7.8" rx="2"/><text class="ve-tick" x="161" y="220">σ4</text><rect class="ve-bar" x="188" y="197.1" width="30" height="2.9" rx="2"/><text class="ve-tick" x="203" y="220">σ5</text><rect class="ve-bar" x="230" y="198.5" width="30" height="1.5" rx="2"/><text class="ve-tick" x="245" y="220">σ6</text><rect class="ve-bar" x="272" y="198.5" width="30" height="1.5" rx="2"/><text class="ve-tick" x="287" y="220">σ7</text><rect class="ve-bar" x="314" y="198.5" width="30" height="1.5" rx="2"/><text class="ve-tick" x="329" y="220">σ8</text><path class="ve-grid" d="M430 200H780"/><rect class="ve-bar hot" x="440" y="90.5" width="30" height="109.5" rx="2"/><text class="ve-tick" x="455" y="220">σ1</text><rect class="ve-bar hot" x="482" y="37.3" width="30" height="162.7" rx="2"/><text class="ve-tick" x="497" y="220">σ2</text><rect class="ve-bar hot" x="524" y="97.7" width="30" height="102.3" rx="2"/><text class="ve-tick" x="539" y="220">σ3</text><rect class="ve-bar hot" x="566" y="86.6" width="30" height="113.4" rx="2"/><text class="ve-tick" x="581" y="220">σ4</text><rect class="ve-bar hot" x="608" y="87.6" width="30" height="112.4" rx="2"/><text class="ve-tick" x="623" y="220">σ5</text><rect class="ve-bar hot" x="650" y="63" width="30" height="137" rx="2"/><text class="ve-tick" x="665" y="220">σ6</text><rect class="ve-bar hot" x="692" y="49.7" width="30" height="150.3" rx="2"/><text class="ve-tick" x="707" y="220">σ7</text><rect class="ve-bar hot" x="734" y="134.2" width="30" height="65.8" rx="2"/><text class="ve-tick" x="749" y="220">σ8</text><text class="ve-tick" x="180" y="24">momentum matrix B</text><text class="ve-tick" x="600" y="24">after Newton-Schulz</text><path class="ve-e is-hot" d="M365 110H430"/><text class="ve-el" x="397" y="98">5 iters</text></svg></div><figcaption><span class="fig-n">Fig. 14</span>Muon keeps the directions of the momentum matrix but flattens its spectrum. Directions that were nearly ignored now move as much as the loud ones.</figcaption></figure><figure><div class="eq"><div class="eq-math">$$\begin{aligned}
+B_t &= \mu B_{t-1} + G_t \\
+O_t &= \mathrm{NewtonSchulz}_5(G_t + \mu B_t) \\
+W_t &= W_{t-1} - \eta \, s \, O_t
+\end{aligned}$$
+$$X_{k+1} = a X_k + b (X_k X_k^\top) X_k + c (X_k X_k^\top)^2 X_k$$</div><dl class="symbols"><div><dt>\(G_t, B_t\)</dt><dd>gradient and momentum buffer, \(\mu = 0.95\) (Nesterov variant)</dd></div><div><dt>\(X_0\)</dt><dd>\(B / \|B\|_F\), so singular values are at most 1</dd></div><div><dt>\((a,b,c)\)</dt><dd>(3.4445, −4.7750, 2.0315)</dd></div><div><dt>\(s\)</dt><dd>shape-dependent scale, \(0.2\sqrt{\max(r,c)}\) in Moonlight</dd></div></dl></div><figcaption><span class="fig-n">Eq. 11</span>Muon's update (top) and the Newton-Schulz iteration (bottom): each pass maps every singular value through \(\phi(\sigma) = a\sigma + b\sigma^3 + c\sigma^5\) and leaves singular vectors alone.</figcaption></figure><figure><div class="frame"><svg class="ve-svg" viewBox="0 0 800 286" role="img" aria-label="Trajectories of a singular value under the Newton-Schulz polynomial for four starting values. Starting values 0.1, 0.5 and 1 reach the band 0.7 to 1.2 within a few iterations; 0.001 is still below it after five."><g class="ve-zone"><rect x="130" y="50.9" width="610" height="74.6"/><text x="138" y="44.9">band 0.7 to 1.2</text></g><path class="ve-grid" d="M130 230H740"/><path class="ve-e no-ah" d="M130 229.9L252 229.5L374 228.2L496 223.9L618 209L740 159.8"/><path class="ve-e no-ah is-hot" d="M130 215.1L252 179.3L374 81.9L496 124.5L618 64.9L740 123.7"/><path class="ve-e no-ah is-hot" d="M130 155.4L252 52.6L374 96.3L496 107L618 90L740 115.8"/><path class="ve-e no-ah is-hot" d="M130 80.8L252 125.4L374 63.8L496 122.4L618 67.3L740 126.1"/><text class="ve-el l" x="120" y="85.8">σ₀ = 1</text><text class="ve-el l" x="120" y="160.4">σ₀ = 0.5</text><text class="ve-el l" x="120" y="220.1">σ₀ = 0.1</text><text class="ve-el l" x="120" y="237.1">σ₀ = 0.001</text><text class="ve-tick" x="130" y="252">0</text><text class="ve-tick" x="252" y="252">1</text><text class="ve-tick" x="374" y="252">2</text><text class="ve-tick" x="496" y="252">3</text><text class="ve-tick" x="618" y="252">4</text><text class="ve-tick" x="740" y="252">5</text><text class="ve-tick" x="435" y="276">Newton-Schulz iteration k</text></svg></div><figcaption><span class="fig-n">Fig. 15</span>Why not SVD? Newton-Schulz needs only matmuls, so it runs in bf16 at a few percent overhead. The odd polynomial pushes each singular value toward a band around 1, not exactly to 1; tiny ones converge slowly.</figcaption></figure><figure><div class="frame"><svg class="ve-svg" viewBox="0 0 800 210" role="img" aria-label="The model&#x27;s parameters split in two. Hidden 2D matrices such as attention and MLP weights go to Muon. Embeddings, the LM head, norm gains and biases go to AdamW."><path class="ve-e is-hot" d="M130 100H280"/><text class="ve-el" x="205" y="88">hidden 2D</text><path class="ve-e" d="M130 100H200V160H280"/><text class="ve-el" x="165" y="185">the rest</text><g class="ve-n" transform="translate(0 70)"><rect class="sh" width="130" height="60" rx="6"/><text x="65" y="22.2">Params</text><text class="sub" x="65" y="43.2">one model</text></g><g class="ve-n is-key" transform="translate(280 40)"><rect class="sh" width="260" height="60" rx="6"/><text x="130" y="22.2">Muon</text><text class="sub" x="130" y="43.2">attention + MLP matrices</text></g><g class="ve-n" transform="translate(280 130)"><rect class="sh" width="260" height="60" rx="6"/><text x="130" y="22.2">AdamW</text><text class="sub" x="130" y="43.2">embeddings, head, 1D</text></g></svg></div><figcaption><span class="fig-n">Fig. 16</span>Embeddings and the output layer have rows that correspond to tokens, not to a linear map between hidden spaces, so they stay on AdamW.</figcaption></figure><figure><div class="frame"><svg class="ve-svg" viewBox="0 0 800 100" role="img" aria-label="Muon, then Moonlight after adding weight decay and RMS matching, then Kimi K2 after adding QK-clip. Moonlight is a 16B-total MoE trained on 5.7T tokens; Kimi K2 is a 1T-total MoE trained on 15.5T tokens."><path class="ve-e" d="M150 50H330"/><text class="ve-el" x="240" y="38">decay + RMS</text><path class="ve-e" d="M500 50H630"/><text class="ve-el" x="565" y="38">adds QK-clip</text><g class="ve-n" transform="translate(0 20)"><rect class="sh" width="150" height="60" rx="6"/><text x="75" y="22.2">Muon</text><text class="sub" x="75" y="43.2">speedrun records</text></g><g class="ve-n" transform="translate(330 20)"><rect class="sh" width="170" height="60" rx="6"/><text x="85" y="22.2">Moonlight</text><text class="sub" x="85" y="43.2">16B MoE, 5.7T tok</text></g><g class="ve-n is-key" transform="translate(630 20)"><rect class="sh" width="170" height="60" rx="6"/><text x="85" y="22.2">Kimi K2</text><text class="sub" x="85" y="43.2">1T MoE, 15.5T tok</text></g></svg></div><figcaption><span class="fig-n">Fig. 17</span>Two changes made Muon scale, then one more for 1T parameters. Matching update RMS to AdamW lets AdamW's learning rate and decay transfer. QK-clip rescales query and key weights when the maximum attention logit exceeds a threshold; K2 trained with no loss spikes.</figcaption></figure></section>
+    <section class="sec" id="s11" aria-labelledby="s11-h"><div class="sec-head"><p class="sec-num"><span class="n">11</span>Code: Muon</p><h2 id="s11-h">A Muon step is momentum, five matmuls and a scale</h2></div><figure class="ve-steps"><div class="frame"><svg class="ve-svg" viewBox="0 0 800 226" role="img" aria-label="Muon step as a flow. The gradient updates the momentum buffer, the Nesterov mix of gradient and buffer is orthogonalized with five Newton-Schulz iterations, rescaled by 0.2 times the root of the larger dimension, and applied to the weights after decay."><path class="ve-e" data-s="2" pathLength="1" d="M170 60H315"/><text class="ve-el" data-s="2" x="242" y="48">accumulates</text><path class="ve-e" data-s="3" pathLength="1" d="M485 60H630"/><text class="ve-el" data-s="3" x="557" y="48">looks ahead</text><path class="ve-e" data-s="4" pathLength="1" d="M715 90V120H85V150"/><text class="ve-el" data-s="4" x="400" y="108">orthogonalizes</text><path class="ve-e is-hot" data-s="5" pathLength="1" d="M170 180H315"/><text class="ve-el" data-s="5" x="242" y="168">rescales</text><path class="ve-e is-hot" data-s="6" pathLength="1" d="M485 180H630"/><text class="ve-el" data-s="6" x="557" y="168">applies</text><g class="ve-n" data-s="1" transform="translate(0 30)"><rect class="sh" width="170" height="60" rx="6"/><text x="85" y="22.2">G</text><text class="sub" x="85" y="43.2">gradient</text></g><g class="ve-n" data-s="2" transform="translate(315 30)"><rect class="sh" width="170" height="60" rx="6"/><text x="85" y="22.2">B</text><text class="sub" x="85" y="43.2">buf·μ + G</text></g><g class="ve-n" data-s="3" transform="translate(630 30)"><rect class="sh" width="170" height="60" rx="6"/><text x="85" y="22.2">G + μB</text><text class="sub" x="85" y="43.2">nesterov mix</text></g><g class="ve-n is-key" data-s="4" transform="translate(0 150)"><rect class="sh" width="170" height="60" rx="6"/><text x="85" y="22.2">O</text><text class="sub" x="85" y="43.2">Newton-Schulz ×5</text></g><g class="ve-n" data-s="5" transform="translate(315 150)"><rect class="sh" width="170" height="60" rx="6"/><text x="85" y="22.2">s · O</text><text class="sub" x="85" y="43.2">0.2 √max(r,c)</text></g><g class="ve-n is-key" data-s="6" transform="translate(630 150)"><rect class="sh" width="170" height="60" rx="6"/><text x="85" y="22.2">W</text><text class="sub" x="85" y="43.2">W ← W − lr·s·O</text></g></svg></div><div class="ve-player"><ol class="ve-cap"><li data-n="1/6">The gradient of one 2D hidden weight \(W\).</li><li data-n="2/6"><code>buf.mul_(momentum).add_(grad)</code>: the momentum buffer, \(\mu = 0.95\).</li><li data-n="3/6">Nesterov: <code>grad.add(buf, alpha=momentum)</code> is the matrix to orthogonalize.</li><li data-n="4/6"><code>newton_schulz5</code>: five matmul iterations push singular values toward 1.</li><li data-n="5/6">Scale by \(0.2\sqrt{\max(r,c)}\) so the update RMS matches AdamW and its LR and decay transfer.</li><li data-n="6/6">Decay the weights, then subtract the scaled update.</li></ol><button data-go="-1" aria-label="Previous step">←</button><button data-play>Play</button><input type="range" min="0" value="0" aria-label="Step"><button data-go="1" aria-label="Next step">→</button></div><figcaption><span class="fig-n">Fig. 18</span>Read left to right, then down. Each node is one line of <code>muon_step</code>.</figcaption></figure><div class="code"><div class="code-bar"><span class="ve-label">muon.py</span><button class="copy" type="button">Copy</button></div><pre tabindex="0"><code><span class="tk-k">import</span> torch
+
+
+<span class="tk-k">def</span> <span class="tk-f">newton_schulz5</span>(G: torch.Tensor, steps: int = <span class="tk-n">5</span>, eps: float = <span class="tk-n">1e-7</span>) -&gt; torch.Tensor:
+    a, b, c = <span class="tk-n">3.4445</span>, -<span class="tk-n">4.7750</span>, <span class="tk-n">2.0315</span>
+    X = G.<span class="tk-f">bfloat16</span>()
+    <span class="tk-c"># Work in the wide orientation so X @ X.T is the smaller Gram matrix.</span>
+    transposed = X.<span class="tk-f">size</span>(<span class="tk-n">0</span>) &gt; X.<span class="tk-f">size</span>(<span class="tk-n">1</span>)
+    <span class="tk-k">if</span> transposed:
+        X = X.T
+    <span class="tk-c"># Frobenius normalization bounds every singular value by 1, inside the polynomial's basin.</span>
+    X = X / (X.<span class="tk-f">norm</span>() + eps)
+    <span class="tk-k">for</span> _ <span class="tk-k">in</span> <span class="tk-f">range</span>(steps):
+        A = X @ X.T
+        B = b * A + c * A @ A
+        X = a * X + B @ X
+    <span class="tk-k">if</span> transposed:
+        X = X.T
+    <span class="tk-k">return</span> X.<span class="tk-f">to</span>(G.dtype)
+
+
+@torch.<span class="tk-f">no_grad</span>()
+<span class="tk-k">def</span> <span class="tk-f">muon_step</span>(W, grad, buf, lr=<span class="tk-n">0.02</span>, momentum=<span class="tk-n">0.95</span>, weight_decay=<span class="tk-n">0.1</span>, nesterov=<span class="tk-k">True</span>):
+    buf.<span class="tk-f">mul_</span>(momentum).<span class="tk-f">add_</span>(grad)
+    update = grad.<span class="tk-f">add</span>(buf, alpha=momentum) <span class="tk-k">if</span> nesterov <span class="tk-k">else</span> buf
+    O = <span class="tk-f">newton_schulz5</span>(update)
+    <span class="tk-c"># Moonlight scaling: makes update RMS comparable to AdamW so its lr/wd settings transfer.</span>
+    O = O * <span class="tk-n">0.2</span> * <span class="tk-f">max</span>(W.shape) ** <span class="tk-n">0.5</span>
+    W.<span class="tk-f">mul_</span>(<span class="tk-n">1</span> - lr * weight_decay)
+    W.<span class="tk-f">add_</span>(O, alpha=-lr)
+
+
+<span class="tk-k">if</span> __name__ == <span class="tk-s">"__main__"</span>:
+    torch.<span class="tk-f">manual_seed</span>(<span class="tk-n">0</span>)
+    G = torch.<span class="tk-f">randn</span>(<span class="tk-n">256</span>, <span class="tk-n">128</span>) @ torch.<span class="tk-f">diag</span>(torch.<span class="tk-f">logspace</span>(<span class="tk-n">0</span>, -<span class="tk-n">3</span>, <span class="tk-n">128</span>))  <span class="tk-c"># badly conditioned</span>
+    O = <span class="tk-f">newton_schulz5</span>(G).<span class="tk-f">float</span>()
+    s_before = torch.linalg.<span class="tk-f">svdvals</span>(G)
+    s_after = torch.linalg.<span class="tk-f">svdvals</span>(O)
+    <span class="tk-f">print</span>(f<span class="tk-s">"singular values before: max/min = {(s_before.max() / s_before.min()).item():.1f}"</span>)
+    <span class="tk-f">print</span>(f<span class="tk-s">"singular values after:  min={s_after.min().item():.2f} max={s_after.max().item():.2f}"</span>)
+    <span class="tk-c"># Directions with tiny singular values converge slower; the bulk should land near 1.</span>
+    <span class="tk-k">assert</span> <span class="tk-n">0.5</span> &lt; s_after.<span class="tk-f">median</span>() &lt; <span class="tk-n">1.3</span></code></pre></div><p>In a real model put all hidden 2D matrices in a Muon group and everything else in an AdamW group. Reference implementations: Keller Jordan's <code>Muon</code> repository and <code>torch.optim.Muon</code> in recent PyTorch.</p></section>
+    <section class="sec" id="s12" aria-labelledby="s12-h"><div class="sec-head"><p class="sec-num"><span class="n">12</span>Schedules</p><h2 id="s12-h">WSD and schedule-free both avoid fixing the end in advance</h2></div><p><b>WSD</b> (popularized by MiniCPM; DeepSeek uses step-based variants) is warmup, a constant stretch, then a rapid decay over the last 10 to 20% of steps. The decay phase is a natural place to switch to high-quality data (annealing), as Llama 3 does.</p><figure><div class="frame"><svg class="ve-svg" viewBox="0 0 800 276" role="img" aria-label="Learning rate over training. Cosine decays smoothly from the peak and needs the final step fixed in advance. Warmup-stable-decay holds the peak and drops in the last 15 percent; dashed arrows branch off the stable phase for a short decay, giving a finished model at any point."><path class="ve-grid" d="M80 240H760"/><path class="ve-e no-ah" d="M80 240L91.3 185.3L102.7 130.7L114 76L125.3 76.1L136.7 76.5L148 77.1L159.3 78L170.7 79.1L182 80.4L193.3 82L204.7 83.8L216 85.9L227.3 88.1L238.7 90.6L250 93.3L261.3 96.2L272.7 99.2L284 102.5L295.3 105.9L306.7 109.4L318 113.2L329.3 117L340.7 121L352 125.1L363.3 129.2L374.7 133.5L386 137.9L397.3 142.3L408.7 146.7L420 151.2L431.3 155.7L442.7 160.3L454 164.8L465.3 169.3L476.7 173.7L488 178.1L499.3 182.5L510.7 186.8L522 190.9L533.3 195L544.7 199L556 202.8L567.3 206.6L578.7 210.1L590 213.5L601.3 216.8L612.7 219.8L624 222.7L635.3 225.4L646.7 227.9L658 230.1L669.3 232.2L680.7 234L692 235.6L703.3 236.9L714.7 238L726 238.9L737.3 239.5L748.7 239.9L760 240"/><path class="ve-e no-ah is-hot" d="M80 240L114 76L658 76L760 240"/><path class="ve-e is-async" d="M318 76L420 240"/><path class="ve-e is-async" d="M488 76L590 240"/><path class="ve-e no-ah is-hot" d="M90 18L130 18"/><text class="ve-tick l" x="142" y="23">WSD: hold, then drop in the last 15%</text><path class="ve-e no-ah" d="M90 44L130 44"/><text class="ve-tick l" x="142" y="49">cosine: needs the end fixed in advance</text><text class="ve-tick l" x="0" y="70">learning rate</text><text class="ve-tick" x="97" y="262">warmup</text><text class="ve-tick" x="386" y="262">stable</text><text class="ve-tick" x="705.6" y="262">decay</text><text class="ve-el l" x="362" y="190">branch: short decay</text></svg></div><figcaption><span class="fig-n">Fig. 19</span>WSD lets you branch a short decay off the stable phase at any point: one long run, many finished models. Cosine's intermediate checkpoints are unfinished.</figcaption></figure><figure><div class="frame"><svg class="ve-svg" viewBox="0 0 800 216" role="img" aria-label="Schedule-free: gradients are taken at y, a blend of the fast iterate z and the running average x. The gradient steps z, and the new z is averaged into x, which is the model you evaluate and ship."><path class="ve-e" d="M130 50H190V110H240"/><text class="ve-el r" x="195" y="40">mixes (1−β)</text><path class="ve-e" d="M130 170H190V150H240"/><text class="ve-el r" x="195" y="194">mixes (β)</text><path class="ve-e is-hot" d="M370 130H470"/><text class="ve-el" x="420" y="118">evaluates</text><path class="ve-e" d="M600 120H635V50H670"/><text class="ve-el l" x="625" y="70">steps</text><path class="ve-e is-hot" d="M735 80V140"/><text class="ve-el l" x="725" y="112">averages in</text><g class="ve-n" transform="translate(0 20)"><rect class="sh" width="130" height="60" rx="6"/><text x="65" y="22.2">z_t</text><text class="sub" x="65" y="43.2">fast iterate</text></g><g class="ve-n" transform="translate(0 140)"><rect class="sh" width="130" height="60" rx="6"/><text x="65" y="22.2">x_t</text><text class="sub" x="65" y="43.2">running average</text></g><g class="ve-n is-key" transform="translate(240 100)"><rect class="sh" width="130" height="60" rx="6"/><text x="65" y="22.2">y_t</text><text class="sub" x="65" y="43.2">gradient point</text></g><g class="ve-n" transform="translate(470 100)"><rect class="sh" width="130" height="60" rx="6"/><text x="65" y="22.2">∇L(y_t)</text><text class="sub" x="65" y="43.2">gradient</text></g><g class="ve-n" transform="translate(670 20)"><rect class="sh" width="130" height="60" rx="6"/><text x="65" y="22.2">z_t+1</text><text class="sub" x="65" y="43.2">new iterate</text></g><g class="ve-n is-key" transform="translate(670 140)"><rect class="sh" width="130" height="60" rx="6"/><text x="65" y="22.2">x_t+1</text><text class="sub" x="65" y="43.2">ship this</text></g></svg></div><figcaption><span class="fig-n">Fig. 20</span>Schedule-free (Defazio et al., 2024) replaces the decay with iterate averaging. It still needs warmup, and training weights \(y\) differ from eval weights \(x\).</figcaption></figure><figure><div class="eq"><div class="eq-math">$$\begin{aligned}
+y_t &= (1 - \beta) z_t + \beta x_t \\
+z_{t+1} &= z_t - \eta \nabla \mathcal{L}(y_t) \\
+x_{t+1} &= (1 - c_{t+1}) x_t + c_{t+1} z_{t+1}, \quad c_{t+1} = \frac{1}{t+1}
+\end{aligned}$$</div><dl class="symbols"><div><dt>\(z_t\)</dt><dd>fast SGD-like iterate</dd></div><div><dt>\(x_t\)</dt><dd>uniform running average of z; evaluate and ship this</dd></div><div><dt>\(y_t\)</dt><dd>gradient point, acts like momentum (\(\beta \approx 0.9\))</dd></div></dl></div><figcaption><span class="fig-n">Eq. 12</span>Schedule-free SGD.</figcaption></figure><p>Schedule-free won the self-tuning track of AlgoPerf 2024. Switch the optimizer between <code>train()</code> and <code>eval()</code>. At LLM scale WSD is still the more common choice.</p></section>
+    <section class="sec" id="s13" aria-labelledby="s13-h"><div class="sec-head"><p class="sec-num"><span class="n">13</span>Fair comparison</p><h2 id="s13-h">Most wins shrink under a fair comparison</h2></div><p>An under-tuned AdamW with \(\beta_2 = 0.999\) is a straw man. An optimizer that is slightly worse at its best LR but robust across LRs may be the better engineering choice.</p><figure><div class="frame"><svg class="ve-svg" viewBox="0 0 800 356" role="img" aria-label="A claim that optimizer X beats AdamW must pass six checks: tune the baseline equally, match compute with finished schedules, measure wall-clock and memory, check across scales, use multiple seeds, and look at stability."><path class="ve-e" d="M150 190H245V33 H340"/><path class="ve-e" d="M150 190H245V91 H340"/><path class="ve-e" d="M150 190H245V149 H340"/><path class="ve-e" d="M150 190H245V207 H340"/><path class="ve-e" d="M150 190H245V265 H340"/><path class="ve-e" d="M150 190H245V323 H340"/><text class="ve-el" x="198" y="178">faces</text><g class="ve-n" transform="translate(340 8)"><rect class="sh" width="460" height="50" rx="6"/><text x="230" y="18.5">1  Tune the baseline as hard</text><text class="sub" x="230" y="36">sweep lr, weight decay, warmup for both</text></g><g class="ve-n" transform="translate(340 66)"><rect class="sh" width="460" height="50" rx="6"/><text x="230" y="18.5">2  Match compute, finish schedules</text><text class="sub" x="230" y="36">no intermediate cosine checkpoints</text></g><g class="ve-n" transform="translate(340 124)"><rect class="sh" width="460" height="50" rx="6"/><text x="230" y="18.5">3  Measure wall-clock and memory</text><text class="sub" x="230" y="36">second-order: fewer steps, costlier steps</text></g><g class="ve-n is-key" transform="translate(340 182)"><rect class="sh" width="460" height="50" rx="6"/><text x="230" y="18.5">4  Check across scales</text><text class="sub" x="230" y="36">gains often shrink with model size</text></g><g class="ve-n" transform="translate(340 240)"><rect class="sh" width="460" height="50" rx="6"/><text x="230" y="18.5">5  Use multiple seeds</text><text class="sub" x="230" y="36">small loss gaps can be noise</text></g><g class="ve-n" transform="translate(340 298)"><rect class="sh" width="460" height="50" rx="6"/><text x="230" y="18.5">6  Look at stability</text><text class="sub" x="230" y="36">loss spikes, sensitivity to LR</text></g><g class="ve-n is-key" transform="translate(0 150)"><rect class="sh" width="150" height="80" rx="6"/><text x="75" y="29.6">Claim</text><text class="sub" x="75" y="57.6">X beats AdamW</text></g></svg></div><figcaption><span class="fig-n">Fig. 21</span>Most wins shrink under this filter. With careful per-optimizer tuning, speedups over AdamW were about 1.1 to 1.4x at small scale and fell with model size; matrix preconditioners (Muon, SOAP) did best (Wen et al., 2025).</figcaption></figure></section>
+    <section class="sec" id="s14" aria-labelledby="s14-h"><div class="sec-head"><p class="sec-num"><span class="n">14</span>Wrap-up</p><h2 id="s14-h">Check the ideas before the project</h2></div><div class="callout confusions"><span class="chip warn">Common confusions</span><ul><li><p class="myth">Adam with weight_decay is AdamW.</p><p class="fact">No. <code>torch.optim.Adam(weight_decay=...)</code> adds L2 to the gradient, which then gets normalized; AdamW decays the weights directly.</p></li><li><p class="myth">Bias correction is a minor detail.</p><p class="fact">At \(t=1\) with \(\beta_2 = 0.999\) the uncorrected second moment is 1000x too small. It matters most at the start, which is also when instability is most likely.</p></li><li><p class="myth">\(\epsilon\) is just for numerical safety.</p><p class="fact">It also sets the scale below which Adam becomes momentum SGD.</p></li><li><p class="myth">Lower \(\beta_2\) is always more stable.</p><p class="fact">Lower \(\beta_2\) reacts faster to gradient spikes, but its estimate is noisier; the trade-off is tied to batch size.</p></li><li><p class="myth">Muon replaces AdamW.</p><p class="fact">Muon handles hidden 2D matrices; embeddings, the LM head and 1D parameters still use AdamW.</p></li><li><p class="myth">Newton-Schulz computes the exact orthogonal factor.</p><p class="fact">Its coefficients trade exactness for speed; singular values land roughly in 0.7 to 1.2.</p></li><li><p class="myth">WSD and schedule-free are the same idea.</p><p class="fact">WSD is a schedule with a short final decay; schedule-free removes the decay by averaging iterates.</p></li></ul></div><div class="callout quiz"><span class="chip info">Check yourself</span><ol><li><p>Derive why \(\mathbb{E}[v_t] = (1 - \beta_2^t)\,\mathbb{E}[g^2]\) under stationarity. What happens to the first Adam update if you skip bias correction on \(v\) but keep it on \(m\)?</p><details><summary>Show answer</summary><p>Unroll \(v_t = (1-\beta_2)\sum_{i=1}^t \beta_2^{t-i} g_i^2\), take expectations and sum the geometric series. Without correction, \(v_1 = 0.001\,g_1^2\) (for \(\beta_2 = 0.999\)), so \(\sqrt{v_1} \approx 0.032|g_1|\) while \(\hat m_1 = g_1\). The update is about \(31.6\,\eta\) per coordinate instead of \(\eta\): a huge first step.</p></details></li><li><p>Explain why L2 regularization inside Adam decays a parameter with large historical gradients less than one with small historical gradients.</p><details><summary>Show answer</summary><p>The term \(\lambda\theta\) is added to \(g\), so the coordinate's update is about \((g + \lambda\theta)/\sqrt{\hat v}\). A large \(\hat v\) divides the decay term down; a small \(\hat v\) amplifies it.</p></details></li><li><p>A 7B model is trained with mixed-precision AdamW. How many GB does model state take? How much would 8-bit Adam save?</p><details><summary>Show answer</summary><p>16 bytes/param \(\times 7\times10^9 \approx 112\) GB. 8-bit Adam cuts \(m\) and \(v\) from 8 bytes to 2 bytes per parameter, saving 6 bytes/param, about 42 GB (leaving about 70 GB).</p></details></li><li><p>Why does LLM pretraining use \(\beta_2 = 0.95\) rather than 0.999?</p><details><summary>Show answer</summary><p>With 0.999, \(v\) averages over about 1000 steps and lags when a gradient suddenly grows, so updates become much larger than intended and the loss spikes. With 0.95 it averages over about 20 steps and tracks the change.</p></details></li><li><p>What does Newton-Schulz do to the singular values and singular vectors of the momentum matrix, and why does that make a better update?</p><details><summary>Show answer</summary><p>Singular vectors are unchanged; every singular value is mapped to roughly 1. The update then moves equally in all directions of the momentum's column and row space instead of being dominated by a few large ones. That is steepest descent under the spectral norm, and it helps underrepresented directions learn.</p></details></li><li><p>A paper shows optimizer X reaches AdamW's loss in 30% fewer steps on a 125M model. List three questions you would ask before adopting it.</p><details><summary>Show answer</summary><p>Was AdamW's LR, weight decay, \(\beta_2\) and warmup tuned as carefully? Does the gain hold in wall-clock time and at larger scales? Were finished schedules compared at equal budgets, with multiple seeds? (Also: memory overhead, stability across LRs.)</p></details></li></ol></div><h3>Resources</h3><div class="resources"><div class="res-col"><h3>Read</h3><ul class="res-list"><li class="res-item is-start"><div class="res-top"><a href="https://distill.pub/2017/momentum/">Why Momentum Really Works</a><span class="start-here">Start here</span></div><div class="res-meta">Distill <span class="chip plain">article</span></div><p>Interactive, rigorous intuition for momentum and conditioning.</p></li><li class="res-item"><div class="res-top"><a href="https://arxiv.org/abs/1412.6980">Adam (arXiv:1412.6980)</a></div><div class="res-meta">Kingma and Ba <span class="chip plain">paper</span></div><p>The original update and bias-correction derivation.</p></li><li class="res-item"><div class="res-top"><a href="https://arxiv.org/abs/1711.05101">Decoupled Weight Decay Regularization (arXiv:1711.05101)</a></div><div class="res-meta">Loshchilov and Hutter <span class="chip plain">paper</span></div><p>Why L2 and weight decay differ under Adam.</p></li><li class="res-item"><div class="res-top"><a href="https://arxiv.org/abs/1804.04235">Adafactor (arXiv:1804.04235)</a></div><div class="res-meta">Shazeer and Stern <span class="chip plain">paper</span></div><p>Factored second moments and update clipping.</p></li><li class="res-item"><div class="res-top"><a href="https://arxiv.org/abs/2110.02861">8-bit Optimizers via Block-wise Quantization (arXiv:2110.02861)</a></div><div class="res-meta">Dettmers et al. <span class="chip plain">paper</span></div><p>How to quantize optimizer state safely.</p></li><li class="res-item"><div class="res-top"><a href="https://kellerjordan.github.io/posts/muon/">Muon: An optimizer for hidden layers</a></div><div class="res-meta">Keller Jordan <span class="chip plain">blog</span></div><p>The design and Newton-Schulz coefficients, from the author.</p></li><li class="res-item"><div class="res-top"><a href="https://arxiv.org/abs/2502.16982">Muon is Scalable for LLM Training (arXiv:2502.16982)</a></div><div class="res-meta">Liu et al. <span class="chip plain">paper</span></div><p>Weight decay, RMS matching, Moonlight.</p></li><li class="res-item"><div class="res-top"><a href="https://arxiv.org/abs/2405.15682">The Road Less Scheduled (arXiv:2405.15682)</a></div><div class="res-meta">Defazio et al. <span class="chip plain">paper</span></div><p>Schedule-free SGD and AdamW.</p></li><li class="res-item"><div class="res-top"><a href="https://arxiv.org/abs/2509.02046">Fantastic Pretraining Optimizers and Where to Find Them (arXiv:2509.02046)</a></div><div class="res-meta">Wen et al. <span class="chip plain">paper</span></div><p>A careful, tuned benchmark of modern optimizers.</p></li><li class="res-item"><div class="res-top"><a href="https://arxiv.org/abs/2302.06675">Lion (arXiv:2302.06675)</a></div><div class="res-meta">Also useful <span class="chip plain">paper</span></div><p>The sign-based update found by program search.</p></li><li class="res-item"><div class="res-top"><a href="https://arxiv.org/abs/2305.14342">Sophia (arXiv:2305.14342)</a></div><div class="res-meta">Also useful <span class="chip plain">paper</span></div><p>Clipped Newton step with a diagonal Hessian.</p></li><li class="res-item"><div class="res-top"><a href="https://arxiv.org/abs/1802.09568">Shampoo (arXiv:1802.09568)</a></div><div class="res-meta">Also useful <span class="chip plain">paper</span></div><p>Kronecker-factored preconditioning.</p></li><li class="res-item"><div class="res-top"><a href="https://arxiv.org/abs/2409.11321">SOAP (arXiv:2409.11321)</a></div><div class="res-meta">Also useful <span class="chip plain">paper</span></div><p>Adam in Shampoo's eigenbasis.</p></li><li class="res-item"><div class="res-top"><a href="https://arxiv.org/abs/2507.20534">Kimi K2 (arXiv:2507.20534)</a></div><div class="res-meta">Also useful <span class="chip plain">paper</span></div><p>For MuonClip.</p></li><li class="res-item"><div class="res-top"><a href="https://arxiv.org/abs/2404.06395">MiniCPM (arXiv:2404.06395)</a></div><div class="res-meta">Also useful <span class="chip plain">paper</span></div><p>For WSD.</p></li><li class="res-item"><div class="res-top"><a href="https://arxiv.org/abs/2306.07179">AlgoPerf (arXiv:2306.07179)</a></div><div class="res-meta">Also useful <span class="chip plain">paper</span></div><p>The optimizer benchmark.</p></li></ul></div><div class="res-col"><h3>Watch</h3><ul class="res-list"><li class="res-item"><div class="res-top"><a href="https://www.youtube.com/watch?v=k8fTYJPd3_I">Gradient Descent With Momentum</a></div><div class="res-meta">Andrew Ng (DeepLearningAI) <span class="chip plain">video</span></div><p>Short, clear EMA view of momentum.</p></li><li class="res-item"><div class="res-top"><a href="https://www.youtube.com/watch?v=JXQT_vxqwIs">Adam Optimization Algorithm</a></div><div class="res-meta">Andrew Ng (DeepLearningAI) <span class="chip plain">video</span></div><p>Adam as momentum plus RMSProp, with bias correction.</p></li><li class="res-item"><div class="res-top"><a href="https://www.youtube.com/watch?v=4OAiakkmKQs">Depths of First Order Optimization</a></div><div class="res-meta">Jeremy Bernstein (Cohere) <span class="chip plain">video</span></div><p>The norm-based view of optimization behind Muon.</p></li></ul></div></div><div class="project"><span class="chip info">Chapter project</span><h3>An optimizer bake-off on your GPT-2</h3><p>Compare AdamW, Lion, Adafactor and Muon on one model, one dataset and one token budget, then decide what the evidence supports.</p><ol><li>Use GPT-2 small (or a 20 to 50M parameter version) with a fixed dataset and token budget, for example 500M tokens.</li><li>Implement or import AdamW (your <code>MyAdamW</code>), Lion, Adafactor, and Muon (hidden 2D matrices) with AdamW on the rest.</li><li>Sweep learning rate over at least 5 log-spaced values per optimizer with the same WSD schedule, warmup and decay fraction. Record final validation loss, tokens/sec and peak memory.</li><li>Plot validation loss vs learning rate (the LR sensitivity curve), and loss vs wall-clock at each best LR.</li><li>Re-run the best two at a model 2 to 4x larger. Does the gap grow or shrink?</li><li>Stretch: from one WSD run, branch decays at 25%, 50% and 100% of the budget and compare with three separate cosine runs of those lengths.</li></ol><ul class="done"><li>A table plus a one-paragraph recommendation.</li><li>The recommendation states what you tuned and what you did not.</li></ul><p class="meta">uses sections 01 to 13</p></div></section>
+  </main>
+</div>
+
+<script>
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Linked highlighting: hovering any [data-ref], or focusing a prose term, lights every element that shares a ref.
+  const linked = [...document.querySelectorAll('[data-ref]')], refs = (el) => el.dataset.ref.split(' ');
+  let hovered = null, focused = null;
+  const paint = () => {
+    const keys = (hovered || focused)?.dataset.ref.split(' ') ?? [];
+    for (const t of linked) t.classList.toggle('is-lit', refs(t).some((k) => keys.includes(k)));
+    for (const svg of document.querySelectorAll('svg')) svg.classList.toggle('has-lit', !!svg.querySelector('.is-lit'));
+  };
+  for (const el of linked) {
+    el.addEventListener('pointerenter', () => { hovered = el; paint(); });
+    el.addEventListener('pointerleave', () => { hovered = null; paint(); });
+    el.addEventListener('focus', () => { focused = el; paint(); });
+    el.addEventListener('blur', () => { focused = null; paint(); });
+  }
+
+  // Stepper / scene player. Opens on the full picture, because the first view must show the answer.
+  for (const root of document.querySelectorAll('.ve-steps')) {
+    const parts = [...root.querySelectorAll('[data-s]')], caps = [...root.querySelectorAll('.ve-cap li')];
+    const range = root.querySelector('input[type=range]'), play = root.querySelector('[data-play]');
+    const n = caps.length; let i = 0, timer = null;
+    if (range) range.max = n - 1;
+    const show = (k) => {
+      i = Math.max(0, Math.min(n - 1, k));
+      for (const el of parts) { const s = el.dataset.s.trim().split(' ').map(Number); el.classList.toggle('on', s[0] <= i + 1); el.classList.toggle('now', s.includes(i + 1)); }
+      caps.forEach((c, j) => c.hidden = j !== i);
+      root.classList.toggle('is-full', i === n - 1);
+      if (range) range.value = i;
+    };
+    const stop = () => { clearInterval(timer); timer = null; if (play) play.textContent = 'Play'; };
+    root.addEventListener('click', (e) => { const b = e.target.closest('[data-go]'); if (b) { stop(); show(i + +b.dataset.go); } });
+    range?.addEventListener('input', () => { stop(); show(+range.value); });
+    play?.addEventListener('click', () => {
+      if (timer) return stop();
+      if (i === n - 1) show(0);
+      play.textContent = 'Pause';
+      timer = setInterval(() => (i < n - 1 ? show(i + 1) : stop()), 3500);
+    });
+    show(n - 1);
+    addEventListener('beforeprint', () => show(n - 1));
+  }
+
+  // Copy buttons: clipboard API, with a selection fallback for browsers that block it on file:// pages.
+  for (const btn of document.querySelectorAll('.code .copy')) {
+    btn.addEventListener('click', async () => {
+      const code = btn.closest('.code').querySelector('pre code');
+      try { await navigator.clipboard.writeText(code.innerText); }
+      catch { const r = document.createRange(); r.selectNodeContents(code); const s = getSelection(); s.removeAllRanges(); s.addRange(r); document.execCommand('copy'); s.removeAllRanges(); }
+      btn.textContent = 'Copied'; setTimeout(() => (btn.textContent = 'Copy'), 1500);
+    });
+  }
+
+  // TOC scroll-spy: the section crossing the top tenth of the viewport is the current one.
+  const tocLinks = new Map([...document.querySelectorAll('.toc a[href^="#"]')].map((a) => [a.getAttribute('href').slice(1), a]));
+  const spy = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      for (const a of tocLinks.values()) a.removeAttribute('aria-current');
+      tocLinks.get(e.target.id)?.setAttribute('aria-current', 'true');
+    }
+  }, { rootMargin: '-10% 0px -80% 0px' });
+  for (const id of tocLinks.keys()) { const s = document.getElementById(id); if (s) spy.observe(s); }
+
+  // Entrance: each block rises in once. Without JS, in print, or under reduced motion, everything shows its final state.
+  if (!still) {
+    document.documentElement.classList.add('js-motion');
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) if (e.isIntersecting) { io.unobserve(e.target); e.target.classList.add('in'); }
+    }, { rootMargin: '0px 0px -10% 0px' });
+    for (const el of document.querySelectorAll('.ch-head, .sec > *')) io.observe(el);
+  }
+
+  // Sidebar visibility is a per-reader preference; storage can be blocked, so it only seeds the initial state.
+  (() => {
+    const root = document.documentElement, b = document.getElementById('toc-toggle');
+    const apply = (hidden) => { root.classList.toggle('toc-hidden', hidden); b.setAttribute('aria-expanded', !hidden); b.setAttribute('aria-label', hidden ? 'Show sidebar' : 'Hide sidebar'); };
+    let hidden = false; try { hidden = localStorage.getItem('toc-hidden') === '1'; } catch (e) {}
+    apply(hidden);
+    b.addEventListener('click', () => { hidden = !hidden; apply(hidden); try { localStorage.setItem('toc-hidden', hidden ? '1' : '0'); } catch (e) {} });
+  })();
+  // Theme: explicit choice wins; with none saved the page follows the OS scheme.
+  (() => {
+    const root = document.documentElement, b = document.getElementById('theme-toggle'), mq = matchMedia('(prefers-color-scheme: light)');
+    const mode = () => root.dataset.theme || (mq.matches ? 'light' : 'dark');
+    const sync = () => { const m = mode(); b.dataset.mode = m; b.setAttribute('aria-label', m === 'light' ? 'Switch to dark mode' : 'Switch to light mode'); };
+    sync(); mq.addEventListener('change', sync);
+    b.addEventListener('click', () => { const next = mode() === 'light' ? 'dark' : 'light'; root.dataset.theme = next; try { localStorage.setItem('theme', next); } catch (e) {} sync(); });
+  })();
+</script>
+</body>
+</html>

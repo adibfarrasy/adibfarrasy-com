@@ -1,0 +1,15 @@
+<figure>
+<div class="frame">
+<svg class="ve-svg" viewBox="0 0 800 280" role="img" aria-label="QLoRA forward and backward. The 4-bit frozen base is dequantized to bf16 and multiplied with the input. The bf16 trained adapter adds its correction. Gradients flow back through the dequantized weights into the adapter only.">
+<path class="ve-e" d="M190 75H320"/><text class="ve-el" x="255" y="66">dequantizes</text>
+<path class="ve-e" d="M470 75H600"/><text class="ve-el" x="535" y="66">x W0</text>
+<path class="ve-e is-hot" d="M470 195H540V115H600"/><text class="ve-el r" x="550" y="160">adds BA·x</text>
+<path class="ve-e is-hot is-async" d="M690 130V255H395V230"/><text class="ve-el" x="545" y="246">gradients: base stays frozen</text>
+<g class="ve-n" transform="translate(20 40)"><rect class="sh is-off" width="170" height="70" rx="6"/><text x="85" y="26">base</text><text class="sub" x="85" y="48">4-bit NF4</text></g>
+<g class="ve-n" transform="translate(320 40)"><rect class="sh" width="150" height="70" rx="6"/><text x="75" y="26">W0 in bf16</text><text class="sub" x="75" y="48">c · NF4[idx]</text></g>
+<g class="ve-n is-key" transform="translate(320 160)"><rect class="sh" width="150" height="70" rx="6"/><text x="75" y="26">adapter</text><text class="sub" x="75" y="48">bf16, trained</text></g>
+<g class="ve-n" transform="translate(600 60)"><rect class="sh" width="180" height="70" rx="6"/><text x="90" y="26">output</text><text class="sub" x="90" y="48">bf16</text></g>
+</svg>
+</div>
+<figcaption><span class="fig-n">Fig. 12</span>Only the base is 4-bit. The adapter and all arithmetic stay in bf16, and trainable weights are never quantized.</figcaption>
+</figure>

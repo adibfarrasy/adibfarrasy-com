@@ -1,0 +1,17 @@
+<figure>
+<div class="frame">
+<svg class="ve-svg" viewBox="0 0 800 230" role="img" aria-label="Top: R1-Zero goes from the V3 base straight to RL with accuracy and format rewards. Bottom: R1 goes from the base through cold-start SFT, reasoning RL, rejection-sampling SFT on about 800k samples, and a final RL stage for helpfulness and harmlessness.">
+<path class="ve-e is-hot" d="M160 40H620"/><text class="ve-el" x="390" y="31">RL only: accuracy + format rewards</text>
+<g class="ve-n" transform="translate(20 10)"><rect class="sh" width="140" height="60" rx="6"/><text x="70" y="22">V3 base</text><text class="sub" x="70" y="44">no SFT</text></g>
+<g class="ve-n is-key" transform="translate(620 10)"><rect class="sh" width="160" height="60" rx="6"/><text x="80" y="22">R1-Zero</text><text class="sub" x="80" y="44">length grows</text></g>
+<text class="ve-tick l" x="20" y="116">DeepSeek-R1</text>
+<path class="ve-e" d="M140 165H180"/><path class="ve-e" d="M300 165H340"/><path class="ve-e" d="M460 165H500"/><path class="ve-e" d="M620 165H660"/>
+<g class="ve-n" transform="translate(20 130)"><rect class="sh" width="120" height="70" rx="6"/><text x="60" y="26">V3 base</text><text class="sub" x="60" y="48">start</text></g>
+<g class="ve-n" transform="translate(180 130)"><rect class="sh" width="120" height="70" rx="6"/><text x="60" y="26">Cold start</text><text class="sub" x="60" y="48">few k CoT</text></g>
+<g class="ve-n" transform="translate(340 130)"><rect class="sh" width="120" height="70" rx="6"/><text x="60" y="26">Reasoning RL</text><text class="sub" x="60" y="48">lang. reward</text></g>
+<g class="ve-n" transform="translate(500 130)"><rect class="sh" width="120" height="70" rx="6"/><text x="60" y="26">RS-SFT</text><text class="sub" x="60" y="48">~800k samples</text></g>
+<g class="ve-n is-key" transform="translate(660 130)"><rect class="sh" width="120" height="70" rx="6"/><text x="60" y="26">Final RL</text><text class="sub" x="60" y="48">help + safety</text></g>
+</svg>
+</div>
+<figcaption><span class="fig-n">Fig. 15</span>R1-Zero shows RL alone can teach reasoning. R1 adds SFT stages around it for readability and breadth.</figcaption>
+</figure>

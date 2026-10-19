@@ -1,0 +1,19 @@
+<figure>
+<div class="frame">
+<svg class="ve-svg" viewBox="0 0 800 280" role="img" aria-label="Top row, PPO: policy trained, reference frozen, reward model frozen, critic trained; baseline is a learned critic with per-token advantages from GAE. Bottom row, GRPO: policy, reference, reward model or verifier, and a dashed dropped critic; baseline is the mean reward of G samples, per-response advantage.">
+<text class="ve-tick l" x="20" y="66">PPO</text>
+<g class="ve-n" transform="translate(130 30)"><rect class="sh" width="140" height="56" rx="6"/><text x="70" y="22">Policy</text><text class="sub" x="70" y="42">trained</text></g>
+<g class="ve-n" transform="translate(300 30)"><rect class="sh" width="140" height="56" rx="6"/><text x="70" y="22">Reference</text><text class="sub" x="70" y="42">frozen</text></g>
+<g class="ve-n" transform="translate(470 30)"><rect class="sh" width="140" height="56" rx="6"/><text x="70" y="22">Reward model</text><text class="sub" x="70" y="42">frozen</text></g>
+<g class="ve-n is-key" transform="translate(640 30)"><rect class="sh" width="140" height="56" rx="6"/><text x="70" y="22">Critic</text><text class="sub" x="70" y="42">trained</text></g>
+<text class="ve-tick l" x="130" y="118">baseline: learned V(s), advantage per token via GAE</text>
+<text class="ve-tick l" x="20" y="196">GRPO</text>
+<g class="ve-n" transform="translate(130 160)"><rect class="sh" width="140" height="56" rx="6"/><text x="70" y="22">Policy</text><text class="sub" x="70" y="42">trained</text></g>
+<g class="ve-n" transform="translate(300 160)"><rect class="sh" width="140" height="56" rx="6"/><text x="70" y="22">Reference</text><text class="sub" x="70" y="42">frozen</text></g>
+<g class="ve-n" transform="translate(470 160)"><rect class="sh" width="140" height="56" rx="6"/><text x="70" y="22">RM or verifier</text><text class="sub" x="70" y="42">frozen or rules</text></g>
+<g class="ve-n" transform="translate(640 160)"><rect class="sh is-off" width="140" height="56" rx="6"/><text x="70" y="22">Critic</text><text class="sub" x="70" y="42">dropped</text></g>
+<text class="ve-tick l" x="130" y="248">baseline: mean reward of G samples, advantage per response</text>
+</svg>
+</div>
+<figcaption><span class="fig-n">Fig. 17</span>GRPO trades the critic for more samples per prompt (8 to 64). Generation is costly but parallel, and the group baseline is conditioned on that prompt's difficulty.</figcaption>
+</figure>

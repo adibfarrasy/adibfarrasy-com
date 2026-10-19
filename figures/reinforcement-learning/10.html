@@ -1,0 +1,16 @@
+<figure>
+<div class="frame">
+<svg class="ve-svg" viewBox="0 0 800 270" role="img" aria-label="Five generated tokens. Each token gets a small negative reward, beta times the log ratio of policy to reference. The last token also gets the large reward model score.">
+<path class="ve-grid" d="M40 140H780"/>
+<path class="ve-e" d="M110 50V138"/><text class="ve-el r" x="120" y="100">penalizes</text>
+<path class="ve-e" d="M260 50V138"/><path class="ve-e" d="M410 50V138"/><path class="ve-e" d="M560 50V138"/>
+<g class="ve-n"><rect class="sh" x="60" y="10" width="100" height="40" rx="6"/><text x="110" y="30">y1</text><rect class="sh" x="210" y="10" width="100" height="40" rx="6"/><text x="260" y="30">y2</text><rect class="sh" x="360" y="10" width="100" height="40" rx="6"/><text x="410" y="30">y3</text><rect class="sh" x="510" y="10" width="100" height="40" rx="6"/><text x="560" y="30">y4</text></g>
+<g class="ve-n is-key"><rect class="sh" x="660" y="10" width="100" height="40" rx="6"/><text x="710" y="30">yT</text></g>
+<rect class="ve-bar hot" x="692" y="70" width="36" height="70"/><text class="ve-bar-v" text-anchor="middle" x="710" y="60">RM score rφ</text>
+<rect class="ve-bar" x="92" y="140" width="36" height="14"/><rect class="ve-bar" x="242" y="140" width="36" height="14"/><rect class="ve-bar" x="392" y="140" width="36" height="14"/><rect class="ve-bar" x="542" y="140" width="36" height="14"/><rect class="ve-bar" x="692" y="140" width="36" height="14"/>
+<text class="ve-bar-v" text-anchor="middle" x="110" y="178">−β log(π/πref)</text><text class="ve-bar-v" text-anchor="middle" x="260" y="178">−β log(π/πref)</text><text class="ve-bar-v" text-anchor="middle" x="410" y="178">−β log(π/πref)</text><text class="ve-bar-v" text-anchor="middle" x="560" y="178">−β log(π/πref)</text><text class="ve-bar-v" text-anchor="middle" x="710" y="178">−β log(π/πref)</text>
+<text class="ve-tick l" x="60" y="230">per-token reward: a small dense KL penalty everywhere, the RM score only at the end</text>
+</svg>
+</div>
+<figcaption><span class="fig-n">Fig. 10</span>PPO-based RLHF folds the KL into the reward, so GAE can spread the end-of-sequence score backward.</figcaption>
+</figure>

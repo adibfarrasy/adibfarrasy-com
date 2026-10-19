@@ -1,0 +1,15 @@
+<figure>
+<div class="frame">
+<svg class="ve-svg" style="min-width:774px" viewBox="0 0 900 300" role="img" aria-label="Memory view. A token's feature-mapped key and value write an outer product into the d_k by d_v state matrix S. A query reads S and returns a mix of stored values weighted by how well the query matches each stored key.">
+<path class="ve-e is-hot" d="M170 130H290"/><text class="ve-el" x="230" y="121">writes</text>
+<path class="ve-e" d="M350 245V202"/><text class="ve-el r" x="358" y="226">matches</text>
+<path class="ve-e is-hot" d="M410 130H570"/><text class="ve-el" x="490" y="121">returns mix</text>
+<g class="ve-n" transform="translate(20 100)"><rect class="sh" width="150" height="60" rx="6"/><text x="75" y="22">φ(k), v</text><text class="sub" x="75" y="44">one token</text></g>
+<g class="ve-n is-key" transform="translate(290 60)"><rect class="sh" width="120" height="140" rx="6"/><path class="ve-grid" d="M320 60V200M350 60V200M380 60V200M290 95H410M290 130H410M290 165H410" transform="translate(-290 -60)"/></g>
+<text class="ve-tick" x="350" y="48">S: d_k × d_v</text>
+<g class="ve-n" transform="translate(275 245)"><rect class="sh" width="150" height="46" rx="6"/><text x="75" y="23">φ(q)</text></g>
+<g class="ve-n" transform="translate(570 100)"><rect class="sh" width="150" height="60" rx="6"/><text x="75" y="22">o</text><text class="sub" x="75" y="44">mix of values</text></g>
+</svg>
+</div>
+<figcaption><span class="fig-n">Fig. 2</span>S is a tiny associative memory: writing stores a value at the address φ(k), reading blends values by how well φ(q) matches each address.</figcaption>
+</figure>

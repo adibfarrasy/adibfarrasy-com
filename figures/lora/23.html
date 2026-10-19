@@ -1,0 +1,29 @@
+<figure>
+<div class="cases">
+<div class="case" data-st="ok"><span class="chip ok">Matches</span><h3>Typical post-training data</h3>
+<svg class="ve-mini" viewBox="0 0 240 100" role="img" aria-label="Schematic: LoRA and full fine-tuning reach the same quality on typical SFT and preference sets.">
+<text class="ve-tick l" x="6" y="24">full FT</text><g class="ve-n"><rect class="sh" x="80" y="6" width="140" height="26" rx="4"/></g>
+<text class="ve-tick l" x="6" y="62">LoRA</text><g class="ve-n is-st"><rect class="sh" x="80" y="44" width="140" height="26" rx="4"/></g>
+<text class="ve-tick" x="120" y="92">same sample efficiency</text>
+</svg></div>
+<div class="case" data-st="warn"><span class="chip warn">Falls short</span><h3>More information than capacity</h3>
+<svg class="ve-mini" viewBox="0 0 240 100" role="img" aria-label="Schematic: LoRA ends below full fine-tuning once the data holds more information than the adapter can hold.">
+<text class="ve-tick l" x="6" y="24">full FT</text><g class="ve-n"><rect class="sh" x="80" y="6" width="140" height="26" rx="4"/></g>
+<text class="ve-tick l" x="6" y="62">LoRA</text><g class="ve-n is-st"><rect class="sh" x="80" y="44" width="90" height="26" rx="4"/></g>
+<text class="ve-tick" x="120" y="92">the adapter is full</text>
+</svg></div>
+<div class="case" data-st="ok"><span class="chip ok">Matches</span><h3>Reinforcement learning</h3>
+<svg class="ve-mini" viewBox="0 0 240 100" role="img" aria-label="Schematic: even rank-1 LoRA matches full fine-tuning for RL.">
+<text class="ve-tick l" x="6" y="24">full FT</text><g class="ve-n"><rect class="sh" x="80" y="6" width="140" height="26" rx="4"/></g>
+<text class="ve-tick l" x="6" y="62">LoRA r=1</text><g class="ve-n is-st"><rect class="sh" x="80" y="44" width="140" height="26" rx="4"/></g>
+<text class="ve-tick" x="120" y="92">few bits per episode</text>
+</svg></div>
+<div class="case" data-st="ok"><span class="chip info">About 10x</span><h3>Best learning rate</h3>
+<svg class="ve-mini" viewBox="0 0 240 100" role="img" aria-label="The best LoRA learning rate is about 10 times the full fine-tuning rate, and roughly independent of rank under 1 over r scaling.">
+<text class="ve-tick l" x="6" y="24">full 1x</text><g class="ve-n"><rect class="sh" x="80" y="6" width="14" height="26" rx="3"/></g>
+<text class="ve-tick l" x="6" y="62">LoRA 10x</text><g class="ve-n is-st"><rect class="sh" x="80" y="44" width="140" height="26" rx="4"/></g>
+<text class="ve-tick" x="120" y="92">flat across rank</text>
+</svg></div>
+</div>
+<figcaption><span class="fig-n">Fig. 23</span>Four findings drawn as schematics; bar lengths show the direction of each result, not measured values.</figcaption>
+</figure>

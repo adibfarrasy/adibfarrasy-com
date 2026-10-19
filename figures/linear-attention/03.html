@@ -1,0 +1,28 @@
+<figure class="ve-steps">
+<div class="frame">
+<svg class="ve-svg" style="min-width:774px" viewBox="0 0 900 300" role="img" aria-label="One recurrence step. The previous state S(t-1) carries into S(t). Token t writes the outer product of its key features and value into S(t). The query features read S(t) and produce the output o(t).">
+<path class="ve-e" data-s="3" pathLength="1" d="M170 145H420"/><text class="ve-el" data-s="3" x="295" y="136">carries</text>
+<path class="ve-e is-hot" data-s="2" data-ref="w" pathLength="1" d="M380 38H495V110"/><text class="ve-el" data-s="2" x="440" y="29">writes k vᵀ</text>
+<path class="ve-e is-hot" data-s="4" data-ref="r" pathLength="1" d="M380 260H495V180"/><text class="ve-el" data-s="4" x="440" y="251">reads</text>
+<path class="ve-e" data-s="4" pathLength="1" d="M570 145H710"/><text class="ve-el" data-s="4" x="640" y="136">outputs</text>
+<g class="ve-n" data-s="1" transform="translate(20 110)"><rect class="sh" width="150" height="70" rx="6"/><text x="75" y="26">S(t-1)</text><text class="sub" x="75" y="50">d_k × d_v</text></g>
+<g class="ve-n" data-s="2" data-ref="w" transform="translate(230 10)"><rect class="sh" width="150" height="56" rx="6"/><text x="75" y="22">φ(k), v</text><text class="sub" x="75" y="42">token t</text></g>
+<g class="ve-n is-key" data-s="3" transform="translate(420 110)"><rect class="sh" width="150" height="70" rx="6"/><text x="75" y="26">S(t)</text><text class="sub" x="75" y="50">S(t-1) + φ(k)vᵀ</text></g>
+<g class="ve-n" data-s="4" data-ref="r" transform="translate(230 235)"><rect class="sh" width="150" height="50" rx="6"/><text x="75" y="19">φ(q)</text><text class="sub" x="75" y="38">token t</text></g>
+<g class="ve-n" data-s="4" transform="translate(710 110)"><rect class="sh" width="150" height="70" rx="6"/><text x="75" y="26">o(t)</text><text class="sub" x="75" y="50">φ(q)ᵀ S(t)</text></g>
+</svg>
+</div>
+<div class="ve-player">
+<ol class="ve-cap">
+<li data-n="1/4">The state S(t-1) is the whole memory so far. It has the same size at every t.</li>
+<li data-n="2/4">Token t makes a rank-1 outer product of its key features and its value.</li>
+<li data-n="3/4">The outer product is added to the carried state: S(t) = S(t-1) + φ(k)vᵀ.</li>
+<li data-n="4/4">The query features read S(t) and give the output. Each step costs O(d_k d_v).</li>
+</ol>
+<button data-go="-1" aria-label="Previous step">←</button>
+<button data-play>Play</button>
+<input type="range" min="0" value="0" aria-label="Step">
+<button data-go="1" aria-label="Next step">→</button>
+</div>
+<figcaption><span class="fig-n">Fig. 3</span>Katharopoulos et al. (2020) made the RNN link explicit. Generating token n + 1 costs the same as token 2.</figcaption>
+</figure>

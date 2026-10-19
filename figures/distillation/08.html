@@ -1,0 +1,30 @@
+<figure class="ve-steps">
+<div class="frame">
+<svg class="ve-svg" viewBox="0 0 800 210" role="img" aria-label="GKD loop. The student samples a response from the prompt. The teacher scores every position of that response. A per-token divergence compares teacher and student. The student is updated, with no gradient through the sampling.">
+<path class="ve-e" data-s="1" pathLength="1" d="M140 100H200"/>
+<path class="ve-e" data-s="1" pathLength="1" d="M330 100H400"/><text class="ve-el" data-s="1" x="365" y="90">samples</text>
+<path class="ve-e" data-s="2" pathLength="1" d="M530 85H560V45H590"/><text class="ve-el" data-s="2" x="560" y="30">reads</text>
+<path class="ve-e" data-s="3" pathLength="1" d="M530 115H560V150H590"/>
+<path class="ve-e" data-s="3" pathLength="1" d="M685 75V130"/><text class="ve-el r" data-s="3" x="693" y="108">p vs q</text>
+<path class="ve-e is-hot" data-s="4" pathLength="1" d="M590 175H265V130"/><text class="ve-el" data-s="4" x="430" y="166">updates θ</text>
+<g class="ve-n" data-s="1" transform="translate(20 70)"><rect class="sh" width="120" height="60" rx="6"/><text x="60" y="22">Prompt x</text></g>
+<g class="ve-n is-key" data-s="1" transform="translate(200 70)"><rect class="sh" width="130" height="60" rx="6"/><text x="65" y="22">Student</text><text class="sub" x="65" y="44">q_θ</text></g>
+<g class="ve-n" data-s="1" transform="translate(400 70)"><rect class="sh" width="130" height="60" rx="6"/><text x="65" y="22">Response ŷ</text><text class="sub" x="65" y="44">student tokens</text></g>
+<g class="ve-n" data-s="2" transform="translate(590 15)"><rect class="sh" width="190" height="60" rx="6"/><text x="95" y="22">Teacher p</text><text class="sub" x="95" y="44">every position</text></g>
+<g class="ve-n" data-s="3" transform="translate(590 130)"><rect class="sh" width="190" height="60" rx="6"/><text x="95" y="22">D(p ‖ q)</text><text class="sub" x="95" y="44">per token</text></g>
+</svg>
+</div>
+<div class="ve-player">
+<ol class="ve-cap">
+<li data-n="1/4">Sample a response ŷ from the current student for each prompt.</li>
+<li data-n="2/4">Run the teacher on (x, ŷ). It gives a next-token distribution at every position.</li>
+<li data-n="3/4">Compute a divergence D (forward KL, reverse KL or JSD) between teacher and student at each position, then average over the response length.</li>
+<li data-n="4/4">Update the student. No gradient flows through the sampling step: the samples are a fixed dataset, refreshed each step.</li>
+</ol>
+<button data-go="-1" aria-label="Previous step">←</button>
+<button data-play>Play</button>
+<input type="range" min="0" value="0" aria-label="Step">
+<button data-go="1" aria-label="Next step">→</button>
+</div>
+<figcaption><span class="fig-n">Fig. 8</span>The GKD loop. Every token gets a teacher signal, unlike RL with one scalar reward at the end.</figcaption>
+</figure>

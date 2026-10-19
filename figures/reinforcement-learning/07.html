@@ -1,0 +1,26 @@
+<figure>
+<div class="frame">
+<svg class="ve-svg" viewBox="0 0 800 290" role="img" aria-label="Two plots of the PPO objective against the ratio rho. For a positive advantage the objective rises with rho up to 1.2 and is flat after, so the gradient is zero there. For a negative advantage the objective is flat below 0.8 and falls with rho after, so the gradient is zero only below 0.8. Both are pessimistic: moving the wrong way keeps the gradient.">
+<text class="ve-tick l" x="40" y="16">A &gt; 0: good action</text>
+<path class="ve-grid" d="M40 236H360M147 30V236M253 30V236"/>
+<g class="ve-dim is-key"><path class="ln" d="M147 46H253"/><text x="200" y="38">1 ± ε, ε = 0.2</text></g>
+<path class="ve-e is-hot no-ah" d="M40 220L253 76"/>
+<path class="ve-e no-ah" d="M253 76H360"/><text class="ve-el" x="306" y="64">no gradient</text>
+<path class="ann" d="M92 148L112 160"/><g class="ve-co" transform="translate(84 140)"><circle r="11"/><text>1</text></g>
+<text class="ve-tick" x="147" y="256">0.8</text><text class="ve-tick" x="200" y="256">1</text><text class="ve-tick" x="253" y="256">1.2</text>
+<text class="ve-tick l" x="440" y="16">A &lt; 0: bad action</text>
+<path class="ve-grid" d="M440 236H760M547 30V236M653 30V236"/>
+<g class="ve-dim is-key"><path class="ln" d="M547 46H653"/><text x="600" y="38">1 ± ε, ε = 0.2</text></g>
+<path class="ve-e no-ah" d="M440 70H547"/><text class="ve-el" x="493" y="94">no gradient</text>
+<path class="ve-e is-hot no-ah" d="M547 70L760 220"/>
+<path class="ann" d="M716 141L706 168"/><g class="ve-co" transform="translate(720 130)"><circle r="11"/><text>2</text></g>
+<text class="ve-tick" x="547" y="256">0.8</text><text class="ve-tick" x="600" y="256">1</text><text class="ve-tick" x="653" y="256">1.2</text>
+<text class="ve-tick" x="200" y="280">ratio ρ</text><text class="ve-tick" x="600" y="280">ratio ρ</text>
+</svg>
+</div>
+<figcaption><span class="fig-n">Fig. 7</span>Vertical axis: the per-sample objective. Accent line: the gradient flows. Grey line: it is zero.</figcaption>
+<ol class="callouts">
+<li><span class="co-n">1</span>Wrong way: A &gt; 0 but \(\rho\) fell below 0.8. The min picks the unclipped term, so the mistake is still corrected.</li>
+<li><span class="co-n">2</span>Wrong way: A &lt; 0 but \(\rho\) rose above 1.2. Again the gradient flows. Clipping never hides a loss.</li>
+</ol>
+</figure>

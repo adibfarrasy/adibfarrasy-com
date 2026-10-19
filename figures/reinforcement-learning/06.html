@@ -1,0 +1,23 @@
+<figure>
+<div class="cases">
+<div class="case" data-st="warn"><span class="chip warn">Low variance, biased</span><h3>λ = 0: one-step TD</h3>
+<svg class="ve-mini" viewBox="0 0 240 112" role="img" aria-label="With lambda 0 only the first TD error has weight 1; all later ones have weight 0.">
+<path class="ve-grid" d="M8 88H236"/>
+<rect class="ve-bar hot" x="14" y="24" width="28" height="64"/><rect class="ve-bar" x="52" y="86" width="28" height="2"/><rect class="ve-bar" x="90" y="86" width="28" height="2"/><rect class="ve-bar" x="128" y="86" width="28" height="2"/><rect class="ve-bar" x="166" y="86" width="28" height="2"/><rect class="ve-bar" x="204" y="86" width="28" height="2"/>
+<text class="ve-tick l" x="14" y="106">δt</text><text class="ve-tick" x="216" y="106">δt+5</text>
+</svg></div>
+<div class="case" data-st="ok"><span class="chip ok">In between</span><h3>λ = 0.5: decaying mix</h3>
+<svg class="ve-mini" viewBox="0 0 240 112" role="img" aria-label="With lambda 0.5 the weights halve at every step: 1, 0.5, 0.25 and so on.">
+<path class="ve-grid" d="M8 88H236"/>
+<rect class="ve-bar hot" x="14" y="24" width="28" height="64"/><rect class="ve-bar" x="52" y="56" width="28" height="32"/><rect class="ve-bar" x="90" y="72" width="28" height="16"/><rect class="ve-bar" x="128" y="80" width="28" height="8"/><rect class="ve-bar" x="166" y="84" width="28" height="4"/><rect class="ve-bar" x="204" y="86" width="28" height="2"/>
+<text class="ve-tick l" x="14" y="106">δt</text><text class="ve-tick" x="216" y="106">δt+5</text>
+</svg></div>
+<div class="case" data-st="risk"><span class="chip risk">Unbiased, high variance</span><h3>λ = 1: Monte Carlo</h3>
+<svg class="ve-mini" viewBox="0 0 240 112" role="img" aria-label="With lambda 1 every TD error has weight 1, which sums to the full return minus the value.">
+<path class="ve-grid" d="M8 88H236"/>
+<rect class="ve-bar hot" x="14" y="24" width="28" height="64"/><rect class="ve-bar" x="52" y="24" width="28" height="64"/><rect class="ve-bar" x="90" y="24" width="28" height="64"/><rect class="ve-bar" x="128" y="24" width="28" height="64"/><rect class="ve-bar" x="166" y="24" width="28" height="64"/><rect class="ve-bar" x="204" y="24" width="28" height="64"/>
+<text class="ve-tick l" x="14" y="106">δt</text><text class="ve-tick" x="216" y="106">δt+5</text>
+</svg></div>
+</div>
+<figcaption><span class="fig-n">Fig. 6</span>Weight \((\gamma\lambda)^l\) on each future TD error, drawn for \(\gamma = 1\). At \(\lambda = 1\) the \(V\) terms telescope into \(G_t - V(s_t)\).</figcaption>
+</figure>

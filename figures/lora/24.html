@@ -1,0 +1,50 @@
+<figure>
+<div class="frame">
+<svg class="ve-svg" viewBox="0 0 800 438" role="img" aria-label="Starting ranges for LoRA settings, each on its own axis. target_modules: all-linear. r: 16 to 64 on a log axis from 1 to 256, with 1 to 8 enough for RL or small style tasks. lora_alpha: 16 to 32, or 2r. Learning rate: 1e-4 to 2e-4 for 7B-class models, about 10 times the full fine-tuning rate. lora_dropout: 0 to 0.05. Batch size: 32 to 128 sequences. Epochs: 1 to 3. Scheduler: cosine or linear with a short warmup.">
+<text class="ve-tick l" x="20" y="39">target_modules</text>
+<text class="ve-bar-v" x="210" y="34" style="fill:var(--text)">all-linear</text>
+<text class="ve-tick l" x="210" y="56">MLP coverage matters more than rank</text>
+<text class="ve-tick l" x="20" y="89">r</text>
+<path class="ve-grid" d="M210 84H560"/>
+<rect class="ve-bar" x="210.0" y="93" width="131.2" height="6" rx="1"/>
+<rect class="ve-bar hot" x="385.0" y="76" width="87.5" height="16" rx="2"/>
+<text class="ve-bar-v" x="576" y="84" style="fill:var(--text)">16 to 64</text>
+<text class="ve-tick l" x="210" y="114">1</text>
+<text class="ve-tick" style="text-anchor:end" x="560" y="114">256</text>
+<text class="ve-tick l" x="20" y="139">lora_alpha</text>
+<path class="ve-grid" d="M210 134H560"/>
+<rect class="ve-bar hot" x="297.5" y="126" width="87.5" height="16" rx="2"/>
+<text class="ve-bar-v" x="576" y="134" style="fill:var(--text)">16 to 32, or 2r</text>
+<text class="ve-tick l" x="210" y="164">0</text>
+<text class="ve-tick" style="text-anchor:end" x="560" y="164">64</text>
+<text class="ve-tick l" x="20" y="189">learning rate</text>
+<path class="ve-grid" d="M210 184H560"/>
+<rect class="ve-bar hot" x="326.7" y="176" width="116.7" height="16" rx="2"/>
+<text class="ve-bar-v" x="576" y="184" style="fill:var(--text)">1e-4 to 2e-4</text>
+<text class="ve-tick l" x="210" y="214">0</text>
+<text class="ve-tick" style="text-anchor:end" x="560" y="214">0.0003</text>
+<text class="ve-tick l" x="20" y="239">lora_dropout</text>
+<path class="ve-grid" d="M210 234H560"/>
+<rect class="ve-bar hot" x="210.0" y="226" width="175.0" height="16" rx="2"/>
+<text class="ve-bar-v" x="576" y="234" style="fill:var(--text)">0 to 0.05</text>
+<text class="ve-tick l" x="210" y="264">0</text>
+<text class="ve-tick" style="text-anchor:end" x="560" y="264">0.1</text>
+<text class="ve-tick l" x="20" y="289">batch size</text>
+<path class="ve-grid" d="M210 284H560"/>
+<rect class="ve-bar hot" x="253.8" y="276" width="131.2" height="16" rx="2"/>
+<text class="ve-bar-v" x="576" y="284" style="fill:var(--text)">32 to 128 sequences</text>
+<text class="ve-tick l" x="210" y="314">0</text>
+<text class="ve-tick" style="text-anchor:end" x="560" y="314">256</text>
+<text class="ve-tick l" x="20" y="339">epochs</text>
+<path class="ve-grid" d="M210 334H560"/>
+<rect class="ve-bar hot" x="297.5" y="326" width="175.0" height="16" rx="2"/>
+<text class="ve-bar-v" x="576" y="334" style="fill:var(--text)">1 to 3</text>
+<text class="ve-tick l" x="210" y="364">0</text>
+<text class="ve-tick" style="text-anchor:end" x="560" y="364">4</text>
+<text class="ve-tick l" x="20" y="389">scheduler</text>
+<text class="ve-bar-v" x="210" y="384" style="fill:var(--text)">cosine or linear, short warmup</text>
+<text class="ve-tick l" x="210" y="406">as in the SFT recipe</text>
+</svg>
+</div>
+<figcaption><span class="fig-n">Fig. 24</span>Starting points, each bar on its own axis. Modest batches, 1 to 3 epochs, and a learning-rate sweep first.</figcaption>
+</figure>

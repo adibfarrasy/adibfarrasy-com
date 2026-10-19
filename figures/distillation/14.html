@@ -1,0 +1,29 @@
+<figure>
+<div class="cases">
+<div class="case" data-st="ok"><span class="chip info">Black-box SFT</span><h3>Teacher is a closed API</h3>
+<svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="A closed API teacher sends text to the student.">
+<path class="ve-e is-st" d="M120 40V66"/><text class="ve-el r" x="128" y="57">text</text>
+<g class="ve-n"><rect class="sh" x="20" y="4" width="200" height="36" rx="5"/><text x="120" y="22">Closed API</text></g>
+<g class="ve-n is-st"><rect class="sh" x="20" y="68" width="200" height="36" rx="5"/><text x="120" y="86">Student SFT</text></g>
+</svg><p>Sequence-level KD. Filter aggressively.</p></div>
+<div class="case" data-st="ok"><span class="chip info">Logit KD, top-k</span><h3>Own teacher, same tokenizer, pretraining scale</h3>
+<svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="An owned teacher sends cached top-k targets to the student.">
+<path class="ve-e is-st" d="M120 40V66"/><text class="ve-el r" x="128" y="57">top-k probs</text>
+<g class="ve-n"><rect class="sh" x="20" y="4" width="200" height="36" rx="5"/><text x="120" y="22">Own teacher</text></g>
+<g class="ve-n is-st"><rect class="sh" x="20" y="68" width="200" height="36" rx="5"/><text x="120" y="86">Student</text></g>
+</svg><p>Gemma 2 style, with cached top-k targets.</p></div>
+<div class="case" data-st="ok"><span class="chip info">Prune, then KD</span><h3>Own teacher, smaller sibling cheaply</h3>
+<svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="The big model is pruned into a copy that logit KD then retrains.">
+<path class="ve-e is-st" d="M120 40V66"/><text class="ve-el r" x="128" y="57">prune+KL</text>
+<g class="ve-n"><rect class="sh" x="20" y="4" width="200" height="36" rx="5"/><text x="120" y="22">Big model</text></g>
+<g class="ve-n is-st"><rect class="sh" x="20" y="68" width="200" height="36" rx="5"/><text x="120" y="86">Pruned copy</text></g>
+</svg><p>Minitron style.</p></div>
+<div class="case" data-st="ok"><span class="chip info">On-policy KD</span><h3>Post-training a small model on a narrow skill</h3>
+<svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="Student rollouts are scored by the teacher at every token.">
+<path class="ve-e is-st" d="M120 40V66"/><text class="ve-el r" x="128" y="57">scores</text>
+<g class="ve-n"><rect class="sh" x="20" y="4" width="200" height="36" rx="5"/><text x="120" y="22">Student rollout</text></g>
+<g class="ve-n is-st"><rect class="sh" x="20" y="68" width="200" height="36" rx="5"/><text x="120" y="86">Teacher</text></g>
+</svg><p>GKD, with reverse KL or JSD.</p></div>
+</div>
+<figcaption><span class="fig-n">Fig. 14</span>Pick the recipe by what access you have to the teacher and how much compute you have.</figcaption>
+</figure>

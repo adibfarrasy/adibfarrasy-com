@@ -1,0 +1,36 @@
+<figure class="ve-steps">
+<div class="frame">
+<svg class="ve-svg" viewBox="0 -10 800 390" role="img" aria-label="Step 1: prompts feed the policy, which samples a response. Step 2: the response is scored by three models: the reward model, the frozen reference and the critic. Step 3: their outputs become GAE advantages. Step 4: the PPO update changes the policy. The policy and the critic are trained; the reward model and the reference are frozen.">
+<path class="ve-e" data-s="1" pathLength="1" d="M130 140H180"/><text class="ve-el" data-s="1" x="155" y="131">feeds</text>
+<path class="ve-e is-hot" data-s="1" pathLength="1" d="M320 140H390"/><text class="ve-el" data-s="1" x="355" y="131">samples</text>
+<path class="ve-e" data-s="2" pathLength="1" d="M500 140H545V50H610"/><text class="ve-el" data-s="2" x="578" y="41">scores</text>
+<path class="ve-e" data-s="2" pathLength="1" d="M500 140H610"/><text class="ve-el" data-s="2" x="555" y="131">anchors</text>
+<path class="ve-e" data-s="2" pathLength="1" d="M500 140H545V230H610"/><text class="ve-el" data-s="2" x="578" y="221">values</text>
+<path class="ve-e" data-s="3" pathLength="1" d="M695 270V300"/><text class="ve-el l" data-s="3" x="687" y="290">rewards, V</text>
+<path class="ve-e" data-s="4" pathLength="1" d="M610 328H520"/><text class="ve-el" data-s="4" x="565" y="319">feeds</text>
+<path class="ve-e is-hot" data-s="4" pathLength="1" d="M330 328H250V175"/><text class="ve-el r" data-s="4" x="258" y="250">updates θ</text>
+<g class="ve-zone" data-s="2"><rect x="592" y="-6" width="206" height="276" rx="8"/><text x="602" y="10">SCORE</text></g>
+<g class="ve-n" data-s="1" transform="translate(20 112)"><rect class="sh" width="110" height="56" rx="6"/><text x="55" y="22">Prompt x</text><text class="sub" x="55" y="42">from dataset</text></g>
+<g class="ve-n is-key" data-s="1" transform="translate(180 105)"><rect class="sh" width="140" height="70" rx="6"/><text x="70" y="26">Policy πθ</text><text class="sub" x="70" y="48">trained</text></g>
+<g class="ve-n" data-s="1" transform="translate(390 112)"><rect class="sh" width="110" height="56" rx="6"/><text x="55" y="22">Response y</text><text class="sub" x="55" y="42">rollout</text></g>
+<g class="ve-n" data-s="2" transform="translate(610 22)"><rect class="sh" width="170" height="56" rx="6"/><text x="85" y="22">Reward model</text><text class="sub" x="85" y="42">frozen</text></g>
+<g class="ve-n" data-s="2" transform="translate(610 112)"><rect class="sh" width="170" height="56" rx="6"/><text x="85" y="22">Reference πref</text><text class="sub" x="85" y="42">frozen</text></g>
+<g class="ve-n is-key" data-s="2" transform="translate(610 202)"><rect class="sh" width="170" height="56" rx="6"/><text x="85" y="22">Critic Vψ</text><text class="sub" x="85" y="42">trained</text></g>
+<g class="ve-n" data-s="3" transform="translate(610 300)"><rect class="sh" width="170" height="56" rx="6"/><text x="85" y="22">Advantages</text><text class="sub" x="85" y="42">GAE per token</text></g>
+<g class="ve-n" data-s="4" transform="translate(330 300)"><rect class="sh" width="190" height="56" rx="6"/><text x="95" y="22">PPO update</text><text class="sub" x="95" y="42">clip + value loss</text></g>
+</svg>
+</div>
+<div class="ve-player">
+<ol class="ve-cap">
+<li data-n="1/4">Rollout: sample responses for a batch of prompts. This is the expensive part, run on an inference engine such as vLLM.</li>
+<li data-n="2/4">Score: the reward model scores the response, the reference gives log-probs for the KL, and the critic gives a value at every token.</li>
+<li data-n="3/4">Advantages: build per-token rewards with the KL folded in, then run GAE.</li>
+<li data-n="4/4">Update: several epochs of minibatch PPO on the policy and value regression on the critic. Accent border means trained.</li>
+</ol>
+<button data-go="-1" aria-label="Previous step">←</button>
+<button data-play>Play</button>
+<input type="range" min="0" value="0" aria-label="Step">
+<button data-go="1" aria-label="Next step">→</button>
+</div>
+<figcaption><span class="fig-n">Fig. 11</span>One PPO-RLHF step. Both trained models also carry optimizer state (16 bytes per parameter), so a 70B policy plus a 70B critic costs several times SFT memory.</figcaption>
+</figure>

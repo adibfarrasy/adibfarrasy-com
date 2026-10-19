@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<!--
+  CHAPTER PAGE KIT (reference page, placeholder content).
+
+  How to build a chapter page from this file:
+  1. Copy everything from <!DOCTYPE html> through </head> verbatim (change only <title> and the meta description).
+  2. Copy the <svg class="ve-defs"> block at the top of <body> and the final <script> block verbatim.
+  3. Write only the body content: .topbar, .page > nav.toc + main (header + one section.sec per course section).
+  Do not add CSS. If a page needs something the kit lacks, add it to this kit first so every page stays identical.
+
+  Component class names:
+    chrome     .topbar .crumbs .pager  .page  nav.toc (scroll-spy: links point at section ids)
+    header     .ch-head .eyebrow h1 .lead .meta
+    section    section.sec#sNN > .sec-head > p.sec-num(span.n) + h2   (12-col grid; text spans 8, figures 12)
+    figure     figure > .frame > svg.ve-svg[role=img][aria-label] + figcaption > span.fig-n
+               svg parts: g.ve-n[.is-key] > rect.sh + text + text.sub   path.ve-e[.is-hot|.is-async|.no-ah]
+                          text.ve-el[.l|.r] (edge verb)  g.ve-dim[.is-key] (dimension)  g.ve-co + path.ann (callout)
+                          g.ve-zone (dashed boundary)  .ve-tick (axis text)  .ve-bar[.hot] + .ve-bar-v (inline bars)
+               ol.callouts > li > span.co-n   (one-line notes under a figure with callouts)
+               svg.ve-svg min-width: viewBox width x 0.86 (inline style) so 14-unit labels stay >= 12px.
+    stepper    figure.ve-steps: parts carry data-s="N"; .ve-player > ol.ve-cap > li[data-n="1/4"] + button[data-go] + input[type=range]
+    linked     .ve-ref[data-ref][tabindex=0] in prose + [data-ref] on svg parts
+    multiples  .cases > .case[data-st=ok|warn|risk] > .chip + h3 + svg.ve-mini (.is-st marks the changed part)
+    chips      .chip.ok (circle) .chip.warn (triangle) .chip.risk (square) .chip.info (diamond) .chip.plain (no shape)
+    equation   figure > .eq > .eq-math ($$ ... $$) + dl.symbols > div > dt + dd   (write < as &lt; inside math)
+    code       .code > .code-bar(span.ve-label + button.copy) + pre[tabindex=0] > code; tokens .tk-k .tk-s .tk-n .tk-f .tk-c
+    callouts   .callout.confusions > .chip.warn + ul > li > p.myth + p.fact
+               .callout.quiz > .chip.info + ol > li > p + details > summary + p
+    resources  .resources > .res-col > h3 + ul.res-list > li.res-item[.is-start] > .res-top(a + .start-here) + .res-meta(.chip.plain) + p
+    project    .project > .chip.info + h3 + p + ol + ul.done + p.meta
+    index only .ch-cards > a.ch-card (.pips > i)   ol.howto
+  Motion: JS adds .js-motion to <html> only when motion is allowed; without it every block shows its final state.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reinforcement Learning</title>
+<meta name="description" content="Reinforcement learning for LLMs: policy gradients, PPO, RLHF, GRPO and the reasoning-RL turn.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23282828'/%3E%3Cpath d='M14 20h14M36 20h14M14 44h14M36 44h14M28 20l8 24' stroke='%23fe8019' stroke-width='5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body, { delimiters: [{ left: '$$', right: '$$', display: true }, { left: '\\(', right: '\\)', display: false }], throwOnError: false })"></script>
+<script>
+  // Runs before first paint so a saved theme choice never flashes the other scheme.
+  try { const t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+<style>
+  /* tokens: gruvbox-dark by default, gruvbox-light when the reader's system asks for light */
+  :root {
+    color-scheme: dark;
+    --bg: #282828; --surface: #3c3836; --border: rgba(255,255,255,.08); --border-bright: #afa18e;
+    --text: #ebdbb2; --text-dim: #afa18e; --accent: #fe8019; --accent-dim: #fe80191f;
+    --ok: #b8bb26; --warn: #fabd2f; --risk: #fc7c6d; --info: #88a99c;
+    --syn-k: #fc7c6d; --syn-s: #b8bb26; --syn-n: #d3869b; --syn-f: #fabd2f; --syn-c: #afa18e;
+    --node-top: color-mix(in srgb, var(--text) 7%, var(--surface)); --lift: rgb(0 0 0 / .45); --halo: 32%;
+    --font-body: 'JetBrains Mono', ui-monospace, monospace;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    --t-label: .75rem; --t-small: .875rem; --t-body: 1rem; --t-lead: 1.25rem; --t-h2: 1.625rem; --t-h1: clamp(2.25rem, 5.5vw, 4rem);
+    --s-1: .25rem; --s-2: .5rem; --s-3: .75rem; --s-4: 1rem; --s-5: 1.5rem; --s-6: 2rem; --s-7: 3rem; --s-8: 4.5rem;
+    --r-1: 4px; --r-2: 10px;
+    --ease: cubic-bezier(.16,1,.3,1); --fast: 150ms; --med: 300ms; --slow: 500ms;
+  }
+  :root[data-theme="light"] {
+      color-scheme: light;
+      --bg: #fbf1c7; --surface: #ebdbb2; --border: rgba(0,0,0,.08); --border-bright: #6b5f56;
+      --text: #3c3836; --text-dim: #6b5f56; --accent: #ad3903; --accent-dim: #ad39031f;
+      --ok: #67630c; --warn: #7a5200; --risk: #9d0006; --info: #076678;
+      --syn-k: #9d0006; --syn-s: #67630c; --syn-n: #8f3f71; --syn-f: #076678; --syn-c: #6b5f56;
+      --node-top: var(--surface); --lift: rgb(60 56 54 / .14); --halo: 22%;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      color-scheme: light;
+      --bg: #fbf1c7; --surface: #ebdbb2; --border: rgba(0,0,0,.08); --border-bright: #6b5f56;
+      --text: #3c3836; --text-dim: #6b5f56; --accent: #ad3903; --accent-dim: #ad39031f;
+      --ok: #67630c; --warn: #7a5200; --risk: #9d0006; --info: #076678;
+      --syn-k: #9d0006; --syn-s: #67630c; --syn-n: #8f3f71; --syn-f: #076678; --syn-c: #6b5f56;
+      --node-top: var(--surface); --lift: rgb(60 56 54 / .14); --halo: 22%;
+    }
+  }
+
+  /* base */
+  html { font-size: 17px; }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--text); font: 400 var(--t-body)/1.6 var(--font-body); text-wrap: pretty; font-kerning: normal; font-synthesis: none; -webkit-font-smoothing: antialiased; }
+  ::selection { background: var(--accent-dim); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  a { color: var(--text); text-decoration: underline 1px var(--accent); text-underline-offset: .22em; transition: color var(--fast) var(--ease); }
+  a:hover { color: var(--accent); }
+  code { font: .875em var(--font-mono); font-variant-ligatures: none; }
+  h1, h2 { text-box: trim-both cap alphabetic; }
+  h1 { font-size: var(--t-h1); line-height: 1.08; font-weight: 600; letter-spacing: -.035em; text-wrap: balance; max-width: 20ch; }
+  h1 .num { color: var(--accent); font-variant-numeric: tabular-nums; }
+  h2 { font-size: var(--t-h2); line-height: 1.2; font-weight: 600; letter-spacing: -.015em; text-wrap: balance; }
+  h3 { font-size: var(--t-body); line-height: 1.3; font-weight: 600; }
+  p, li { max-width: 66ch; }
+  ul, ol { padding-left: 1.25em; }
+  .eyebrow { display: flex; align-items: center; gap: var(--s-2); font: 600 var(--t-label) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+  .eyebrow::before { content: ''; width: 1.25rem; height: 2px; background: currentColor; }
+  .ve-label { font: 600 var(--t-label) var(--font-mono); color: var(--text-dim); }
+  .caps { text-transform: uppercase; letter-spacing: .08em; }
+  .lead { font-size: var(--t-lead); line-height: 1.5; color: var(--text-dim); max-width: 48ch; }
+  .lead b { color: var(--text); font-weight: 600; }
+  .meta { font: 400 var(--t-label) var(--font-mono); color: var(--text-dim); font-variant-numeric: tabular-nums; }
+
+  /* top bar: course breadcrumb left, chapter pager right */
+  .topbar { border-bottom: 1px solid var(--border); }
+  .topbar-in { max-width: 82rem; margin: 0 auto; padding: var(--s-3) var(--s-5); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-2) var(--s-5); font: 400 var(--t-small) var(--font-mono); }
+  .topbar a { text-decoration: none; }
+  .topbar a:hover { color: var(--accent); }
+  .crumbs { display: flex; flex-wrap: wrap; list-style: none; padding: 0; gap: var(--s-2); color: var(--text-dim); }
+  .crumbs li + li::before { content: '/'; margin-right: var(--s-2); color: var(--text-dim); }
+  .crumbs [aria-current] { color: var(--text); font-weight: 600; }
+  .pager { display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-5); }
+  .pager a { color: var(--text-dim); }
+
+  /* page: sticky TOC column + main; below 1000px the TOC becomes a sticky bar */
+  .page { max-width: 82rem; margin: 0 auto; padding: 0 var(--s-5); }
+  main { min-width: 0; max-width: 64rem; padding: var(--s-7) 0 var(--s-8); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-8); }
+  .toc { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--border); margin: 0 calc(-1 * var(--s-5)); padding: var(--s-2) var(--s-5); }
+  .toc > .ve-label { display: none; }
+  .toc ol { list-style: none; padding: 0; display: flex; gap: var(--s-4); overflow-x: auto; scrollbar-width: none; mask-image: linear-gradient(90deg, #000 85%, transparent); }
+  .toc ol::-webkit-scrollbar { display: none; }
+  .toc li { max-width: none; }
+  .toc a { display: block; white-space: nowrap; font: 400 var(--t-small) var(--font-mono); color: var(--text-dim); text-decoration: none; padding: var(--s-1) 0; border-bottom: 2px solid transparent; }
+  .toc a .n { color: var(--text-dim); margin-right: var(--s-1); }
+  .toc a:hover { color: var(--text); }
+  .toc a[aria-current] { color: var(--text); border-color: var(--accent); }
+  .toc a[aria-current] .n { color: var(--accent); }
+  @media (min-width: 1000px) {
+    .page { display: grid; grid-template-columns: 12rem minmax(0, 1fr); column-gap: var(--s-7); }
+    .toc { align-self: start; margin: 0; padding: var(--s-7) 0 var(--s-5); border: 0; background: none; max-height: 100vh; overflow-y: auto; }
+    .toc > .ve-label { display: block; margin-bottom: var(--s-3); }
+    .toc ol { flex-direction: column; gap: 0; overflow: visible; mask-image: none; }
+    .toc a { white-space: normal; border-bottom: 0; border-left: 2px solid var(--border); padding: var(--s-1) 0 var(--s-1) var(--s-3); }
+    .toc a[aria-current] { border-left-color: var(--accent); }
+  }
+
+  /* chapter header */
+  .ch-head { display: grid; gap: var(--s-4); }
+  .ch-head h1 { margin-bottom: var(--s-2); }
+  .ch-head + figure { margin-top: calc(var(--s-6) - var(--s-8)); }
+
+  /* sections: a 12-column grid on one flush-left axis; prose spans 8 columns, figures all 12 */
+  .sec { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--s-5); row-gap: var(--s-5); scroll-margin-top: 4rem; }
+  .sec > * { grid-column: 1 / -1; min-width: 0; }
+  @media (min-width: 52rem) { .sec > :is(p, ul, ol, h3) { grid-column: 1 / span 8; } }
+  .sec > h3 { margin-top: var(--s-5); }
+  /* section opener (kicker head): section number + name above the takeaway h2 */
+  .sec-head { display: grid; gap: var(--s-3); border-top: 1px solid var(--border); padding-top: var(--s-5); margin-bottom: var(--s-2); }
+  .sec-num { font: 600 var(--t-label) var(--font-mono); color: var(--text-dim); letter-spacing: .04em; }
+  .sec-num .n { color: var(--accent); margin-right: var(--s-2); font-variant-numeric: tabular-nums; }
+
+  /* figure: the stage is a faint dot grid, so nodes read as objects placed on it */
+  figure { min-width: 0; }
+  .frame { background: radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--text) 13%, transparent) 1px, transparent 1.5px) 0 0 / 20px 20px, var(--bg); border: 1px solid var(--border); border-radius: var(--r-2); padding: var(--s-5); overflow-x: auto; }
+  .ve-svg { overflow: visible; }
+  figcaption { font-size: var(--t-small); color: var(--text-dim); margin-top: var(--s-3); }
+  .fig-n { font: 600 var(--t-label) var(--font-mono); color: var(--text); margin-right: var(--s-2); }
+  .callouts { list-style: none; padding: 0; margin-top: var(--s-3); display: grid; gap: var(--s-2); color: var(--text-dim); }
+  .co-n { display: inline-grid; place-items: center; width: 1.4rem; height: 1.4rem; margin-right: var(--s-2); border: 1.5px solid var(--accent); border-radius: 50%; font: 600 var(--t-label) var(--font-mono); color: var(--accent); }
+
+  /* diagram kit */
+  /* min-width keeps 14-unit labels >= 12px as rendered; narrow screens scroll the frame instead. Wider viewBoxes set min-width inline (viewBox width x 0.86). */
+  .ve-svg { width: 100%; min-width: 700px; height: auto; display: block; font: 600 15px var(--font-mono); }
+  .ve-n .sh { fill: url(#ve-node); stroke: var(--border-bright); stroke-width: 1.5; filter: drop-shadow(0 6px 14px var(--lift)); transition: stroke var(--fast) var(--ease), opacity var(--med) var(--ease); }
+  .ve-n .lid { fill: var(--node-top); }
+  .ve-n.is-key .sh { fill: color-mix(in srgb, var(--accent) 11%, var(--surface)); stroke: var(--accent); stroke-width: 2; filter: drop-shadow(0 0 16px color-mix(in srgb, var(--accent) var(--halo), transparent)); }
+  .ve-n text { fill: var(--text); text-anchor: middle; dominant-baseline: central; font-weight: 600; }
+  .ve-n .sub { fill: var(--text-dim); font: 400 14px var(--font-mono); }
+  .ve-n .is-off { stroke-dasharray: 5 4; fill: none; filter: none; }
+  .ve-e { fill: none; stroke: var(--text-dim); stroke-width: 1.75; marker-end: url(#ve-ah); }
+  .ve-e.no-ah { marker-end: none; }
+  .ve-e.is-hot { stroke: var(--accent); stroke-width: 2.75; filter: drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 55%, transparent)); }
+  .ve-e.is-async { stroke-dasharray: 6 5; }
+  .ve-el { fill: var(--text-dim); font: 400 14px var(--font-mono); text-anchor: middle; paint-order: stroke; stroke: var(--bg); stroke-width: 5px; stroke-linejoin: round; }
+  .ve-el.l { text-anchor: end; } .ve-el.r { text-anchor: start; }
+  .ve-tick { fill: var(--text-dim); font: 400 14px var(--font-mono); text-anchor: middle; }
+  .ve-tick.l { text-anchor: start; }
+  .ve-grid { stroke: var(--border); stroke-width: 1; }
+  .ve-zone rect { fill: none; stroke: var(--border-bright); stroke-width: 1; stroke-dasharray: 4 4; }
+  .ve-zone text { fill: var(--text-dim); font: 600 14px var(--font-mono); letter-spacing: .08em; }
+  .ve-bar { fill: var(--border-bright); }
+  .ve-bar.hot { fill: var(--accent); }
+  .ve-bar-v { fill: var(--text-dim); font: 400 14px var(--font-mono); dominant-baseline: central; }
+  .ve-dim path { fill: none; stroke-width: 1; } .ve-dim .ext { stroke: var(--border-bright); } .ve-dim .ln { stroke: var(--text-dim); }
+  .ve-dim text { fill: var(--text); font: 600 14px var(--font-mono); text-anchor: middle; }
+  .ve-dim .ln { marker-start: url(#ve-ah2); marker-end: url(#ve-ah2); } .ve-dim .ln.ticks { marker-start: none; marker-end: none; }
+  .ve-dim.is-key .ln { stroke: var(--accent); } .ve-dim.is-key text { fill: var(--accent); }
+  .ann { fill: none; stroke: var(--text-dim); stroke-width: 1; }
+  .ve-co circle { fill: var(--surface); stroke: var(--accent); stroke-width: 1.75; }
+  .ve-co text { fill: var(--accent); font: 600 14px var(--font-mono); text-anchor: middle; dominant-baseline: central; }
+  .ve-co.now circle { fill: var(--accent); } .ve-co.now text { fill: var(--surface); }
+
+  /* linked highlighting: same data-ref lights up together; unlit labels drop to --text-dim instead of fading */
+  .ve-ref { text-decoration: underline dotted var(--text-dim) 1px; text-underline-offset: .22em; border-radius: var(--r-1); transition: background var(--fast) var(--ease); }
+  .ve-ref.is-lit { background: var(--accent-dim); text-decoration-color: var(--accent); }
+  svg [data-ref] { transition: opacity var(--med) var(--ease); }
+  svg.has-lit path[data-ref]:not(.is-lit), svg.has-lit g[data-ref]:not(.is-lit) .sh, svg.has-lit rect[data-ref]:not(.is-lit) { opacity: .25; }
+  svg.has-lit g[data-ref]:not(.is-lit) text, svg.has-lit text[data-ref]:not(.is-lit) { fill: var(--text-dim); }
+  .ve-n.is-lit .sh { stroke: var(--accent); }
+  .ve-e.is-lit { stroke: var(--accent); }
+  .ve-el.is-lit { fill: var(--text); }
+  .case.is-lit, .ch-card.is-lit { border-color: var(--accent); }
+
+  /* stepper / scene player: future parts stay a faint outline, their labels hidden */
+  .ve-steps [data-s] { transition: opacity var(--slow) var(--ease), stroke-dashoffset var(--slow) var(--ease); }
+  .ve-steps [data-s]:not(.on) { opacity: .15; }
+  .ve-steps g[data-s]:not(.on) text, .ve-steps text[data-s]:not(.on) { opacity: 0; }
+  .ve-steps path[pathLength][data-s] { stroke-dasharray: 1; stroke-dashoffset: 1; }
+  .ve-steps path[pathLength][data-s].on { stroke-dashoffset: 0; }
+  .ve-steps .ve-n.now > .sh { stroke: var(--accent); }
+  .ve-steps:not(.is-full) .ve-e.now { stroke: var(--accent); stroke-width: 2.75; }
+  .ve-player { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: center; gap: var(--s-2) var(--s-3); margin-top: var(--s-4); }
+  .ve-cap { grid-column: 1 / -1; list-style: none; padding: 0; min-height: 3.2em; }
+  .ve-cap li::before { content: attr(data-n); font: 600 var(--t-label) var(--font-mono); color: var(--accent); margin-right: var(--s-3); font-variant-numeric: tabular-nums; }
+  .ve-player input { accent-color: var(--accent); min-width: 0; }
+  button { font: 400 var(--t-small) var(--font-mono); color: var(--text); background: var(--surface); border: 1px solid var(--border-bright); border-radius: var(--r-1); padding: var(--s-2) var(--s-3); cursor: pointer; transition: border-color var(--fast) var(--ease); }
+  button:hover, button:focus-visible { border-color: var(--accent); }
+
+  /* small multiples: one mini diagram per case; the changed part takes the case's status color */
+  .cases { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14.5rem), 1fr)); gap: var(--s-4); }
+  .case { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-2); padding: var(--s-4); display: grid; gap: var(--s-3); align-content: start; min-width: 0; transition: border-color var(--fast) var(--ease); }
+  .case[data-st=ok] { --st: var(--ok); } .case[data-st=warn] { --st: var(--warn); } .case[data-st=risk] { --st: var(--risk); }
+  .ve-mini { width: 100%; height: auto; font: 600 15px var(--font-mono); }
+  .ve-mini .ve-n .sh { filter: none; }
+  .ve-mini .is-st.ve-e { stroke: var(--st); stroke-width: 2.75; }
+  .ve-mini .is-st .sh { stroke: var(--st); stroke-width: 2; }
+  .ve-mini .ve-el { stroke: var(--surface); }
+
+  /* chips: shape and word, never color alone */
+  .chip { display: inline-flex; align-items: center; gap: var(--s-2); font: 600 var(--t-label) var(--font-mono); padding: 2px var(--s-2); border: 1px solid currentColor; border-radius: var(--r-1); white-space: nowrap; justify-self: start; }
+  .chip::before { content: ''; width: .5rem; height: .5rem; background: currentColor; }
+  .chip.ok { color: var(--ok); } .chip.ok::before { border-radius: 50%; }
+  .chip.warn { color: var(--warn); } .chip.warn::before { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+  .chip.risk { color: var(--risk); }
+  .chip.info { color: var(--info); } .chip.info::before { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+  .chip.plain { color: var(--text-dim); font-weight: 400; } .chip.plain::before { display: none; }
+
+  /* equation + symbols legend */
+  .eq { display: grid; gap: var(--s-4) var(--s-6); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-2); padding: var(--s-5); }
+  @media (min-width: 52rem) { .eq { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); align-items: center; } }
+  .eq-math { min-width: 0; overflow-x: auto; overflow-y: hidden; }
+  .eq-math .katex-display { margin: var(--s-2) 0; }
+  .symbols { display: grid; gap: var(--s-2); }
+  .symbols > div { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr); gap: var(--s-3); align-items: baseline; }
+  .symbols dd { margin: 0; color: var(--text-dim); }
+
+  /* code: scroll container, copy button, gruvbox syntax tokens; code sits on --bg so every token reaches 4.5:1 */
+  .code { border: 1px solid var(--border); border-radius: var(--r-2); background: var(--bg); min-width: 0; }
+  .code-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); padding: var(--s-2) var(--s-2) var(--s-2) var(--s-4); background: var(--surface); border-bottom: 1px solid var(--border); border-radius: var(--r-2) var(--r-2) 0 0; }
+  .code pre { margin: 0; padding: var(--s-4); overflow-x: auto; font: 400 var(--t-small)/1.6 var(--font-mono); font-variant-ligatures: none; tab-size: 4; }
+  .code pre code { font: inherit; }
+  .tk-k { color: var(--syn-k); } .tk-s { color: var(--syn-s); } .tk-n { color: var(--syn-n); } .tk-f { color: var(--syn-f); } .tk-c { color: var(--syn-c); }
+
+  /* callouts: common confusions and check yourself */
+  .callout { background: var(--surface); border-radius: var(--r-2); padding: var(--s-5); display: grid; gap: var(--s-4); }
+  .confusions ul { list-style: none; padding: 0; display: grid; gap: var(--s-4); }
+  .confusions p { padding-left: 1.5em; text-indent: -1.5em; }
+  .confusions .myth { color: var(--text-dim); }
+  .confusions .myth::before { content: '✕'; display: inline-block; width: 1.5em; text-indent: 0; color: var(--risk); font-weight: 600; }
+  .confusions .fact::before { content: '✓'; display: inline-block; width: 1.5em; text-indent: 0; color: var(--ok); font-weight: 600; }
+  .quiz ol { display: grid; gap: var(--s-4); padding-left: 1.75em; }
+  .quiz li::marker { font: 600 var(--t-label) var(--font-mono); color: var(--accent); }
+  .quiz details { margin-top: var(--s-2); }
+  .quiz summary { cursor: pointer; font: 600 var(--t-small) var(--font-mono); color: var(--accent); width: fit-content; }
+  .quiz details p { margin-top: var(--s-2); padding-left: var(--s-3); border-left: 1px solid var(--border-bright); }
+
+  /* resources: Read and Watch columns; "start here" = star shape + word + accent frame */
+  .resources { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: var(--s-5) var(--s-6); }
+  .res-col { min-width: 0; }
+  .res-col > h3 { font: 600 var(--t-label) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--text-dim); padding-bottom: var(--s-2); border-bottom: 1px solid var(--border-bright); }
+  .res-list { list-style: none; padding: 0; }
+  .res-item { padding: var(--s-3) 0; border-bottom: 1px solid var(--border); display: grid; gap: var(--s-1); }
+  .res-item.is-start { border: 1px solid var(--accent); border-radius: var(--r-2); padding: var(--s-3) var(--s-4); margin: var(--s-2) 0; }
+  .res-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-1) var(--s-3); }
+  .res-top a { font-weight: 600; overflow-wrap: anywhere; }
+  .res-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); font: 400 var(--t-label) var(--font-mono); color: var(--text-dim); }
+  .res-item p { color: var(--text-dim); }
+  .start-here { display: inline-flex; align-items: center; gap: var(--s-1); font: 600 var(--t-label) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); white-space: nowrap; }
+  .start-here::before { content: ''; width: .8rem; height: .8rem; background: currentColor; clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+
+  /* chapter project */
+  .project { border: 1px solid var(--border-bright); border-radius: var(--r-2); padding: var(--s-5); display: grid; gap: var(--s-4); }
+  .project h3 { font-size: var(--t-lead); }
+  .project ol, .project ul { display: grid; gap: var(--s-2); }
+  .project .done { list-style: none; padding: 0; }
+  .project .done li::before { content: '□'; color: var(--accent); margin-right: var(--s-2); }
+
+  /* index only: chapter cards and how-to steps */
+  .ch-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14.5rem), 1fr)); gap: var(--s-4); }
+  .ch-card { display: grid; gap: var(--s-3); align-content: start; min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-2); padding: var(--s-4); color: var(--text); text-decoration: none; transition: border-color var(--fast) var(--ease); }
+  .ch-card:hover, .ch-card:focus-visible { border-color: var(--accent); color: var(--text); }
+  .ch-card h3 { font-size: var(--t-lead); }
+  .ch-card p, .ch-card ol { color: var(--text-dim); }
+  .ch-card .go { font: 600 var(--t-label) var(--font-mono); color: var(--accent); }
+  .pips { display: flex; flex-wrap: wrap; gap: var(--s-1); }
+  .pips i { width: .55rem; height: .55rem; background: var(--text-dim); }
+  .howto { list-style: none; padding: 0; counter-reset: step; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); gap: var(--s-5) var(--s-4); }
+  .howto li { counter-increment: step; border-top: 1px solid var(--border-bright); padding-top: var(--s-3); }
+  .howto li::before { content: counter(step, decimal-leading-zero); display: block; font: 600 var(--t-label) var(--font-mono); color: var(--accent); margin-bottom: var(--s-2); }
+
+  /* entrance: blocks rise in once (JS adds .js-motion only when motion is allowed) */
+  .js-motion :is(.ch-head, .sec > *) { transition: opacity var(--slow) var(--ease), transform var(--slow) var(--ease); }
+  .js-motion :is(.ch-head, .sec > *):not(.in) { opacity: 0; transform: translateY(1rem); }
+  .topbar-in .pager { margin-left: auto; }
+  .icon-btn { background: none; border: 0; padding: var(--s-1); color: var(--text-dim); display: inline-flex; line-height: 0; }
+  .icon-btn:hover { color: var(--text); }
+  .icon-btn svg { width: 1.1rem; height: 1.1rem; }
+  .icon-btn .i-moon, .icon-btn[data-mode="light"] .i-sun { display: none; }
+  .icon-btn[data-mode="light"] .i-moon { display: block; }
+  .toc-head { display: none; }
+  .toc-btn { background: none; border: 0; padding: var(--s-1); color: var(--text-dim); display: inline-flex; line-height: 0; }
+  .toc-btn:hover { color: var(--text); }
+  .toc-btn svg { width: 1rem; height: 1rem; transition: transform var(--fast) var(--ease); }
+  @media (min-width: 1000px) {
+    .toc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--s-3); }
+    .toc-head .ve-label { margin: 0; }
+    html.toc-hidden .page { grid-template-columns: 2rem minmax(0, 1fr); }
+    html.toc-hidden .toc-head .ve-label, html.toc-hidden .toc ol { display: none; }
+    html.toc-hidden .toc-btn svg { transform: rotate(180deg); }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  @media print {
+    :root { --bg: #fff; --surface: #fff; --border: #ebdbb2; --border-bright: #6b5f56; --text: #3c3836; --text-dim: #6b5f56; --accent: #ad3903; --ok: #67630c; --warn: #7a5200; --risk: #9d0006; --info: #076678;
+      --syn-k: #9d0006; --syn-s: #67630c; --syn-n: #8f3f71; --syn-f: #076678; --syn-c: #6b5f56; --node-top: #fff; }
+    .toc, .toc-btn, .icon-btn, .pager, .copy, .ve-player button, .ve-player input { display: none; }
+    .page { display: block; }
+    .frame { overflow: visible; background: #fff; } .ve-svg { min-width: 0 !important; }
+    .frame, .case, .ch-card, .callout, .project, .eq, .code { break-inside: avoid; } h2 { break-after: avoid; }
+    svg * { filter: none !important; }
+    .js-motion :is(.ch-head, .sec > *) { opacity: 1 !important; transform: none !important; }
+    .ve-steps [data-s]:not(.on), .ve-steps g[data-s]:not(.on) text, .ve-steps text[data-s]:not(.on) { opacity: 1; }
+    .ve-steps path[pathLength][data-s] { stroke-dashoffset: 0; }
+  }
+</style>
+</head>
+<body>
+<!-- Shared defs: one arrowhead (context-stroke follows each edge's color), the node fill, and the section pip. -->
+<svg class="ve-defs" width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <marker id="ve-ah" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker>
+    <marker id="ve-ah2" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker>
+    <linearGradient id="ve-node" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--node-top)"/><stop offset="1" style="stop-color:var(--surface)"/></linearGradient>
+    <pattern id="ve-pip" width="13" height="9" patternUnits="userSpaceOnUse"><rect width="9" height="9" style="fill:var(--text-dim)"/></pattern>
+  </defs>
+</svg>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <nav aria-label="Breadcrumb">
+      <ol class="crumbs">
+        <li><a href="index.html">Learn AI Fundamentals</a></li>
+        <li>LLM Advanced</li>
+        <li aria-current="page">Reinforcement Learning</li>
+      </ol>
+    </nav>
+    <nav class="pager" aria-label="Chapters">
+      <a href="08-optimizers.html" rel="prev">← Previous: Optimizers</a>
+      <a href="index.html" rel="next">Course index →</a>
+    </nav>
+    <button type="button" class="icon-btn" id="theme-toggle" aria-label="Switch to light mode"><svg class="i-sun" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1"/></svg><svg class="i-moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 9.6A5.8 5.8 0 0 1 6.4 2.5a5.8 5.8 0 1 0 7.1 7.1z"/></svg></button>
+  </div>
+</header>
+
+<div class="page">
+  <nav class="toc" aria-label="Sections">
+    <div class="toc-head"><p class="ve-label caps">On this page</p><button type="button" class="toc-btn" id="toc-toggle" aria-controls="toc-list" aria-expanded="true" aria-label="Hide sidebar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg></button></div>
+    <ol id="toc-list">
+      <li><a href="#s01"><span class="n">01</span>RL fundamentals</a></li>
+      <li><a href="#s02"><span class="n">02</span>RLHF and GRPO</a></li>
+      <li><a href="#s03"><span class="n">+</span>Project</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header class="ch-head">
+      <p class="eyebrow">Chapter 6 · LLM Advanced</p>
+      <h1>RL turns a score into a <span class="num">gradient</span></h1>
+      <p class="lead">A language model is a policy, a response is an episode, and a reward arrives at the end. Every method here is <b>log-probability times advantage</b>, with a different way to estimate the advantage.</p>
+      <p class="meta">2 sections · needs: pretraining loss, SFT, reward models, DPO, KV cache, basic probability</p>
+    </header>
+
+    <figure>
+      <div class="frame">
+        <svg class="ve-svg" viewBox="0 0 800 230" role="img" aria-label="The state, which is the prompt plus the tokens so far, goes into the policy. The policy samples the next token as its action. The token is appended to the state again. Only at the end of the response does a single reward arrive.">
+          <path class="ve-e" d="M160 95H230"/><text class="ve-el" x="195" y="86">reads</text>
+          <path class="ve-e is-hot" d="M370 95H440"/><text class="ve-el" x="405" y="86">samples</text>
+          <path class="ve-e is-async" d="M580 95H660"/><text class="ve-el" x="620" y="86">at EOS</text>
+          <path class="ve-e" d="M510 130V185H90V130"/><text class="ve-el" x="300" y="176">appends the token</text>
+          <g class="ve-n" transform="translate(20 60)"><rect class="sh" width="140" height="70" rx="6"/><text x="70" y="26">State</text><text class="sub" x="70" y="48">(x, y&lt;t)</text></g>
+          <g class="ve-n is-key" transform="translate(230 60)"><rect class="sh" width="140" height="70" rx="6"/><text x="70" y="26">Policy πθ</text><text class="sub" x="70" y="48">the LLM</text></g>
+          <g class="ve-n" transform="translate(440 60)"><rect class="sh" width="140" height="70" rx="6"/><text x="70" y="26">Action</text><text class="sub" x="70" y="48">next token</text></g>
+          <g class="ve-n" transform="translate(660 60)"><rect class="sh" width="120" height="70" rx="6"/><text x="60" y="26">Reward</text><text class="sub" x="60" y="48">one scalar</text></g>
+          <path class="ann" d="M510 60V36"/><g class="ve-co" transform="translate(510 24)"><circle r="11"/><text>1</text></g>
+          <path class="ann" d="M720 60V36"/><g class="ve-co" transform="translate(720 24)"><circle r="11"/><text>2</text></g>
+        </svg>
+      </div>
+      <figcaption><span class="fig-n">Fig. 1</span>The MDP of LLM generation: the transition is plain concatenation, so all the randomness sits in the policy.</figcaption>
+      <ol class="callouts">
+        <li><span class="co-n">1</span>About 100k to 200k tokens to choose from at every step.</li>
+        <li><span class="co-n">2</span>Sparse and terminal: zero at every token except the last (reward model score, or "answer correct").</li>
+      </ol>
+    </figure>
+
+    <section class="sec" id="s01" aria-labelledby="s01-h">
+      <div class="sec-head"><p class="sec-num"><span class="n">01</span>RL fundamentals</p><h2 id="s01-h">The policy gradient is log-probability times advantage</h2></div>
+
+      <h3>1.1 RL only tells the model how good its choices were</h3>
+      <p>Supervised learning gives the right answer. RL gives a score, often much later. That fits things we can judge but not demonstrate: "was it helpful?", "is the proof correct?", "did the tests pass?". RL turns scores into gradients.</p>
+      <figure>
+        <div class="cases">
+          <div class="case" data-st="warn"><span class="chip warn">Data moves</span><h3>Data depends on the policy</h3>
+            <svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="Policy version 1 samples data A. After an update, policy version 2 samples data B, so the training data changes with the model.">
+              <path class="ve-e" d="M60 36V72"/><text class="ve-el" x="60" y="54">samples</text>
+              <path class="ve-e is-st" d="M180 36V72"/><text class="ve-el" x="180" y="54">samples</text>
+              <g class="ve-n"><rect class="sh" x="10" y="4" width="100" height="32" rx="5"/><text x="60" y="20">π v1</text></g>
+              <g class="ve-n"><rect class="sh" x="130" y="4" width="100" height="32" rx="5"/><text x="180" y="20">π v2</text></g>
+              <g class="ve-n"><rect class="sh" x="10" y="72" width="100" height="32" rx="5"/><text x="60" y="88">data A</text></g>
+              <g class="ve-n is-st"><rect class="sh" x="130" y="72" width="100" height="32" rx="5"/><text x="180" y="88">data B</text></g>
+            </svg></div>
+          <div class="case" data-st="risk"><span class="chip risk">Late reward</span><h3>Delayed credit</h3>
+            <svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="Five tokens are generated, but the reward arrives only after the last one, so it is unclear which tokens deserve it.">
+              <path class="ve-e is-st" d="M209 38V72"/><text class="ve-el l" x="201" y="56">at end</text>
+              <g class="ve-n"><rect class="sh" x="6" y="8" width="38" height="30" rx="4"/><text x="25" y="23">t1</text><rect class="sh" x="52" y="8" width="38" height="30" rx="4"/><text x="71" y="23">t2</text><rect class="sh" x="98" y="8" width="38" height="30" rx="4"/><text x="117" y="23">t3</text><rect class="sh" x="144" y="8" width="38" height="30" rx="4"/><text x="163" y="23">t4</text></g>
+              <g class="ve-n is-st"><rect class="sh" x="190" y="8" width="38" height="30" rx="4"/><text x="209" y="23">t5</text><rect class="sh" x="150" y="72" width="80" height="32" rx="5"/><text x="190" y="88">reward</text></g>
+              <text class="ve-tick l" x="6" y="88">who gets credit?</text>
+            </svg></div>
+          <div class="case" data-st="warn"><span class="chip warn">Only what it samples</span><h3>Exploration</h3>
+            <svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="From one prompt the model sampled one path and never tried the other, which has probability near zero, so it can never be rewarded.">
+              <path class="ve-e" d="M120 34V50H55V68"/>
+              <path class="ve-e is-async is-st" d="M120 34V50H185V68"/>
+              <g class="ve-n"><rect class="sh" x="80" y="4" width="80" height="30" rx="5"/><text x="120" y="19">prompt</text><rect class="sh" x="10" y="68" width="90" height="36" rx="5"/><text x="55" y="86">sampled</text></g>
+              <g class="ve-n is-st"><rect class="sh is-off" x="140" y="68" width="90" height="36" rx="5"/><text x="185" y="86">p ≈ 0</text></g>
+            </svg></div>
+        </div>
+        <figcaption><span class="fig-n">Fig. 2</span>Three properties that set RL apart from supervised learning, and all three show up in LLM training.</figcaption>
+      </figure>
+
+      <h3>1.2 A response is an episode, a token is an action</h3>
+      <p>An MDP is the tuple \((\mathcal{S}, \mathcal{A}, P, R, \gamma)\): states, actions, transitions, reward, discount. "Markov" means the next state depends only on the current state and action. For an LLM the state is the whole history, so this holds trivially. Fig. 1 is the mapping.</p>
+      <p>Many LLM algorithms treat the whole response as one action (a contextual bandit). That is a reasonable simplification, and with a terminal reward and \(\gamma = 1\), standard for LLMs.</p>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$G_t = \sum_{k=0}^{T-t-1} \gamma^k \, r_{t+k}$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(G_t\)</dt><dd>return from step \(t\) onward</dd></div>
+            <div><dt>\(r_{t+k}\)</dt><dd>reward at step \(t+k\)</dd></div>
+            <div><dt>\(\gamma^k\)</dt><dd>discount for a reward \(k\) steps ahead</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 1</span>The return is the discounted sum of future rewards. Discounting would penalize long correct answers, so LLMs use \(\gamma = 1\).</figcaption>
+      </figure>
+
+      <h3>1.3 Value, Q and advantage are one tree</h3>
+      <p>The <span class="ve-ref" data-ref="v" tabindex="0">value</span> \(V\) averages over what the policy might do. The <span class="ve-ref" data-ref="q" tabindex="0">Q function</span> fixes the first action. The <span class="ve-ref" data-ref="a" tabindex="0">advantage</span> is their gap, so it is positive for better-than-average actions and averages to zero.</p>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 -20 800 330" role="img" aria-label="From one state with value 0.65, three actions have Q values 1.0, 0.5 and 0.0 and policy probabilities 0.5, 0.3 and 0.2. The advantages Q minus V are plus 0.35, minus 0.15 and minus 0.65, and their probability-weighted sum is zero.">
+            <path class="ve-grid" d="M640 8V292"/>
+            <path class="ve-grid" d="M470 48H640M470 150H640M470 252H640"/>
+            <text class="ve-tick" x="640" y="-4">A = Q − V</text>
+            <path class="ve-e" d="M170 150H235V48H300"/><text class="ve-el" x="262" y="39">π = 0.5</text>
+            <path class="ve-e" d="M170 150H300"/><text class="ve-el" x="262" y="141">π = 0.3</text>
+            <path class="ve-e" d="M170 150H235V252H300"/><text class="ve-el" x="262" y="243">π = 0.2</text>
+            <g class="ve-n is-key" data-ref="v" transform="translate(20 115)"><rect class="sh" width="150" height="70" rx="6"/><text x="75" y="26">State s</text><text class="sub" x="75" y="48">V = 0.65</text></g>
+            <g class="ve-n" data-ref="q" transform="translate(300 20)"><rect class="sh" width="170" height="56" rx="6"/><text x="85" y="20">good token</text><text class="sub" x="85" y="40">Q = 1.0</text></g>
+            <g class="ve-n" data-ref="q" transform="translate(300 122)"><rect class="sh" width="170" height="56" rx="6"/><text x="85" y="20">typical token</text><text class="sub" x="85" y="40">Q = 0.5</text></g>
+            <g class="ve-n" data-ref="q" transform="translate(300 224)"><rect class="sh" width="170" height="56" rx="6"/><text x="85" y="20">bad token</text><text class="sub" x="85" y="40">Q = 0.0</text></g>
+            <rect class="ve-bar hot" data-ref="a" x="640" y="39" width="52" height="18"/><text class="ve-bar-v" data-ref="a" x="715" y="48">+0.35</text>
+            <rect class="ve-bar" data-ref="a" x="618" y="141" width="22" height="18"/><text class="ve-bar-v" data-ref="a" x="715" y="150">−0.15</text>
+            <rect class="ve-bar" data-ref="a" x="542" y="243" width="98" height="18"/><text class="ve-bar-v" data-ref="a" x="715" y="252">−0.65</text>
+            <text class="ve-tick" x="640" y="304">Σ π·A = 0</text>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 3</span>V = 0.5·1.0 + 0.3·0.5 + 0.2·0.0 = 0.65. Hover a term above to light its part of the tree.</figcaption>
+      </figure>
+      <p>In LLM terms: \(V(s)\) of a partial response is "how likely is this to end up correct?". \(A(s,a)\) of a token is "did it make success likelier than what the model usually writes here?".</p>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$V^\pi(s) = \mathbb{E}_{\tau \sim \pi}\left[ G_t \mid s_t = s \right]$$
+            $$Q^\pi(s,a) = \mathbb{E}_{\tau \sim \pi}\left[ G_t \mid s_t = s,\, a_t = a \right]$$
+            $$A^\pi(s,a) = Q^\pi(s,a) - V^\pi(s)$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(V^\pi\)</dt><dd>how good is it to be here?</dd></div>
+            <div><dt>\(Q^\pi\)</dt><dd>how good is it to do \(a\) here, then follow \(\pi\)?</dd></div>
+            <div><dt>\(A^\pi\)</dt><dd>better or worse than average; \(\mathbb{E}_{a\sim\pi}[A]=0\)</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 2</span>Value, action value and advantage.</figcaption>
+      </figure>
+
+      <h3>1.4 Bellman equations: one reward plus the rest</h3>
+      <p>Split the return into the first reward and the rest, and the value functions become recursive. Replace the policy average by a max and you get the optimal \(Q^*\), which underlies Q-learning and DQN. LLMs rarely use value-based methods: a max over 100k+ actions at every step, on a model that is already a good policy, makes policy-based methods the natural choice.</p>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$V^\pi(s) = \mathbb{E}_{a,\,s'}\left[ R(s,a) + \gamma V^\pi(s') \right]$$
+            $$Q^*(s,a) = R(s,a) + \gamma\, \mathbb{E}_{s'}\left[ \max_{a'} Q^*(s',a') \right]$$
+            $$\delta_t = r_t + \gamma V(s_{t+1}) - V(s_t)$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(s', a'\)</dt><dd>next state and next action</dd></div>
+            <div><dt>\(\delta_t\)</dt><dd>TD error: one-step estimate of the advantage</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 3</span>If \(V\) were exact, \(\mathbb{E}[\delta_t] = 0\). A nonzero \(\delta_t\) says this step went better or worse than \(V\) predicted. GAE reuses it below.</figcaption>
+      </figure>
+
+      <h3>1.5 Exploration is sampling, and it has a ceiling</h3>
+      <p>An agent that always takes its best guess never finds better. For LLMs, exploration comes from sampling temperature and from many responses per prompt. A pretrained model already proposes plausible actions, so the goal is diverse reasoning paths, not random tokens.</p>
+      <p>The flip side: RL can only reinforce what the model sometimes produces. If every sample for a prompt fails, the reward is constant and there is no signal. This exploration bottleneck is why curriculum and difficulty filtering matter in reasoning RL.</p>
+
+      <h3>1.6 The policy gradient theorem in three moves</h3>
+      <p>We want to maximize \(J(\theta) = \mathbb{E}_{\tau\sim\pi_\theta}[R(\tau)]\). The trajectory probability factorizes into the initial state, the policy terms and the dynamics. Step through what that buys.</p>
+      <figure class="ve-steps">
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 372" role="img" aria-label="Four stacked expressions. The objective J of theta becomes an expectation of grad log p times R by the log-derivative trick. The dynamics then drop out because only the policy terms depend on theta. Finally only rewards from step t onward are kept, giving the REINFORCE gradient.">
+            <path class="ve-e" data-s="2" pathLength="1" d="M290 56V100"/><text class="ve-el r" data-s="2" x="302" y="82">log-derivative trick: ∇p = p ∇log p</text>
+            <path class="ve-e" data-s="3" pathLength="1" d="M290 156V200"/><text class="ve-el r" data-s="3" x="302" y="182">only the policy terms carry θ</text>
+            <path class="ve-e is-hot" data-s="4" pathLength="1" d="M290 256V300"/><text class="ve-el r" data-s="4" x="302" y="282">earlier rewards drop out: reward-to-go</text>
+            <g class="ve-n" data-s="1" transform="translate(20 0)"><rect class="sh" width="540" height="56" rx="6"/><text x="270" y="28">J(θ) = E[ R(τ) ]</text></g>
+            <g class="ve-n" data-s="2" transform="translate(20 100)"><rect class="sh" width="540" height="56" rx="6"/><text x="270" y="28">∇J = E[ ∇ log p(τ) · R(τ) ]</text></g>
+            <g class="ve-n" data-s="3" transform="translate(20 200)"><rect class="sh" width="540" height="56" rx="6"/><text x="270" y="28">∇J = E[ Σt ∇ log π(at|st) · R(τ) ]</text></g>
+            <g class="ve-n is-key" data-s="4" transform="translate(20 300)"><rect class="sh" width="540" height="56" rx="6"/><text x="270" y="28">∇J = E[ Σt ∇ log π(at|st) · Gt ]</text></g>
+            <text class="ve-tick l" data-s="2" x="580" y="128">reward = black box</text>
+            <text class="ve-tick l" data-s="3" x="580" y="228">no model of P needed</text>
+            <text class="ve-tick l" data-s="4" x="580" y="328">= REINFORCE</text>
+          </svg>
+        </div>
+        <div class="ve-player">
+          <ol class="ve-cap">
+            <li data-n="1/4">Start from the expected return over trajectories sampled from the policy.</li>
+            <li data-n="2/4">The log-derivative trick turns the gradient of an expectation into an expectation we can sample. The reward is never differentiated, so it can be a unit test, a click or a regex.</li>
+            <li data-n="3/4">The log of the trajectory probability splits into initial state, policy and dynamics terms. Only the policy terms depend on θ, so we need no model of the environment.</li>
+            <li data-n="4/4">An action cannot change rewards before it, so replace R(τ) by the return from t onward. This is REINFORCE.</li>
+          </ol>
+          <button data-go="-1" aria-label="Previous step">←</button>
+          <button data-play>Play</button>
+          <input type="range" min="0" value="0" aria-label="Step">
+          <button data-go="1" aria-label="Next step">→</button>
+        </div>
+        <figcaption><span class="fig-n">Fig. 4</span>The derivation of the policy gradient, one move per step.</figcaption>
+      </figure>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$\nabla_\theta J(\theta) = \mathbb{E}_{\tau \sim \pi_\theta}\left[ \sum_{t=0}^{T-1} \nabla_\theta \log \pi_\theta(a_t \mid s_t)\, G_t \right]$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(\pi_\theta\)</dt><dd>the policy, here the LLM</dd></div>
+            <div><dt>\(G_t\)</dt><dd>return from step \(t\)</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 4</span>In code: minimize \(-\sum_t \log\pi_\theta(a_t\mid s_t)\,G_t\) with \(G_t\) held constant. With a terminal reward and \(\gamma=1\), REINFORCE on an LLM is SFT on your own samples, weighted by reward.</figcaption>
+      </figure>
+
+      <h3>1.7 A baseline removes the noise, not the signal</h3>
+      <p>REINFORCE is unbiased but noisy. If every reward is positive, every sampled action is pushed up and only the relative sizes carry signal. Subtract a baseline \(b(s_t)\) that does not depend on the action. The natural choice is \(b = V^\pi\), which makes the weight an estimate of the advantage.</p>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 290" role="img" aria-label="Left: four samples with rewards 6, 9, 7 and 8 are all pushed up when there is no baseline. Right: subtracting the mean 7.5 gives weights minus 1.5, plus 1.5, minus 0.5 and plus 0.5, so worse samples go down and better samples go up.">
+            <text class="ve-tick l" x="20" y="16">no baseline: every sample pushed up</text>
+            <path class="ve-grid" d="M20 230H380"/>
+            <rect class="ve-bar" x="50" y="122" width="44" height="108"/><text class="ve-bar-v" text-anchor="middle" x="72" y="108">6</text>
+            <rect class="ve-bar" x="135" y="68" width="44" height="162"/><text class="ve-bar-v" text-anchor="middle" x="157" y="54">9</text>
+            <rect class="ve-bar" x="220" y="104" width="44" height="126"/><text class="ve-bar-v" text-anchor="middle" x="242" y="90">7</text>
+            <rect class="ve-bar" x="305" y="86" width="44" height="144"/><text class="ve-bar-v" text-anchor="middle" x="327" y="72">8</text>
+            <text class="ve-tick" x="72" y="252">o1</text><text class="ve-tick" x="157" y="252">o2</text><text class="ve-tick" x="242" y="252">o3</text><text class="ve-tick" x="327" y="252">o4</text>
+            <text class="ve-tick l" x="420" y="16">minus the mean (7.5): above up, below down</text>
+            <path class="ve-grid" d="M420 150H780"/>
+            <rect class="ve-bar" x="450" y="150" width="44" height="60"/><text class="ve-bar-v" text-anchor="middle" x="472" y="224">−1.5</text>
+            <rect class="ve-bar hot" x="535" y="90" width="44" height="60"/><text class="ve-bar-v" text-anchor="middle" x="557" y="76">+1.5</text>
+            <rect class="ve-bar" x="620" y="150" width="44" height="20"/><text class="ve-bar-v" text-anchor="middle" x="642" y="184">−0.5</text>
+            <rect class="ve-bar hot" x="705" y="130" width="44" height="20"/><text class="ve-bar-v" text-anchor="middle" x="727" y="116">+0.5</text>
+            <text class="ve-tick" x="472" y="252">o1</text><text class="ve-tick" x="557" y="252">o2</text><text class="ve-tick" x="642" y="252">o3</text><text class="ve-tick" x="727" y="252">o4</text>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 5</span>Same four samples, same rewards. The baseline changes only the weights, and the expected gradient stays the same.</figcaption>
+      </figure>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$\mathbb{E}_{a \sim \pi_\theta}\left[ \nabla_\theta \log \pi_\theta(a \mid s)\, b(s) \right] = b(s)\, \nabla_\theta \sum_a \pi_\theta(a \mid s) = b(s)\, \nabla_\theta 1 = 0$$
+            $$\nabla_\theta J(\theta) = \mathbb{E}\left[ \sum_t \nabla_\theta \log \pi_\theta(a_t \mid s_t)\, A^\pi(s_t, a_t) \right]$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(b(s)\)</dt><dd>baseline: any function that ignores the action</dd></div>
+            <div><dt>\(A^\pi\)</dt><dd>advantage, the weight when \(b = V^\pi\)</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 5</span>Why a baseline is unbiased, and the form every later algorithm shares. PPO, GRPO, RLOO, Dr. GRPO and DAPO differ in how they estimate \(A\) and how they limit the update size.</figcaption>
+      </figure>
+
+      <h3>1.8 GAE dials between low variance and low bias</h3>
+      <p>Actor-critic methods learn the baseline: an actor (the policy) and a critic \(V_\phi\) trained by regression toward observed returns. The critic gives advantages from TD errors without waiting for the full return. How far ahead to look is a bias-variance trade-off, and GAE exposes it as one knob \(\lambda\).</p>
+      <figure>
+        <div class="cases">
+          <div class="case" data-st="warn"><span class="chip warn">Low variance, biased</span><h3>λ = 0: one-step TD</h3>
+            <svg class="ve-mini" viewBox="0 0 240 112" role="img" aria-label="With lambda 0 only the first TD error has weight 1; all later ones have weight 0.">
+              <path class="ve-grid" d="M8 88H236"/>
+              <rect class="ve-bar hot" x="14" y="24" width="28" height="64"/><rect class="ve-bar" x="52" y="86" width="28" height="2"/><rect class="ve-bar" x="90" y="86" width="28" height="2"/><rect class="ve-bar" x="128" y="86" width="28" height="2"/><rect class="ve-bar" x="166" y="86" width="28" height="2"/><rect class="ve-bar" x="204" y="86" width="28" height="2"/>
+              <text class="ve-tick l" x="14" y="106">δt</text><text class="ve-tick" x="216" y="106">δt+5</text>
+            </svg></div>
+          <div class="case" data-st="ok"><span class="chip ok">In between</span><h3>λ = 0.5: decaying mix</h3>
+            <svg class="ve-mini" viewBox="0 0 240 112" role="img" aria-label="With lambda 0.5 the weights halve at every step: 1, 0.5, 0.25 and so on.">
+              <path class="ve-grid" d="M8 88H236"/>
+              <rect class="ve-bar hot" x="14" y="24" width="28" height="64"/><rect class="ve-bar" x="52" y="56" width="28" height="32"/><rect class="ve-bar" x="90" y="72" width="28" height="16"/><rect class="ve-bar" x="128" y="80" width="28" height="8"/><rect class="ve-bar" x="166" y="84" width="28" height="4"/><rect class="ve-bar" x="204" y="86" width="28" height="2"/>
+              <text class="ve-tick l" x="14" y="106">δt</text><text class="ve-tick" x="216" y="106">δt+5</text>
+            </svg></div>
+          <div class="case" data-st="risk"><span class="chip risk">Unbiased, high variance</span><h3>λ = 1: Monte Carlo</h3>
+            <svg class="ve-mini" viewBox="0 0 240 112" role="img" aria-label="With lambda 1 every TD error has weight 1, which sums to the full return minus the value.">
+              <path class="ve-grid" d="M8 88H236"/>
+              <rect class="ve-bar hot" x="14" y="24" width="28" height="64"/><rect class="ve-bar" x="52" y="24" width="28" height="64"/><rect class="ve-bar" x="90" y="24" width="28" height="64"/><rect class="ve-bar" x="128" y="24" width="28" height="64"/><rect class="ve-bar" x="166" y="24" width="28" height="64"/><rect class="ve-bar" x="204" y="24" width="28" height="64"/>
+              <text class="ve-tick l" x="14" y="106">δt</text><text class="ve-tick" x="216" y="106">δt+5</text>
+            </svg></div>
+        </div>
+        <figcaption><span class="fig-n">Fig. 6</span>Weight \((\gamma\lambda)^l\) on each future TD error, drawn for \(\gamma = 1\). At \(\lambda = 1\) the \(V\) terms telescope into \(G_t - V(s_t)\).</figcaption>
+      </figure>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$\hat A_t^{\mathrm{GAE}(\gamma,\lambda)} = \sum_{l=0}^{T-t-1} (\gamma\lambda)^l\, \delta_{t+l}, \qquad \hat A_t = \delta_t + \gamma\lambda\, \hat A_{t+1}$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(\lambda\)</dt><dd>trade-off knob in \([0,1]\)</dd></div>
+            <div><dt>\(\delta_{t+l}\)</dt><dd>TD error at step \(t+l\)</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 6</span>GAE as a sum, and the backward recursion used in code. Common: \(\gamma=0.99,\lambda=0.95\) in classic control; \(\gamma=1\), \(\lambda=0.95\) or \(1\) for LLMs.</figcaption>
+      </figure>
+      <p>For LLMs the critic is usually another transformer of policy size with a scalar head at every token. With a sparse terminal reward, per-token advantages come entirely from the critic's changing predictions: if \(V\) jumps after a token, that token gets credit. That is the critic's promise (token-level credit) and its cost (another large model, hard to train on sparse rewards).</p>
+
+      <h3>1.9 Trust regions: take a step the data can vouch for</h3>
+      <p>The gradient gives a direction, not a step size. A big step can collapse the policy, and since the policy generates its own data, a collapsed policy poisons every later batch. We also want several gradient steps per batch of expensive rollouts. After the first step the data comes from the old policy, and importance sampling corrects for that.</p>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$L^{\mathrm{CPI}}(\theta) = \mathbb{E}_{s,a\sim\pi_{\theta_{\mathrm{old}}}}\left[ \frac{\pi_\theta(a\mid s)}{\pi_{\theta_{\mathrm{old}}}(a\mid s)}\, \hat A(s,a) \right]$$
+            $$\mathbb{E}_s\left[ \mathrm{KL}\left( \pi_{\theta_{\mathrm{old}}}(\cdot\mid s) \,\|\, \pi_\theta(\cdot\mid s) \right) \right] \le \delta$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(\pi_{\theta_{\mathrm{old}}}\)</dt><dd>policy that generated the data</dd></div>
+            <div><dt>ratio</dt><dd>reweights old samples for the new policy; its gradient at \(\theta_{\mathrm{old}}\) is the policy gradient</dd></div>
+            <div><dt>\(\delta\)</dt><dd>TRPO's KL budget</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 7</span>TRPO maximizes the surrogate under a KL constraint, solved with conjugate gradients and a line search. It works but is awkward with large networks.</figcaption>
+      </figure>
+
+      <h3>1.10 PPO clips the ratio instead of constraining the KL</h3>
+      <p>Write the ratio \(\rho_t = \pi_\theta(a_t\mid s_t)/\pi_{\theta_{\mathrm{old}}}(a_t\mid s_t)\). PPO takes the minimum of the plain and the clipped term. The result is a lower bound on the surrogate with no incentive to push \(\rho\) outside \([1-\varepsilon, 1+\varepsilon]\), so it runs several epochs of minibatch SGD per batch.</p>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 290" role="img" aria-label="Two plots of the PPO objective against the ratio rho. For a positive advantage the objective rises with rho up to 1.2 and is flat after, so the gradient is zero there. For a negative advantage the objective is flat below 0.8 and falls with rho after, so the gradient is zero only below 0.8. Both are pessimistic: moving the wrong way keeps the gradient.">
+            <text class="ve-tick l" x="40" y="16">A &gt; 0: good action</text>
+            <path class="ve-grid" d="M40 236H360M147 30V236M253 30V236"/>
+            <g class="ve-dim is-key"><path class="ln" d="M147 46H253"/><text x="200" y="38">1 ± ε, ε = 0.2</text></g>
+            <path class="ve-e is-hot no-ah" d="M40 220L253 76"/>
+            <path class="ve-e no-ah" d="M253 76H360"/><text class="ve-el" x="306" y="64">no gradient</text>
+            <path class="ann" d="M92 148L112 160"/><g class="ve-co" transform="translate(84 140)"><circle r="11"/><text>1</text></g>
+            <text class="ve-tick" x="147" y="256">0.8</text><text class="ve-tick" x="200" y="256">1</text><text class="ve-tick" x="253" y="256">1.2</text>
+            <text class="ve-tick l" x="440" y="16">A &lt; 0: bad action</text>
+            <path class="ve-grid" d="M440 236H760M547 30V236M653 30V236"/>
+            <g class="ve-dim is-key"><path class="ln" d="M547 46H653"/><text x="600" y="38">1 ± ε, ε = 0.2</text></g>
+            <path class="ve-e no-ah" d="M440 70H547"/><text class="ve-el" x="493" y="94">no gradient</text>
+            <path class="ve-e is-hot no-ah" d="M547 70L760 220"/>
+            <path class="ann" d="M716 141L706 168"/><g class="ve-co" transform="translate(720 130)"><circle r="11"/><text>2</text></g>
+            <text class="ve-tick" x="547" y="256">0.8</text><text class="ve-tick" x="600" y="256">1</text><text class="ve-tick" x="653" y="256">1.2</text>
+            <text class="ve-tick" x="200" y="280">ratio ρ</text><text class="ve-tick" x="600" y="280">ratio ρ</text>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 7</span>Vertical axis: the per-sample objective. Accent line: the gradient flows. Grey line: it is zero.</figcaption>
+        <ol class="callouts">
+          <li><span class="co-n">1</span>Wrong way: A &gt; 0 but \(\rho\) fell below 0.8. The min picks the unclipped term, so the mistake is still corrected.</li>
+          <li><span class="co-n">2</span>Wrong way: A &lt; 0 but \(\rho\) rose above 1.2. Again the gradient flows. Clipping never hides a loss.</li>
+        </ol>
+      </figure>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$L^{\mathrm{CLIP}}(\theta) = \mathbb{E}_t\left[ \min\Big( \rho_t \hat A_t,\; \mathrm{clip}(\rho_t, 1-\varepsilon, 1+\varepsilon)\, \hat A_t \Big) \right]$$
+            $$L^{\mathrm{PPO}} = -L^{\mathrm{CLIP}} + c_1\, \mathbb{E}_t\left[ (V_\phi(s_t) - \hat G_t)^2 \right] - c_2\, \mathbb{E}_t\left[ \mathcal{H}(\pi_\theta(\cdot\mid s_t)) \right]$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(\rho_t\)</dt><dd>probability ratio, 1 at the start of each update phase</dd></div>
+            <div><dt>\(\hat A_t\)</dt><dd>advantage (usually GAE), held constant</dd></div>
+            <div><dt>\(\varepsilon\)</dt><dd>clip range, typically 0.2</dd></div>
+            <div><dt>\(\hat G_t\)</dt><dd>critic target, often \(\hat A_t + V_{\mathrm{old}}(s_t)\)</dd></div>
+            <div><dt>\(\mathcal{H}\)</dt><dd>policy entropy, encourages exploration</dd></div>
+            <div><dt>\(c_1, c_2\)</dt><dd>loss weights</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 8</span>The clipped objective, and the full PPO loss with value regression and an entropy bonus.</figcaption>
+      </figure>
+
+      <h3>1.11 Code: REINFORCE on a toy sequence task</h3>
+      <p>A toy with the shape of LLM RL: the policy emits \(L\) tokens one at a time, conditioned on the previous token. The episode ends after \(L\) tokens with one terminal reward, the fraction of positions that match a hidden target. Sequence is the episode, token is the action. Pure PyTorch, seconds on a CPU.</p>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 270" role="img" aria-label="A target sequence 3 1 4 1 5 2 and a sampled sequence 3 1 2 1 5 0. Four of six positions match, so the reward is 4 over 6 plus the shift 5, which is 5.67.">
+            <text class="ve-tick l" x="20" y="40">target</text>
+            <text class="ve-tick l" x="20" y="136">sampled</text>
+            <path class="ve-e is-hot no-ah" d="M185 110V58M285 110V58M485 110V58M585 110V58"/>
+            <text class="ve-el" x="185" y="84">match</text><text class="ve-el" x="285" y="84">match</text><text class="ve-el" x="385" y="84">miss</text><text class="ve-el" x="485" y="84">match</text><text class="ve-el" x="585" y="84">match</text><text class="ve-el" x="685" y="84">miss</text>
+            <g class="ve-n"><rect class="sh" x="150" y="14" width="70" height="44" rx="6"/><text x="185" y="36">3</text><rect class="sh" x="250" y="14" width="70" height="44" rx="6"/><text x="285" y="36">1</text><rect class="sh" x="350" y="14" width="70" height="44" rx="6"/><text x="385" y="36">4</text><rect class="sh" x="450" y="14" width="70" height="44" rx="6"/><text x="485" y="36">1</text><rect class="sh" x="550" y="14" width="70" height="44" rx="6"/><text x="585" y="36">5</text><rect class="sh" x="650" y="14" width="70" height="44" rx="6"/><text x="685" y="36">2</text></g>
+            <g class="ve-n is-key"><rect class="sh" x="150" y="110" width="70" height="44" rx="6"/><text x="185" y="132">3</text><rect class="sh" x="250" y="110" width="70" height="44" rx="6"/><text x="285" y="132">1</text><rect class="sh" x="450" y="110" width="70" height="44" rx="6"/><text x="485" y="132">1</text><rect class="sh" x="550" y="110" width="70" height="44" rx="6"/><text x="585" y="132">5</text></g>
+            <g class="ve-n"><rect class="sh" x="350" y="110" width="70" height="44" rx="6"/><text x="385" y="132">2</text><rect class="sh" x="650" y="110" width="70" height="44" rx="6"/><text x="685" y="132">0</text></g>
+            <path class="ve-e is-hot" d="M435 154V196"/><text class="ve-el r" x="447" y="180">mean match + shift 5</text>
+            <g class="ve-n is-key" transform="translate(335 196)"><rect class="sh" width="200" height="54" rx="6"/><text x="100" y="20">reward 5.67</text><text class="sub" x="100" y="40">4/6 matched + 5</text></g>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 8</span>One rollout of the toy. The reward shift of 5 makes every reward positive, which is where a missing baseline hurts most.</figcaption>
+      </figure>
+      <div class="code">
+        <div class="code-bar"><span class="ve-label">reinforce_toy.py</span><button class="copy" type="button">Copy</button></div>
+<pre tabindex="0"><code><span class="tk-k">import</span> torch
+<span class="tk-k">import</span> torch.nn <span class="tk-k">as</span> nn
+
+torch.<span class="tk-f">manual_seed</span>(<span class="tk-n">0</span>)
+V, L, BATCH = <span class="tk-n">8</span>, <span class="tk-n">6</span>, <span class="tk-n">64</span>
+TARGET = torch.<span class="tk-f">tensor</span>([<span class="tk-n">3</span>, <span class="tk-n">1</span>, <span class="tk-n">4</span>, <span class="tk-n">1</span>, <span class="tk-n">5</span>, <span class="tk-n">2</span>])
+<span class="tk-c"># All-positive rewards (like a reward model whose scores never go below zero) are where a missing baseline hurts most.</span>
+REWARD_SHIFT = <span class="tk-n">5.0</span>
+BOS = V  <span class="tk-c"># an extra input id that marks the start, like a BOS token</span>
+
+
+<span class="tk-k">class</span> <span class="tk-f">TinyPolicy</span>(nn.Module):
+    <span class="tk-s">"""Next-token distribution given (position, previous token): a minimal autoregressive LM."""</span>
+
+    <span class="tk-k">def</span> <span class="tk-f">__init__</span>(self):
+        <span class="tk-f">super</span>().<span class="tk-f">__init__</span>()
+        self.emb = nn.<span class="tk-f">Embedding</span>(V + <span class="tk-n">1</span>, <span class="tk-n">32</span>)
+        self.pos = nn.<span class="tk-f">Embedding</span>(L, <span class="tk-n">32</span>)
+        self.head = nn.<span class="tk-f">Linear</span>(<span class="tk-n">32</span>, V)
+
+    <span class="tk-k">def</span> <span class="tk-f">forward</span>(self, prev_tok, t):
+        <span class="tk-k">return</span> self.<span class="tk-f">head</span>(torch.<span class="tk-f">tanh</span>(self.<span class="tk-f">emb</span>(prev_tok) + self.pos.weight[t]))
+
+
+<span class="tk-k">def</span> <span class="tk-f">rollout</span>(policy):
+    prev = torch.<span class="tk-f">full</span>((BATCH,), BOS)
+    tokens, logps = [], []
+    <span class="tk-k">for</span> t <span class="tk-k">in</span> <span class="tk-f">range</span>(L):
+        dist = torch.distributions.<span class="tk-f">Categorical</span>(logits=<span class="tk-f">policy</span>(prev, t))
+        tok = dist.<span class="tk-f">sample</span>()
+        tokens.<span class="tk-f">append</span>(tok)
+        logps.<span class="tk-f">append</span>(dist.<span class="tk-f">log_prob</span>(tok))
+        prev = tok
+    tokens = torch.<span class="tk-f">stack</span>(tokens, <span class="tk-n">1</span>)
+    <span class="tk-c"># Reward only at the end, like a verifier scoring a finished answer.</span>
+    reward = (tokens == TARGET).<span class="tk-f">float</span>().<span class="tk-f">mean</span>(<span class="tk-n">1</span>) + REWARD_SHIFT
+    <span class="tk-k">return</span> tokens, torch.<span class="tk-f">stack</span>(logps, <span class="tk-n">1</span>), reward
+
+
+<span class="tk-k">def</span> <span class="tk-f">train</span>(use_baseline: bool, steps=<span class="tk-n">150</span>):
+    policy = <span class="tk-f">TinyPolicy</span>()
+    opt = torch.optim.<span class="tk-f">Adam</span>(policy.<span class="tk-f">parameters</span>(), lr=<span class="tk-n">1e-2</span>)
+    baseline = <span class="tk-n">0.0</span>
+    <span class="tk-k">for</span> step <span class="tk-k">in</span> <span class="tk-f">range</span>(steps):
+        _, logps, reward = <span class="tk-f">rollout</span>(policy)
+        <span class="tk-c"># With gamma=1 and a terminal reward, every token's return-to-go equals the final reward.</span>
+        adv = reward - baseline <span class="tk-k">if</span> use_baseline <span class="tk-k">else</span> reward
+        loss = -(logps.<span class="tk-f">sum</span>(<span class="tk-n">1</span>) * adv).<span class="tk-f">mean</span>()
+        opt.<span class="tk-f">zero_grad</span>(); loss.<span class="tk-f">backward</span>(); opt.<span class="tk-f">step</span>()
+        <span class="tk-c"># A running mean is the simplest state-independent baseline; it is unbiased because it ignores the sampled actions.</span>
+        baseline = <span class="tk-n">0.9</span> * baseline + <span class="tk-n">0.1</span> * reward.<span class="tk-f">mean</span>().<span class="tk-f">item</span>()
+    <span class="tk-k">with</span> torch.<span class="tk-f">no_grad</span>():
+        <span class="tk-k">return</span> <span class="tk-f">rollout</span>(policy)[<span class="tk-n">2</span>].<span class="tk-f">mean</span>().<span class="tk-f">item</span>() - REWARD_SHIFT
+
+
+<span class="tk-k">if</span> __name__ == <span class="tk-s">"__main__"</span>:
+    no_b = <span class="tk-f">train</span>(use_baseline=<span class="tk-n">False</span>)
+    with_b = <span class="tk-f">train</span>(use_baseline=<span class="tk-n">True</span>)
+    <span class="tk-f">print</span>(<span class="tk-s">f"fraction of target matched, no baseline:   {no_b:.2f}"</span>)
+    <span class="tk-f">print</span>(<span class="tk-s">f"fraction of target matched, with baseline: {with_b:.2f}"</span>)
+    <span class="tk-k">assert</span> with_b &gt; <span class="tk-n">0.9</span> <span class="tk-k">and</span> with_b &gt; no_b, <span class="tk-s">"the baseline should solve the toy faster"</span></code></pre>
+      </div>
+      <p>Without a baseline every sequence scores near 5 and is pushed up, so only small differences carry signal. With the baseline, below-average sequences get a negative weight and the toy is solved in the same budget. Try these:</p>
+      <ul>
+        <li>Set <code>REWARD_SHIFT = 0</code>: the gap shrinks.</li>
+        <li>Shrink <code>BATCH</code> and compare curves over several seeds.</li>
+        <li>Use the mean reward of the other samples as the baseline: you have just invented RLOO (2.8).</li>
+        <li>Reward 1 only if the whole sequence matches (sparse, like math correctness) and watch exploration fail.</li>
+      </ul>
+
+      <div class="callout confusions">
+        <span class="chip warn">Common confusions</span>
+        <ul>
+          <li><p class="myth">The reward is differentiated.</p><p class="fact">Never. Policy gradient differentiates log-probabilities of sampled actions. The reward is only a weight.</p></li>
+          <li><p class="myth">A baseline biases the gradient.</p><p class="fact">Not if it ignores the action being scored. It changes variance only.</p></li>
+          <li><p class="myth">V and Q are the same for LLMs because transitions are deterministic.</p><p class="fact">\(Q(s,a) = r + V(s')\), but \(V(s)\) still averages over the policy's future sampling. They stay different functions.</p></li>
+          <li><p class="myth">PPO's clip limits the KL.</p><p class="fact">It removes the incentive to move ratios far from 1 on sampled actions. The KL can still drift over many epochs, so many implementations monitor it and stop early.</p></li>
+          <li><p class="myth">Discounting is needed.</p><p class="fact">With finite episodes and a terminal reward, \(\gamma = 1\) is standard. Discounting would penalize long correct answers.</p></li>
+          <li><p class="myth">An episode is a token.</p><p class="fact">An episode is the full response. A token is one action inside it.</p></li>
+        </ul>
+      </div>
+
+      <div class="callout quiz">
+        <span class="chip info">Check yourself</span>
+        <ol>
+          <li><p>In the LLM MDP, what are the state, action, transition and episode? Why is the transition trivial?</p>
+            <details><summary>Show answer</summary><p>State: prompt plus tokens so far. Action: the next token. Transition: append the token. Episode: one response up to EOS or the length limit. It is trivial because the environment is string concatenation; all randomness comes from the policy, the prompt distribution and the reward.</p></details></li>
+          <li><p>Show that the dynamics \(P(s'\mid s,a)\) do not appear in \(\nabla_\theta \log p_\theta(\tau)\). Why does it matter?</p>
+            <details><summary>Show answer</summary><p>\(\log p_\theta(\tau) = \log\rho(s_0) + \sum_t \log\pi_\theta(a_t\mid s_t) + \sum_t \log P(s_{t+1}\mid s_t,a_t)\). Only the policy terms depend on \(\theta\). So gradients come from samples without modeling the environment or the reward function.</p></details></li>
+          <li><p>Prove a state-dependent baseline leaves the gradient unbiased. What breaks if it depends on the action?</p>
+            <details><summary>Show answer</summary><p>\(\mathbb{E}_{a\sim\pi}[\nabla\log\pi(a\mid s)\,b(s)] = b(s)\nabla\sum_a\pi(a\mid s) = b(s)\nabla 1 = 0\). If \(b\) depends on \(a\), it cannot leave the sum, the term no longer vanishes, and the gradient is biased.</p></details></li>
+          <li><p>With a terminal reward \(r\), \(\gamma=1\) and no critic, what is the REINFORCE weight on each token? What does that imply for credit assignment?</p>
+            <details><summary>Show answer</summary><p>Every token gets weight \(r\) (or \(r-b\)). All tokens of a good response are reinforced equally, including irrelevant or harmful ones. Credit assignment relies on averaging over many samples.</p></details></li>
+          <li><p>What do \(\lambda=0\) and \(\lambda=1\) correspond to in GAE?</p>
+            <details><summary>Show answer</summary><p>\(\lambda=0\): one-step TD advantage \(\delta_t\), low variance, biased by critic errors. \(\lambda=1\): Monte Carlo advantage \(G_t - V(s_t)\), unbiased but high variance.</p></details></li>
+          <li><p>An action has \(\hat A>0\) and ratio 1.35 with \(\varepsilon=0.2\). What is the PPO gradient for that sample?</p>
+            <details><summary>Show answer</summary><p>Zero. With \(\hat A>0\) and \(\rho>1.2\) the min picks the clipped term \(1.2\hat A\), which is constant in \(\theta\). The action has already moved far enough.</p></details></li>
+        </ol>
+      </div>
+
+      <h3>Resources</h3>
+      <div class="resources"><div class="res-col"><h3>Read</h3><ul class="res-list">
+<li class="res-item is-start"><div class="res-top"><a href="https://spinningup.openai.com/en/latest/">OpenAI Spinning Up in Deep RL</a><span class="start-here">Start here</span></div><div class="res-meta">OpenAI <span class="chip plain">docs</span></div><p>Concise math of policy gradients, VPG and PPO with clean reference code.</p></li>
+<li class="res-item"><div class="res-top"><a href="http://incompleteideas.net/book/the-book-2nd.html">Sutton and Barto, Reinforcement Learning: An Introduction (2nd ed.)</a></div><div class="res-meta">Sutton and Barto <span class="chip plain">book</span></div><p>The textbook; chapters 3 (MDPs) and 13 (policy gradient) are the essentials here.</p></li>
+<li class="res-item"><div class="res-top"><a href="https://lilianweng.github.io/posts/2018-04-08-policy-gradient/">Lilian Weng, Policy Gradient Algorithms</a></div><div class="res-meta">Lilian Weng <span class="chip plain">blog</span></div><p>One-page tour of the policy gradient family with derivations.</p></li>
+<li class="res-item"><div class="res-top"><a href="https://arxiv.org/abs/1506.02438">Schulman et al., High-Dimensional Continuous Control Using GAE (arXiv:1506.02438)</a></div><div class="res-meta">Schulman et al., 2015 <span class="chip plain">paper</span></div><p>The GAE paper.</p></li>
+<li class="res-item"><div class="res-top"><a href="https://arxiv.org/abs/1502.05477">Schulman et al., Trust Region Policy Optimization (arXiv:1502.05477)</a></div><div class="res-meta">Schulman et al., 2015 <span class="chip plain">paper</span></div><p>The trust-region argument PPO approximates.</p></li>
+<li class="res-item"><div class="res-top"><a href="https://arxiv.org/abs/1707.06347">Schulman et al., Proximal Policy Optimization Algorithms (arXiv:1707.06347)</a></div><div class="res-meta">Schulman et al., 2017 <span class="chip plain">paper</span></div><p>The clipped objective.</p></li>
+</ul></div><div class="res-col"><h3>Watch</h3><ul class="res-list">
+<li class="res-item"><div class="res-top"><a href="https://www.youtube.com/playlist?list=PLqYmG7hTraZDM-OYHWgPebj2MfCFzFObQ">David Silver, RL Course (DeepMind x UCL, 2015)</a></div><div class="res-meta">David Silver <span class="chip plain">video playlist</span></div><p>The classic lecture series; lectures 1-3 and 7 cover this section. Slides at <a href="https://www.davidsilver.uk/teaching/">davidsilver.uk/teaching</a>.</p></li>
+<li class="res-item"><div class="res-top"><a href="https://www.youtube.com/watch?v=KHZVXao4qXs">David Silver, Lecture 7: Policy Gradient Methods</a></div><div class="res-meta">David Silver <span class="chip plain">video</span></div><p>The single most relevant lecture.</p></li>
+<li class="res-item"><div class="res-top"><a href="https://huggingface.co/learn/deep-rl-course/unit0/introduction">Hugging Face Deep RL Course</a></div><div class="res-meta">Hugging Face <span class="chip plain">course</span></div><p>Hands-on units including REINFORCE and PPO from scratch.</p></li>
+</ul></div></div>
+    </section>
+
+    <section class="sec" id="s02" aria-labelledby="s02-h">
+      <div class="sec-head"><p class="sec-num"><span class="n">02</span>RLHF and GRPO</p><h2 id="s02-h">Every RLHF method is one gradient with a different advantage</h2></div>
+
+      <h3>2.1 InstructGPT: SFT, reward model, then PPO</h3>
+      <p>InstructGPT (Ouyang et al. 2022) is the template every later system modifies. It also mixed pretraining gradients into PPO ("PPO-ptx") to limit regressions on public benchmarks, the alignment tax.</p>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 290" role="img" aria-label="Pipeline: the pretrained GPT-3 is fine-tuned into an SFT model on 13k demonstrations. The SFT model samples outputs that labelers rank, training a 6B reward model on 33k prompts. The reward model scores outputs for PPO on 31k prompts, which is anchored to the SFT model with a KL penalty. Below, a 1.3B InstructGPT model is shown as a sliver next to the 175B GPT-3, yet labelers preferred it.">
+            <path class="ve-e" d="M160 75H230"/><text class="ve-el" x="195" y="66">tunes</text>
+            <path class="ve-e" d="M370 75H440"/><text class="ve-el" x="405" y="66">samples</text>
+            <path class="ve-e is-hot" d="M580 75H650"/><text class="ve-el" x="615" y="66">scores</text>
+            <path class="ve-e is-async" d="M300 110V170H715V110"/><text class="ve-el" x="507" y="162">anchors with a KL penalty</text>
+            <g class="ve-n" transform="translate(20 40)"><rect class="sh" width="140" height="70" rx="6"/><text x="70" y="26">Pretrained</text><text class="sub" x="70" y="48">GPT-3</text></g>
+            <g class="ve-n" transform="translate(230 40)"><rect class="sh" width="140" height="70" rx="6"/><text x="70" y="26">1 SFT</text><text class="sub" x="70" y="48">13k demos</text></g>
+            <g class="ve-n" transform="translate(440 40)"><rect class="sh" width="140" height="70" rx="6"/><text x="70" y="26">2 Reward model</text><text class="sub" x="70" y="48">33k prompts, 6B</text></g>
+            <g class="ve-n is-key" transform="translate(650 40)"><rect class="sh" width="130" height="70" rx="6"/><text x="65" y="26">3 PPO</text><text class="sub" x="65" y="48">31k prompts</text></g>
+            <text class="ve-tick l" x="20" y="223">GPT-3 175B</text>
+            <rect class="ve-bar" x="170" y="215" width="350" height="16"/><text class="ve-bar-v" x="528" y="223">175B</text>
+            <text class="ve-tick l" x="20" y="263">InstructGPT 1.3B</text>
+            <rect class="ve-bar hot" x="170" y="255" width="3" height="16"/><text class="ve-bar-v" x="184" y="263">1.3B, preferred by labelers</text>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 9</span>The headline result: labelers preferred the 1.3B InstructGPT over the 175B GPT-3. Alignment training is far cheaper than the matching scale-up.</figcaption>
+      </figure>
+
+      <h3>2.2 The KL penalty rides on every token</h3>
+      <p>The reward model is only accurate near the SFT outputs it was trained on. Without a penalty the policy drifts to places where the reward model is high for bad reasons. The KL keeps text fluent and diverse. DPO solves this same objective in closed form; PPO solves it by sampling.</p>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 270" role="img" aria-label="Five generated tokens. Each token gets a small negative reward, beta times the log ratio of policy to reference. The last token also gets the large reward model score.">
+            <path class="ve-grid" d="M40 140H780"/>
+            <path class="ve-e" d="M110 50V138"/><text class="ve-el r" x="120" y="100">penalizes</text>
+            <path class="ve-e" d="M260 50V138"/><path class="ve-e" d="M410 50V138"/><path class="ve-e" d="M560 50V138"/>
+            <g class="ve-n"><rect class="sh" x="60" y="10" width="100" height="40" rx="6"/><text x="110" y="30">y1</text><rect class="sh" x="210" y="10" width="100" height="40" rx="6"/><text x="260" y="30">y2</text><rect class="sh" x="360" y="10" width="100" height="40" rx="6"/><text x="410" y="30">y3</text><rect class="sh" x="510" y="10" width="100" height="40" rx="6"/><text x="560" y="30">y4</text></g>
+            <g class="ve-n is-key"><rect class="sh" x="660" y="10" width="100" height="40" rx="6"/><text x="710" y="30">yT</text></g>
+            <rect class="ve-bar hot" x="692" y="70" width="36" height="70"/><text class="ve-bar-v" text-anchor="middle" x="710" y="60">RM score rφ</text>
+            <rect class="ve-bar" x="92" y="140" width="36" height="14"/><rect class="ve-bar" x="242" y="140" width="36" height="14"/><rect class="ve-bar" x="392" y="140" width="36" height="14"/><rect class="ve-bar" x="542" y="140" width="36" height="14"/><rect class="ve-bar" x="692" y="140" width="36" height="14"/>
+            <text class="ve-bar-v" text-anchor="middle" x="110" y="178">−β log(π/πref)</text><text class="ve-bar-v" text-anchor="middle" x="260" y="178">−β log(π/πref)</text><text class="ve-bar-v" text-anchor="middle" x="410" y="178">−β log(π/πref)</text><text class="ve-bar-v" text-anchor="middle" x="560" y="178">−β log(π/πref)</text><text class="ve-bar-v" text-anchor="middle" x="710" y="178">−β log(π/πref)</text>
+            <text class="ve-tick l" x="60" y="230">per-token reward: a small dense KL penalty everywhere, the RM score only at the end</text>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 10</span>PPO-based RLHF folds the KL into the reward, so GAE can spread the end-of-sequence score backward.</figcaption>
+      </figure>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$\max_\theta\; \mathbb{E}_{x\sim\mathcal{D},\,y\sim\pi_\theta(\cdot\mid x)}\left[ r_\phi(x,y) \right] - \beta\, \mathbb{D}_{\mathrm{KL}}\left( \pi_\theta(\cdot\mid x) \,\|\, \pi_{\mathrm{ref}}(\cdot\mid x) \right)$$
+            $$r_t = \begin{cases} -\beta \log \dfrac{\pi_\theta(y_t\mid s_t)}{\pi_{\mathrm{ref}}(y_t\mid s_t)} &amp; t &lt; T \\[2ex] r_\phi(x,y) - \beta \log \dfrac{\pi_\theta(y_T\mid s_T)}{\pi_{\mathrm{ref}}(y_T\mid s_T)} &amp; t = T \end{cases}$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(x, y\)</dt><dd>prompt and sampled response</dd></div>
+            <div><dt>\(r_\phi\)</dt><dd>reward model score</dd></div>
+            <div><dt>\(\pi_{\mathrm{ref}}\)</dt><dd>frozen SFT model</dd></div>
+            <div><dt>\(\beta\)</dt><dd>KL coefficient, often 0.01 to 0.1</dd></div>
+            <div><dt>\(s_t\)</dt><dd>\((x, y_{&lt;t})\); \(T\) is the last token index</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 9</span>The RLHF objective and its per-token form. The sampled log-ratio is a single-sample KL estimate: it can be negative for one token and is positive in expectation.</figcaption>
+      </figure>
+
+      <h3>2.3 PPO for LLMs keeps four models in memory</h3>
+      <figure class="ve-steps">
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 -10 800 390" role="img" aria-label="Step 1: prompts feed the policy, which samples a response. Step 2: the response is scored by three models: the reward model, the frozen reference and the critic. Step 3: their outputs become GAE advantages. Step 4: the PPO update changes the policy. The policy and the critic are trained; the reward model and the reference are frozen.">
+            <path class="ve-e" data-s="1" pathLength="1" d="M130 140H180"/><text class="ve-el" data-s="1" x="155" y="131">feeds</text>
+            <path class="ve-e is-hot" data-s="1" pathLength="1" d="M320 140H390"/><text class="ve-el" data-s="1" x="355" y="131">samples</text>
+            <path class="ve-e" data-s="2" pathLength="1" d="M500 140H545V50H610"/><text class="ve-el" data-s="2" x="578" y="41">scores</text>
+            <path class="ve-e" data-s="2" pathLength="1" d="M500 140H610"/><text class="ve-el" data-s="2" x="555" y="131">anchors</text>
+            <path class="ve-e" data-s="2" pathLength="1" d="M500 140H545V230H610"/><text class="ve-el" data-s="2" x="578" y="221">values</text>
+            <path class="ve-e" data-s="3" pathLength="1" d="M695 270V300"/><text class="ve-el l" data-s="3" x="687" y="290">rewards, V</text>
+            <path class="ve-e" data-s="4" pathLength="1" d="M610 328H520"/><text class="ve-el" data-s="4" x="565" y="319">feeds</text>
+            <path class="ve-e is-hot" data-s="4" pathLength="1" d="M330 328H250V175"/><text class="ve-el r" data-s="4" x="258" y="250">updates θ</text>
+            <g class="ve-zone" data-s="2"><rect x="592" y="-6" width="206" height="276" rx="8"/><text x="602" y="10">SCORE</text></g>
+            <g class="ve-n" data-s="1" transform="translate(20 112)"><rect class="sh" width="110" height="56" rx="6"/><text x="55" y="22">Prompt x</text><text class="sub" x="55" y="42">from dataset</text></g>
+            <g class="ve-n is-key" data-s="1" transform="translate(180 105)"><rect class="sh" width="140" height="70" rx="6"/><text x="70" y="26">Policy πθ</text><text class="sub" x="70" y="48">trained</text></g>
+            <g class="ve-n" data-s="1" transform="translate(390 112)"><rect class="sh" width="110" height="56" rx="6"/><text x="55" y="22">Response y</text><text class="sub" x="55" y="42">rollout</text></g>
+            <g class="ve-n" data-s="2" transform="translate(610 22)"><rect class="sh" width="170" height="56" rx="6"/><text x="85" y="22">Reward model</text><text class="sub" x="85" y="42">frozen</text></g>
+            <g class="ve-n" data-s="2" transform="translate(610 112)"><rect class="sh" width="170" height="56" rx="6"/><text x="85" y="22">Reference πref</text><text class="sub" x="85" y="42">frozen</text></g>
+            <g class="ve-n is-key" data-s="2" transform="translate(610 202)"><rect class="sh" width="170" height="56" rx="6"/><text x="85" y="22">Critic Vψ</text><text class="sub" x="85" y="42">trained</text></g>
+            <g class="ve-n" data-s="3" transform="translate(610 300)"><rect class="sh" width="170" height="56" rx="6"/><text x="85" y="22">Advantages</text><text class="sub" x="85" y="42">GAE per token</text></g>
+            <g class="ve-n" data-s="4" transform="translate(330 300)"><rect class="sh" width="190" height="56" rx="6"/><text x="95" y="22">PPO update</text><text class="sub" x="95" y="42">clip + value loss</text></g>
+          </svg>
+        </div>
+        <div class="ve-player">
+          <ol class="ve-cap">
+            <li data-n="1/4">Rollout: sample responses for a batch of prompts. This is the expensive part, run on an inference engine such as vLLM.</li>
+            <li data-n="2/4">Score: the reward model scores the response, the reference gives log-probs for the KL, and the critic gives a value at every token.</li>
+            <li data-n="3/4">Advantages: build per-token rewards with the KL folded in, then run GAE.</li>
+            <li data-n="4/4">Update: several epochs of minibatch PPO on the policy and value regression on the critic. Accent border means trained.</li>
+          </ol>
+          <button data-go="-1" aria-label="Previous step">←</button>
+          <button data-play>Play</button>
+          <input type="range" min="0" value="0" aria-label="Step">
+          <button data-go="1" aria-label="Next step">→</button>
+        </div>
+        <figcaption><span class="fig-n">Fig. 11</span>One PPO-RLHF step. Both trained models also carry optimizer state (16 bytes per parameter), so a 70B policy plus a 70B critic costs several times SFT memory.</figcaption>
+      </figure>
+      <p>Details that matter: whiten advantages per batch, initialize the critic from the reward model, mask padding and prompt tokens out of every loss, monitor KL, length, reward and value loss together, and use a large prompt batch because the gradient is noisy. The memory burden is a big reason DPO took off, and why GRPO and RLOO drop the critic.</p>
+
+      <h3>2.4 Online RL gets feedback on what the model does now</h3>
+      <figure>
+        <div class="cases">
+          <div class="case" data-st="warn"><span class="chip warn">Fixed pairs</span><h3>DPO: offline</h3>
+            <svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="A fixed dataset of preference pairs trains the policy in one direction. The data never reflects the current policy.">
+              <path class="ve-e is-st" d="M86 48H154"/><text class="ve-el" x="120" y="39">trains</text>
+              <g class="ve-n"><rect class="sh" x="10" y="26" width="76" height="44" rx="5"/><text x="48" y="48">pairs</text></g>
+              <g class="ve-n"><rect class="sh" x="154" y="26" width="76" height="44" rx="5"/><text x="192" y="48">policy</text></g>
+              <text class="ve-tick l" x="10" y="98">data fixed at collection</text>
+            </svg></div>
+          <div class="case" data-st="ok"><span class="chip ok">Fresh samples</span><h3>PPO, GRPO: online</h3>
+            <svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="The policy samples responses, a judge scores them, and the score trains the policy, so feedback reflects what the model does now.">
+              <path class="ve-e" d="M86 38H154"/><text class="ve-el" x="120" y="29">samples</text>
+              <path class="ve-e is-st" d="M154 60H86"/><text class="ve-el" x="120" y="75">scores</text>
+              <g class="ve-n"><rect class="sh" x="10" y="26" width="76" height="44" rx="5"/><text x="48" y="48">policy</text></g>
+              <g class="ve-n"><rect class="sh" x="154" y="26" width="76" height="44" rx="5"/><text x="192" y="48">judge</text></g>
+              <text class="ve-tick l" x="10" y="98">data follows the policy</text>
+            </svg></div>
+        </div>
+        <figcaption><span class="fig-n">Fig. 12</span>Same KL-regularized objective, different data. Well-tuned online methods tend to edge out DPO, at higher cost. Tulu 3 used both: DPO for preferences, then RLVR for verifiable skills.</figcaption>
+      </figure>
+
+      <h3>2.5 Push a proxy hard enough and the true score falls</h3>
+      <p>The reward model is a learned proxy (Goodhart's law). Symptoms: ever longer answers (length bias), hedging and flattery, formatting for its own sake, and repeated phrases the model likes. With verifiable rewards, hacking looks like exploiting the checker: the right format without solving, special-casing tests.</p>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 290" role="img" aria-label="Score against distance from the initial policy. The proxy reward model score rises forever. The gold, true score rises, peaks, then falls.">
+            <path class="ve-grid" d="M60 250H770M60 20V250"/>
+            <path class="ve-grid" d="M400 80V250"/>
+            <path class="ve-e no-ah" d="M60 245C200 140 420 70 760 40"/>
+            <path class="ve-e is-hot no-ah" d="M60 245C180 140 300 80 400 80C520 80 640 160 760 245"/>
+            <text class="ve-el l" x="770" y="24">proxy RM score</text>
+            <text class="ve-el l" x="392" y="68">gold (true) score</text>
+            <path class="ann" d="M400 48V76"/><g class="ve-co" transform="translate(400 36)"><circle r="11"/><text>1</text></g>
+            <text class="ve-tick l" x="70" y="16">score</text>
+            <text class="ve-tick" x="415" y="276">distance from the start policy, d = √KL</text>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 13</span>Shape only, not measured data. Larger reward models and more data push the peak further out and higher.</figcaption>
+        <ol class="callouts"><li><span class="co-n">1</span>Past the peak the proxy still climbs while real quality drops. Use the KL penalty or early stopping, and evaluate with something other than the reward model you optimized.</li></ol>
+      </figure>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$R_{\mathrm{BoN}}(d) = d\left(\alpha_{\mathrm{bon}} - \beta_{\mathrm{bon}}\, d\right), \qquad R_{\mathrm{RL}}(d) = d\left(\alpha_{\mathrm{RL}} - \beta_{\mathrm{RL}} \log d\right)$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(R(d)\)</dt><dd>gold reward gain over the initial policy</dd></div>
+            <div><dt>\(d\)</dt><dd>\(\sqrt{\mathrm{KL}(\pi\,\|\,\pi_{\mathrm{ref}})}\)</dd></div>
+            <div><dt>\(\alpha,\beta\)</dt><dd>fitted coefficients</dd></div>
+            <div><dt>BoN, RL</dt><dd>best-of-\(n\) vs PPO against the proxy</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 10</span>Gao, Schulman and Hilton (2022) used a large gold reward model as a stand-in for humans and smaller proxies trained on its labels. Both curves rise, peak, then fall.</figcaption>
+      </figure>
+
+      <h3>2.6 RLAIF swaps human labels for model labels</h3>
+      <ul>
+        <li><b>Constitutional AI</b> (Bai et al. 2022): the model critiques and revises its outputs against written principles, and an AI labeler produces harmlessness preferences for the reward model.</li>
+        <li><b>RLAIF vs RLHF</b> (Lee et al. 2023): an off-the-shelf LLM labeler led to policies rated comparably to RLHF on summarization and dialogue. They also tried the LLM's score directly as the reward.</li>
+      </ul>
+      <p>Most open preference data today (Tulu 3, UltraFeedback-style) is AI-labeled, often audited by humans. Reward hacking still applies, plus biases inherited from the judge.</p>
+
+      <h3>2.7 RLVR drops the reward model, GRPO drops the critic</h3>
+      <p><b>RLVR</b> (RL with verifiable rewards, named in Tulu 3) skips the reward model when correctness can be checked: math answers against a reference, code against tests, constraints against a checker. The reward is usually binary, sometimes with a small format reward. A verifier cannot be flattered, which cuts hacking a lot but not to zero.</p>
+      <figure>
+        <div class="cases">
+          <div class="case" data-st="warn"><span class="chip warn">Score can be gamed</span><h3>Learned reward model</h3>
+            <svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="A response is scored by a learned reward model, which can be flattered.">
+              <path class="ve-e is-st" d="M120 34V70"/><text class="ve-el r" x="128" y="55">scored by</text>
+              <g class="ve-n"><rect class="sh" x="70" y="4" width="100" height="30" rx="5"/><text x="120" y="19">response</text></g>
+              <g class="ve-n is-st"><rect class="sh" x="30" y="70" width="180" height="34" rx="5"/><text x="120" y="87">learned RM</text></g>
+            </svg></div>
+          <div class="case" data-st="ok"><span class="chip ok">0 or 1</span><h3>Verifier (RLVR)</h3>
+            <svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="A response is checked by rules such as tests or an answer key, giving a binary reward.">
+              <path class="ve-e is-st" d="M120 34V70"/><text class="ve-el r" x="128" y="55">checked by</text>
+              <g class="ve-n"><rect class="sh" x="70" y="4" width="100" height="30" rx="5"/><text x="120" y="19">response</text></g>
+              <g class="ve-n is-st"><rect class="sh" x="30" y="70" width="180" height="34" rx="5"/><text x="120" y="87">tests, answer key</text></g>
+            </svg></div>
+        </div>
+        <figcaption><span class="fig-n">Fig. 14</span>Weak verifiers can still be hacked (format tricks, test special-casing). Verifier quality is part of reward design.</figcaption>
+      </figure>
+      <p>With long chain-of-thought, RLVR produced the reasoning models. <b>DeepSeek-R1-Zero</b> applied RL straight to the V3 base with only accuracy and format rewards (reasoning in <code>&lt;think&gt;</code> tags). Response length grew from hundreds to thousands of tokens and the model learned to re-check and backtrack (the "aha moment"). <b>DeepSeek-R1</b> made this usable with a four-stage pipeline.</p>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 230" role="img" aria-label="Top: R1-Zero goes from the V3 base straight to RL with accuracy and format rewards. Bottom: R1 goes from the base through cold-start SFT, reasoning RL, rejection-sampling SFT on about 800k samples, and a final RL stage for helpfulness and harmlessness.">
+            <path class="ve-e is-hot" d="M160 40H620"/><text class="ve-el" x="390" y="31">RL only: accuracy + format rewards</text>
+            <g class="ve-n" transform="translate(20 10)"><rect class="sh" width="140" height="60" rx="6"/><text x="70" y="22">V3 base</text><text class="sub" x="70" y="44">no SFT</text></g>
+            <g class="ve-n is-key" transform="translate(620 10)"><rect class="sh" width="160" height="60" rx="6"/><text x="80" y="22">R1-Zero</text><text class="sub" x="80" y="44">length grows</text></g>
+            <text class="ve-tick l" x="20" y="116">DeepSeek-R1</text>
+            <path class="ve-e" d="M140 165H180"/><path class="ve-e" d="M300 165H340"/><path class="ve-e" d="M460 165H500"/><path class="ve-e" d="M620 165H660"/>
+            <g class="ve-n" transform="translate(20 130)"><rect class="sh" width="120" height="70" rx="6"/><text x="60" y="26">V3 base</text><text class="sub" x="60" y="48">start</text></g>
+            <g class="ve-n" transform="translate(180 130)"><rect class="sh" width="120" height="70" rx="6"/><text x="60" y="26">Cold start</text><text class="sub" x="60" y="48">few k CoT</text></g>
+            <g class="ve-n" transform="translate(340 130)"><rect class="sh" width="120" height="70" rx="6"/><text x="60" y="26">Reasoning RL</text><text class="sub" x="60" y="48">lang. reward</text></g>
+            <g class="ve-n" transform="translate(500 130)"><rect class="sh" width="120" height="70" rx="6"/><text x="60" y="26">RS-SFT</text><text class="sub" x="60" y="48">~800k samples</text></g>
+            <g class="ve-n is-key" transform="translate(660 130)"><rect class="sh" width="120" height="70" rx="6"/><text x="60" y="26">Final RL</text><text class="sub" x="60" y="48">help + safety</text></g>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 15</span>R1-Zero shows RL alone can teach reasoning. R1 adds SFT stages around it for readability and breadth.</figcaption>
+      </figure>
+
+      <h3>GRPO: the group mean replaces the critic</h3>
+      <p>GRPO (DeepSeekMath, Shao et al. 2024) starts from the baseline form (1.7). The ideal baseline for prompt \(q\) is \(V(q)\), the policy's expected reward on \(q\). Estimate it by Monte Carlo: sample a group of \(G\) responses, score them, and use their mean. Then divide by the standard deviation.</p>
+      <figure class="ve-steps">
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 392" role="img" aria-label="Prompt one: four sampled responses with rewards 1, 0, 0, 1 have mean 0.5 and standard deviation 0.58, so advantages are plus 0.87, minus 0.87, minus 0.87, plus 0.87, shared by every token of each response. Prompt two: all four responses get reward 0, so every advantage is zero and the prompt adds no policy gradient.">
+            <path class="ve-e" data-s="1" pathLength="1" d="M130 45H214"/><text class="ve-el" data-s="1" x="172" y="36">samples</text>
+            <g class="ve-zone" data-s="1"><rect x="214" y="0" width="322" height="80" rx="8"/><text x="224" y="14">GROUP, G = 4</text></g>
+            <g class="ve-n" data-s="1" transform="translate(20 20)"><rect class="sh" width="110" height="50" rx="6"/><text x="55" y="25">prompt q</text></g>
+            <g class="ve-n" data-s="1" transform="translate(230 22)"><rect class="sh" width="62" height="46" rx="6"/><text x="31" y="23">o1</text></g>
+            <g class="ve-n" data-s="1" transform="translate(306 22)"><rect class="sh" width="62" height="46" rx="6"/><text x="31" y="23">o2</text></g>
+            <g class="ve-n" data-s="1" transform="translate(382 22)"><rect class="sh" width="62" height="46" rx="6"/><text x="31" y="23">o3</text></g>
+            <g class="ve-n" data-s="1" transform="translate(458 22)"><rect class="sh" width="62" height="46" rx="6"/><text x="31" y="23">o4</text></g>
+            <text class="ve-tick" data-s="2" x="261" y="96">r = 1</text><text class="ve-tick" data-s="2" x="337" y="96">r = 0</text><text class="ve-tick" data-s="2" x="413" y="96">r = 0</text><text class="ve-tick" data-s="2" x="489" y="96">r = 1</text>
+            <path class="ve-grid" data-s="3" d="M214 160H536"/>
+            <rect class="ve-bar hot" data-s="3" x="246" y="130" width="30" height="30"/><text class="ve-bar-v" data-s="3" text-anchor="middle" x="261" y="118">+0.87</text>
+            <rect class="ve-bar" data-s="3" x="322" y="160" width="30" height="30"/><text class="ve-bar-v" data-s="3" text-anchor="middle" x="337" y="204">−0.87</text>
+            <rect class="ve-bar" data-s="3" x="398" y="160" width="30" height="30"/><text class="ve-bar-v" data-s="3" text-anchor="middle" x="413" y="204">−0.87</text>
+            <rect class="ve-bar hot" data-s="3" x="474" y="130" width="30" height="30"/><text class="ve-bar-v" data-s="3" text-anchor="middle" x="489" y="118">+0.87</text>
+            <text class="ve-tick l" data-s="3" x="560" y="130">mean 0.5, std 0.58</text>
+            <text class="ve-tick l" data-s="3" x="560" y="156">A = (r − mean) / std</text>
+            <text class="ve-tick l" data-s="4" x="560" y="190">same A on every token of oi</text>
+            <path class="ve-e" data-s="1" pathLength="1" d="M130 275H214"/><text class="ve-el" data-s="1" x="172" y="266">samples</text>
+            <g class="ve-zone" data-s="1"><rect x="214" y="230" width="322" height="80" rx="8"/><text x="224" y="244">GROUP, G = 4</text></g>
+            <g class="ve-n" data-s="1" transform="translate(20 250)"><rect class="sh" width="110" height="50" rx="6"/><text x="55" y="25">prompt q'</text></g>
+            <g class="ve-n" data-s="1" transform="translate(230 252)"><rect class="sh" width="62" height="46" rx="6"/><text x="31" y="23">o1</text></g>
+            <g class="ve-n" data-s="1" transform="translate(306 252)"><rect class="sh" width="62" height="46" rx="6"/><text x="31" y="23">o2</text></g>
+            <g class="ve-n" data-s="1" transform="translate(382 252)"><rect class="sh" width="62" height="46" rx="6"/><text x="31" y="23">o3</text></g>
+            <g class="ve-n" data-s="1" transform="translate(458 252)"><rect class="sh" width="62" height="46" rx="6"/><text x="31" y="23">o4</text></g>
+            <text class="ve-tick" data-s="2" x="261" y="326">r = 0</text><text class="ve-tick" data-s="2" x="337" y="326">r = 0</text><text class="ve-tick" data-s="2" x="413" y="326">r = 0</text><text class="ve-tick" data-s="2" x="489" y="326">r = 0</text>
+            <text class="ve-tick l" data-s="3" x="214" y="356">A = 0 for all four</text>
+            <text class="ve-tick l" data-s="4" x="214" y="380">adds no policy gradient, only the KL term</text>
+          </svg>
+        </div>
+        <div class="ve-player">
+          <ol class="ve-cap">
+            <li data-n="1/4">For each prompt, sample a group of G responses from the old policy.</li>
+            <li data-n="2/4">Score each response with the reward model or verifier.</li>
+            <li data-n="3/4">Center the rewards on the group mean and divide by the group std. A tie group (all right or all wrong) has zero advantage.</li>
+            <li data-n="4/4">Each response's single advantage is copied to all of its tokens (outcome supervision), then fed to PPO's clipped loss.</li>
+          </ol>
+          <button data-go="-1" aria-label="Previous step">←</button>
+          <button data-play>Play</button>
+          <input type="range" min="0" value="0" aria-label="Step">
+          <button data-go="1" aria-label="Next step">→</button>
+        </div>
+        <figcaption><span class="fig-n">Fig. 16</span>GRPO advantages for two prompts. The second prompt shows why dynamic sampling in DAPO exists.</figcaption>
+      </figure>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$\hat A_{i,t} = \frac{r_i - \mathrm{mean}(r_1,\dots,r_G)}{\mathrm{std}(r_1,\dots,r_G)}$$
+            $$\mathcal{J}_{\mathrm{GRPO}}(\theta) = \mathbb{E}\left[ \frac{1}{G}\sum_{i=1}^{G} \frac{1}{|o_i|}\sum_{t=1}^{|o_i|} \Big( \min\big( \rho_{i,t}\hat A_{i,t},\; \mathrm{clip}(\rho_{i,t}, 1-\varepsilon, 1+\varepsilon)\hat A_{i,t} \big) - \beta\, \mathbb{D}_{\mathrm{KL}}^{(i,t)} \Big) \right]$$
+            $$\mathbb{D}_{\mathrm{KL}}^{(i,t)} = \frac{\pi_{\mathrm{ref}}(o_{i,t}\mid\cdot)}{\pi_\theta(o_{i,t}\mid\cdot)} - \log\frac{\pi_{\mathrm{ref}}(o_{i,t}\mid\cdot)}{\pi_\theta(o_{i,t}\mid\cdot)} - 1$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(i, t\)</dt><dd>response index in the group, token index in it</dd></div>
+            <div><dt>\(\rho_{i,t}\)</dt><dd>per-token ratio \(\pi_\theta / \pi_{\theta_{\mathrm{old}}}\)</dd></div>
+            <div><dt>\(|o_i|\)</dt><dd>length of response \(i\)</dd></div>
+            <div><dt>\(\beta\)</dt><dd>KL coefficient (0.04 in DeepSeekMath)</dd></div>
+            <div><dt>k3</dt><dd>third line: non-negative, unbiased for \(\mathrm{KL}(\pi_\theta\|\pi_{\mathrm{ref}})\) when sampling from \(\pi_\theta\), lower variance than the raw log-ratio</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 11</span>GRPO advantage, objective, and the k3 KL estimator (from John Schulman's note). The KL sits in the loss, not in the reward.</figcaption>
+      </figure>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 280" role="img" aria-label="Top row, PPO: policy trained, reference frozen, reward model frozen, critic trained; baseline is a learned critic with per-token advantages from GAE. Bottom row, GRPO: policy, reference, reward model or verifier, and a dashed dropped critic; baseline is the mean reward of G samples, per-response advantage.">
+            <text class="ve-tick l" x="20" y="66">PPO</text>
+            <g class="ve-n" transform="translate(130 30)"><rect class="sh" width="140" height="56" rx="6"/><text x="70" y="22">Policy</text><text class="sub" x="70" y="42">trained</text></g>
+            <g class="ve-n" transform="translate(300 30)"><rect class="sh" width="140" height="56" rx="6"/><text x="70" y="22">Reference</text><text class="sub" x="70" y="42">frozen</text></g>
+            <g class="ve-n" transform="translate(470 30)"><rect class="sh" width="140" height="56" rx="6"/><text x="70" y="22">Reward model</text><text class="sub" x="70" y="42">frozen</text></g>
+            <g class="ve-n is-key" transform="translate(640 30)"><rect class="sh" width="140" height="56" rx="6"/><text x="70" y="22">Critic</text><text class="sub" x="70" y="42">trained</text></g>
+            <text class="ve-tick l" x="130" y="118">baseline: learned V(s), advantage per token via GAE</text>
+            <text class="ve-tick l" x="20" y="196">GRPO</text>
+            <g class="ve-n" transform="translate(130 160)"><rect class="sh" width="140" height="56" rx="6"/><text x="70" y="22">Policy</text><text class="sub" x="70" y="42">trained</text></g>
+            <g class="ve-n" transform="translate(300 160)"><rect class="sh" width="140" height="56" rx="6"/><text x="70" y="22">Reference</text><text class="sub" x="70" y="42">frozen</text></g>
+            <g class="ve-n" transform="translate(470 160)"><rect class="sh" width="140" height="56" rx="6"/><text x="70" y="22">RM or verifier</text><text class="sub" x="70" y="42">frozen or rules</text></g>
+            <g class="ve-n" transform="translate(640 160)"><rect class="sh is-off" width="140" height="56" rx="6"/><text x="70" y="22">Critic</text><text class="sub" x="70" y="42">dropped</text></g>
+            <text class="ve-tick l" x="130" y="248">baseline: mean reward of G samples, advantage per response</text>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 17</span>GRPO trades the critic for more samples per prompt (8 to 64). Generation is costly but parallel, and the group baseline is conditioned on that prompt's difficulty.</figcaption>
+      </figure>
+
+      <h3>2.8 RLOO, Dr. GRPO and DAPO fix what GRPO leaves rough</h3>
+      <p><b>RLOO</b> (Ahmadian et al. 2024) treats the whole response as one action, samples \(k\) responses per prompt, and uses the leave-one-out mean as each sample's baseline. That baseline ignores sample \(i\), so the estimator is exactly unbiased. It is plain REINFORCE with a baseline, what you built in 1.11.</p>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 270" role="img" aria-label="Four samples with rewards 1, 0, 0, 1. The group-mean advantage is plus or minus 0.50. The leave-one-out advantage is plus or minus 0.67, which is the group-mean advantage times k over k minus 1, so they differ only by a constant factor.">
+            <rect class="ve-bar" x="40" y="12" width="16" height="12"/><text class="ve-bar-v" x="62" y="18">group mean</text>
+            <rect class="ve-bar hot" x="260" y="12" width="16" height="12"/><text class="ve-bar-v" x="282" y="18">leave-one-out (RLOO)</text>
+            <path class="ve-grid" d="M40 140H780"/>
+            <rect class="ve-bar" x="74" y="90" width="40" height="50"/><text class="ve-bar-v" text-anchor="middle" x="94" y="76">+0.50</text>
+            <rect class="ve-bar hot" x="126" y="73" width="40" height="67"/><text class="ve-bar-v" text-anchor="middle" x="146" y="59">+0.67</text>
+            <rect class="ve-bar" x="264" y="140" width="40" height="50"/><text class="ve-bar-v" text-anchor="middle" x="284" y="204">−0.50</text>
+            <rect class="ve-bar hot" x="316" y="140" width="40" height="67"/><text class="ve-bar-v" text-anchor="middle" x="336" y="221">−0.67</text>
+            <rect class="ve-bar" x="454" y="140" width="40" height="50"/><text class="ve-bar-v" text-anchor="middle" x="474" y="204">−0.50</text>
+            <rect class="ve-bar hot" x="506" y="140" width="40" height="67"/><text class="ve-bar-v" text-anchor="middle" x="526" y="221">−0.67</text>
+            <rect class="ve-bar" x="644" y="90" width="40" height="50"/><text class="ve-bar-v" text-anchor="middle" x="664" y="76">+0.50</text>
+            <rect class="ve-bar hot" x="696" y="73" width="40" height="67"/><text class="ve-bar-v" text-anchor="middle" x="716" y="59">+0.67</text>
+            <text class="ve-tick" x="120" y="256">o1, r = 1</text><text class="ve-tick" x="310" y="256">o2, r = 0</text><text class="ve-tick" x="500" y="256">o3, r = 0</text><text class="ve-tick" x="690" y="256">o4, r = 1</text>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 18</span>The group mean includes the sample itself, but the result is only the leave-one-out advantage times (k−1)/k = 0.75. So GRPO's bias comes from its other normalizations.</figcaption>
+      </figure>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$\hat A_i = r_i - \frac{1}{k-1}\sum_{j\ne i} r_j, \qquad r_i - \mathrm{mean}(r) = \frac{k-1}{k}\,\hat A_i$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(k\)</dt><dd>responses per prompt</dd></div>
+            <div><dt>\(\hat A_i\)</dt><dd>RLOO advantage of sample \(i\)</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 12</span>RLOO baseline, and why a plain group mean is just a rescaled version of it.</figcaption>
+      </figure>
+      <p><b>Dr. GRPO</b> (Liu et al. 2025) finds two biases in GRPO's normalizations.</p>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 240" role="img" aria-label="Under per-response averaging, each token carries weight 1 over the response length. A response with 2 tokens has weight 0.50 per token, 3 tokens 0.33, 4 tokens 0.25 and 5 tokens 0.20. Short responses are weighted more per token.">
+            <text class="ve-tick l" x="110" y="14">tokens</text><text class="ve-tick l" x="290" y="14">loss weight per token = 1/|o|</text>
+            <text class="ve-tick l" x="20" y="54">|o| = 2</text><text class="ve-tick l" x="20" y="106">|o| = 3</text><text class="ve-tick l" x="20" y="158">|o| = 4</text><text class="ve-tick l" x="20" y="210">|o| = 5</text>
+            <rect class="ve-bar" x="110" y="39" width="22" height="22"/><rect class="ve-bar" x="138" y="39" width="22" height="22"/>
+            <rect class="ve-bar" x="110" y="91" width="22" height="22"/><rect class="ve-bar" x="138" y="91" width="22" height="22"/><rect class="ve-bar" x="166" y="91" width="22" height="22"/>
+            <rect class="ve-bar" x="110" y="143" width="22" height="22"/><rect class="ve-bar" x="138" y="143" width="22" height="22"/><rect class="ve-bar" x="166" y="143" width="22" height="22"/><rect class="ve-bar" x="194" y="143" width="22" height="22"/>
+            <rect class="ve-bar" x="110" y="195" width="22" height="22"/><rect class="ve-bar" x="138" y="195" width="22" height="22"/><rect class="ve-bar" x="166" y="195" width="22" height="22"/><rect class="ve-bar" x="194" y="195" width="22" height="22"/><rect class="ve-bar" x="222" y="195" width="22" height="22"/>
+            <rect class="ve-bar hot" x="290" y="42" width="200" height="16"/><text class="ve-bar-v" x="500" y="50">0.50</text>
+            <rect class="ve-bar" x="290" y="94" width="133" height="16"/><text class="ve-bar-v" x="433" y="102">0.33</text>
+            <rect class="ve-bar" x="290" y="146" width="100" height="16"/><text class="ve-bar-v" x="400" y="154">0.25</text>
+            <rect class="ve-bar" x="290" y="198" width="80" height="16"/><text class="ve-bar-v" x="380" y="206">0.20</text>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 19</span>Length bias from \(1/|o_i|\): a token in a short response weighs more than one in a long response.</figcaption>
+      </figure>
+      <ol>
+        <li><b>Length bias.</b> For positive advantages this favors short correct answers. For negative advantages it penalizes long wrong answers less per token, so wrong answers drift longer. Part of the "length grows during RL" effect is this artifact.</li>
+        <li><b>Difficulty bias.</b> Dividing by std scales up prompts where almost all samples agree (very easy or very hard), overweighting them against medium prompts.</li>
+      </ol>
+      <p>The fix: drop the std division and replace \(1/|o_i|\) with a constant normalizer such as the maximum generation length. The objective is then an unbiased policy gradient, with shorter wrong answers at similar accuracy.</p>
+      <p><b>DAPO</b> (Yu et al. 2025, ByteDance Seed) makes four practical changes and reached 50 on AIME 2024 with Qwen2.5-32B base. It also removes the KL term, since for long CoT the policy is supposed to move far from the initial model.</p>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 230" role="img" aria-label="A token at probability 0.01 can rise at most to 0.0120 with symmetric clipping at 1.2 times, but to 0.0128 with the higher upper bound 1.28 times.">
+            <path class="ve-grid" d="M60 150H760"/>
+            <g class="ve-dim"><path class="ext" d="M120 150V54M420 150V54"/><path class="ln" d="M120 60H420"/><text x="270" y="52">×1.2 → 0.0120</text></g>
+            <g class="ve-dim is-key"><path class="ext" d="M540 150V94"/><path class="ln" d="M120 100H540"/><text x="330" y="92">×1.28 → 0.0128</text></g>
+            <g class="ve-co"><circle cx="120" cy="150" r="7"/></g><g class="ve-co"><circle cx="420" cy="150" r="7"/></g><g class="ve-co now"><circle cx="540" cy="150" r="7"/></g>
+            <text class="ve-tick" x="120" y="180">0.0100</text><text class="ve-tick" x="420" y="180">0.0120</text><text class="ve-tick" x="540" y="180">0.0128</text>
+            <text class="ve-tick" x="120" y="206">start</text><text class="ve-tick" x="420" y="206">ε = 0.2</text><text class="ve-tick" x="540" y="206">ε high = 0.28</text>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 20</span>Clip-Higher in numbers: with symmetric clipping a rare token (p = 0.01) can gain only 0.002 per update, which collapses entropy.</figcaption>
+      </figure>
+      <figure>
+        <div class="cases">
+          <div class="case" data-st="ok"><span class="chip ok">Keeps entropy</span><h3>1 Clip-Higher</h3>
+            <svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="The lower clip range is 0.2 and the upper clip range is raised to 0.28.">
+              <text class="ve-tick l" x="8" y="26">low</text><rect class="ve-bar" x="60" y="18" width="80" height="16"/><text class="ve-bar-v" x="148" y="26">0.20</text>
+              <text class="ve-tick l" x="8" y="70">high</text><rect class="ve-bar hot" x="60" y="62" width="112" height="16"/><text class="ve-bar-v" x="180" y="70">0.28</text>
+            </svg></div>
+          <div class="case" data-st="ok"><span class="chip ok">No wasted rows</span><h3>2 Dynamic sampling</h3>
+            <svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="Five prompts with group accuracies 0, 0.5, 1, 0.25 and 1. Those with accuracy 0 or 1 are dashed and dropped; the batch is refilled.">
+              <g class="ve-n"><rect class="sh is-off" x="6" y="8" width="38" height="30" rx="4"/><text x="25" y="23">0</text><rect class="sh" x="52" y="8" width="38" height="30" rx="4"/><text x="71" y="23">0.5</text><rect class="sh is-off" x="98" y="8" width="38" height="30" rx="4"/><text x="117" y="23">1</text><rect class="sh" x="144" y="8" width="38" height="30" rx="4"/><text x="163" y="23">.25</text><rect class="sh is-off" x="190" y="8" width="38" height="30" rx="4"/><text x="209" y="23">1</text></g>
+              <text class="ve-tick l" x="6" y="64">drop accuracy 0 or 1</text><text class="ve-tick l" x="6" y="88">refill the batch</text>
+            </svg></div>
+          <div class="case" data-st="ok"><span class="chip ok">Long answers count</span><h3>3 Token-level loss</h3>
+            <svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="A short and a long response; every token has the same weight.">
+              <text class="ve-tick l" x="6" y="30">short</text><rect class="ve-bar" x="60" y="19" width="22" height="22"/><rect class="ve-bar" x="88" y="19" width="22" height="22"/>
+              <text class="ve-tick l" x="6" y="66">long</text><rect class="ve-bar" x="60" y="55" width="22" height="22"/><rect class="ve-bar" x="88" y="55" width="22" height="22"/><rect class="ve-bar" x="116" y="55" width="22" height="22"/><rect class="ve-bar" x="144" y="55" width="22" height="22"/><rect class="ve-bar" x="172" y="55" width="22" height="22"/>
+              <text class="ve-tick l" x="6" y="102">every token, same weight</text>
+            </svg></div>
+          <div class="case" data-st="ok"><span class="chip ok">Less noise</span><h3>4 Overlong shaping</h3>
+            <svg class="ve-mini" viewBox="0 0 240 120" role="img" aria-label="Reward is flat until the maximum length, then falls gently instead of dropping to wrong.">
+              <path class="ve-grid" d="M10 90H230"/>
+              <path class="ve-e is-hot no-ah" d="M20 30H150L210 80"/>
+              <path class="ve-grid" d="M150 20V90"/>
+              <text class="ve-tick" x="150" y="110">max length</text><text class="ve-tick l" x="20" y="62">soft penalty</text>
+            </svg></div>
+        </div>
+        <figcaption><span class="fig-n">Fig. 21</span>DAPO's four changes: asymmetric clip range, filter zero-advantage prompts, average the loss over all tokens in the batch, and soften the penalty for truncated responses (which can also be masked).</figcaption>
+      </figure>
+      <p>All of these share one template: \(\nabla\log\pi \times \hat A\), with choices for the baseline, the normalization and the trust region.</p>
+
+      <h3>2.9 Code: GRPO advantages and loss</h3>
+      <p>The three <code>agg</code> modes are GRPO (<code>seq_mean</code>), DAPO (<code>token_mean</code>) and Dr. GRPO (<code>constant</code>). Run it and read the printed gradients: under <code>seq_mean</code> the length-3 response gets a larger per-token gradient than the length-5 one despite equal advantage magnitudes. That is the length bias in two lines of output.</p>
+      <div class="code">
+        <div class="code-bar"><span class="ve-label">grpo.py</span><button class="copy" type="button">Copy</button></div>
+<pre tabindex="0"><code><span class="tk-k">import</span> torch
+
+
+<span class="tk-k">def</span> <span class="tk-f">grpo_advantages</span>(rewards: torch.Tensor, scale_by_std: bool = <span class="tk-n">True</span>, eps: float = <span class="tk-n">1e-6</span>):
+    <span class="tk-s">"""rewards: [num_prompts, G] -&gt; advantages of the same shape."""</span>
+    mean = rewards.<span class="tk-f">mean</span>(dim=<span class="tk-n">1</span>, keepdim=<span class="tk-n">True</span>)
+    adv = rewards - mean
+    <span class="tk-k">if</span> scale_by_std:  <span class="tk-c"># Dr. GRPO sets this False to avoid over-weighting near-unanimous groups.</span>
+        adv = adv / (rewards.<span class="tk-f">std</span>(dim=<span class="tk-n">1</span>, keepdim=<span class="tk-n">True</span>) + eps)
+    <span class="tk-k">return</span> adv
+
+
+<span class="tk-k">def</span> <span class="tk-f">grpo_loss</span>(logp, old_logp, ref_logp, adv, mask,
+              clip_low=<span class="tk-n">0.2</span>, clip_high=<span class="tk-n">0.2</span>, beta=<span class="tk-n">0.04</span>, agg=<span class="tk-s">"seq_mean"</span>, max_len=<span class="tk-n">None</span>):
+    <span class="tk-s">"""
+    logp, old_logp, ref_logp, mask: [B, T] per-token tensors for B = num_prompts * G responses.
+    adv: [B] one advantage per response.
+    agg: "seq_mean" (GRPO), "token_mean" (DAPO), "constant" (Dr. GRPO).
+    """</span>
+    adv = adv.<span class="tk-f">unsqueeze</span>(<span class="tk-n">1</span>)  <span class="tk-c"># every token of a response shares its outcome advantage</span>
+    ratio = torch.<span class="tk-f">exp</span>(logp - old_logp)
+    unclipped = ratio * adv
+    clipped = torch.<span class="tk-f">clamp</span>(ratio, <span class="tk-n">1</span> - clip_low, <span class="tk-n">1</span> + clip_high) * adv
+    pg = torch.<span class="tk-f">min</span>(unclipped, clipped)
+
+    <span class="tk-c"># k3 estimator: non-negative per token and lower variance than the raw log-ratio.</span>
+    log_r = ref_logp - logp
+    kl = torch.<span class="tk-f">exp</span>(log_r) - log_r - <span class="tk-n">1</span>
+
+    per_token = -(pg - beta * kl) * mask
+    <span class="tk-k">if</span> agg == <span class="tk-s">"seq_mean"</span>:
+        <span class="tk-k">return</span> (per_token.<span class="tk-f">sum</span>(<span class="tk-n">1</span>) / mask.<span class="tk-f">sum</span>(<span class="tk-n">1</span>).<span class="tk-f">clamp</span>(min=<span class="tk-n">1</span>)).<span class="tk-f">mean</span>()
+    <span class="tk-k">if</span> agg == <span class="tk-s">"token_mean"</span>:
+        <span class="tk-k">return</span> per_token.<span class="tk-f">sum</span>() / mask.<span class="tk-f">sum</span>().<span class="tk-f">clamp</span>(min=<span class="tk-n">1</span>)
+    <span class="tk-k">if</span> agg == <span class="tk-s">"constant"</span>:
+        <span class="tk-k">return</span> per_token.<span class="tk-f">sum</span>() / (per_token.shape[<span class="tk-n">0</span>] * (max_len <span class="tk-k">or</span> per_token.shape[<span class="tk-n">1</span>]))
+    <span class="tk-k">raise</span> <span class="tk-f">ValueError</span>(agg)
+
+
+<span class="tk-k">if</span> __name__ == <span class="tk-s">"__main__"</span>:
+    torch.<span class="tk-f">manual_seed</span>(<span class="tk-n">0</span>)
+    P, G, T = <span class="tk-n">2</span>, <span class="tk-n">4</span>, <span class="tk-n">5</span>
+    rewards = torch.<span class="tk-f">tensor</span>([[<span class="tk-n">1</span>., <span class="tk-n">0</span>., <span class="tk-n">0</span>., <span class="tk-n">1</span>.], [<span class="tk-n">0</span>., <span class="tk-n">0</span>., <span class="tk-n">0</span>., <span class="tk-n">0</span>.]])
+    adv = <span class="tk-f">grpo_advantages</span>(rewards).<span class="tk-f">flatten</span>()
+    <span class="tk-f">print</span>(<span class="tk-s">"advantages:"</span>, adv.<span class="tk-f">view</span>(P, G))
+    <span class="tk-k">assert</span> torch.<span class="tk-f">allclose</span>(adv[<span class="tk-n">4</span>:], torch.<span class="tk-f">zeros</span>(<span class="tk-n">4</span>)), <span class="tk-s">"all-equal group gives no signal"</span>
+
+    lengths = torch.<span class="tk-f">tensor</span>([<span class="tk-n">5</span>, <span class="tk-n">3</span>, <span class="tk-n">4</span>, <span class="tk-n">2</span>, <span class="tk-n">5</span>, <span class="tk-n">5</span>, <span class="tk-n">1</span>, <span class="tk-n">3</span>])
+    mask = (torch.<span class="tk-f">arange</span>(T)[<span class="tk-n">None</span>, :] &lt; lengths[:, <span class="tk-n">None</span>]).<span class="tk-f">float</span>()
+    logp = (torch.<span class="tk-f">randn</span>(P * G, T) * <span class="tk-n">0.1</span> - <span class="tk-n">1.0</span>).<span class="tk-f">requires_grad_</span>(<span class="tk-n">True</span>)
+    old_logp = logp.<span class="tk-f">detach</span>().<span class="tk-f">clone</span>()  <span class="tk-c"># first PPO epoch: policy equals the sampler</span>
+    ref_logp = old_logp + <span class="tk-n">0.05</span> * torch.<span class="tk-f">randn_like</span>(old_logp)
+
+    <span class="tk-k">for</span> agg <span class="tk-k">in</span> (<span class="tk-s">"seq_mean"</span>, <span class="tk-s">"token_mean"</span>, <span class="tk-s">"constant"</span>):
+        loss = <span class="tk-f">grpo_loss</span>(logp, old_logp, ref_logp, adv, mask, agg=agg, beta=<span class="tk-n">0.0</span>)
+        (g,) = torch.autograd.<span class="tk-f">grad</span>(loss, logp)
+        <span class="tk-c"># With ratio == 1, the gradient on each token's logp is -adv times its aggregation weight.</span>
+        <span class="tk-f">print</span>(agg, <span class="tk-s">"grad on token 0 per response:"</span>, [<span class="tk-f">round</span>(v, <span class="tk-n">3</span>) <span class="tk-k">for</span> v <span class="tk-k">in</span> g[:, <span class="tk-n">0</span>].<span class="tk-f">tolist</span>()])
+        <span class="tk-k">assert</span> (g[:<span class="tk-n">4</span>, <span class="tk-n">0</span>].<span class="tk-f">sign</span>() == -adv[:<span class="tk-n">4</span>].<span class="tk-f">sign</span>()).<span class="tk-f">all</span>()</code></pre>
+      </div>
+      <p>In a real trainer, <code>logp</code> comes from a forward pass of the policy on the sampled tokens, <code>old_logp</code> from the policy at rollout time (often recomputed by the training engine, since inference-engine log-probs differ slightly), and <code>ref_logp</code> from the frozen reference.</p>
+
+      <h3>2.10 Process rewards help search, outcome rewards win in RL</h3>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 285" role="img" aria-label="Top, outcome reward model: a four-step solution gets one score at the end, wrong, and no signal on the steps. Bottom, process reward model: each step is scored; steps 1 and 2 are ok, step 3 is flagged wrong, step 4 ok, and the answer is wrong.">
+            <text class="ve-tick l" x="20" y="48">ORM</text>
+            <path class="ve-e" d="M230 42H260"/><path class="ve-e" d="M360 42H390"/><path class="ve-e" d="M490 42H520"/><path class="ve-e" d="M620 42H650"/>
+            <g class="ve-n"><rect class="sh" x="130" y="20" width="100" height="44" rx="6"/><text x="180" y="42">step 1</text><rect class="sh" x="260" y="20" width="100" height="44" rx="6"/><text x="310" y="42">step 2</text><rect class="sh" x="390" y="20" width="100" height="44" rx="6"/><text x="440" y="42">step 3</text><rect class="sh" x="520" y="20" width="100" height="44" rx="6"/><text x="570" y="42">step 4</text></g>
+            <g class="ve-n is-key"><rect class="sh" x="650" y="20" width="110" height="44" rx="6"/><text x="705" y="42">answer</text></g>
+            <text class="ve-tick l" x="130" y="100">no signal on the steps</text>
+            <text class="ve-tick" x="705" y="100">one score: wrong</text>
+            <text class="ve-tick l" x="20" y="158">PRM</text>
+            <path class="ve-e" d="M230 152H260"/><path class="ve-e" d="M360 152H390"/><path class="ve-e" d="M490 152H520"/><path class="ve-e" d="M620 152H650"/>
+            <g class="ve-n"><rect class="sh" x="130" y="130" width="100" height="44" rx="6"/><text x="180" y="152">step 1</text><rect class="sh" x="260" y="130" width="100" height="44" rx="6"/><text x="310" y="152">step 2</text><rect class="sh" x="390" y="130" width="100" height="44" rx="6"/><text x="440" y="152">step 3</text><rect class="sh" x="520" y="130" width="100" height="44" rx="6"/><text x="570" y="152">step 4</text></g>
+            <g class="ve-n is-key"><rect class="sh" x="650" y="130" width="110" height="44" rx="6"/><text x="705" y="152">answer</text></g>
+            <rect class="ve-bar" x="162" y="212" width="36" height="40"/><text class="ve-bar-v" text-anchor="middle" x="180" y="270">ok</text>
+            <rect class="ve-bar" x="292" y="212" width="36" height="40"/><text class="ve-bar-v" text-anchor="middle" x="310" y="270">ok</text>
+            <rect class="ve-bar hot" x="422" y="240" width="36" height="12"/><text class="ve-bar-v" text-anchor="middle" x="440" y="270">wrong</text>
+            <rect class="ve-bar" x="552" y="212" width="36" height="40"/><text class="ve-bar-v" text-anchor="middle" x="570" y="270">ok</text>
+            <rect class="ve-bar" x="687" y="240" width="36" height="12"/><text class="ve-bar-v" text-anchor="middle" x="705" y="270">wrong</text>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 22</span>An ORM scores the final answer (a rule-based verifier is a perfect ORM). A PRM scores every step and can point at where the solution broke.</figcaption>
+      </figure>
+      <ul>
+        <li>"Let's Verify Step by Step" (Lightman et al. 2023) released PRM800K, 800k step labels on MATH, and found process supervision gave a better best-of-\(N\) verifier.</li>
+        <li>Math-Shepherd (Wang et al. 2023) labels steps automatically by rolling out from each step and counting how often it reaches the right answer, a Monte Carlo estimate of \(V(s_t)\).</li>
+        <li>In large-scale RL, PRMs have fared worse. R1 lists them among failed attempts: steps are hard to define, labels are noisy, and a learned PRM invites hacking and needs retraining as the policy moves. They stay useful for search and reranking.</li>
+      </ul>
+
+      <h3>2.11 Test-time compute is the other scaling axis</h3>
+      <figure>
+        <div class="cases">
+          <div class="case" data-st="ok"><span class="chip info">N answers, vote or verify</span><h3>Parallel sampling</h3>
+            <svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="One prompt fans out to three sampled answers.">
+              <path class="ve-e" d="M120 32V50H45V70"/><path class="ve-e" d="M120 32V70"/><path class="ve-e" d="M120 32V50H195V70"/>
+              <g class="ve-n"><rect class="sh" x="80" y="4" width="80" height="28" rx="5"/><text x="120" y="18">prompt</text><rect class="sh" x="15" y="70" width="60" height="30" rx="5"/><text x="45" y="85">ans</text><rect class="sh" x="90" y="70" width="60" height="30" rx="5"/><text x="120" y="85">ans</text><rect class="sh" x="165" y="70" width="60" height="30" rx="5"/><text x="195" y="85">ans</text></g>
+            </svg></div>
+          <div class="case" data-st="ok"><span class="chip info">PRM-guided</span><h3>Search</h3>
+            <svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="A tree of partial solutions; a process reward model picks the best branch.">
+              <path class="ve-e no-ah" d="M120 30V42H60V54M60 80V86H30V94M60 80V86H90V94"/><path class="ve-e is-hot no-ah" d="M120 30V42H180V54M180 80V86H150V94"/><path class="ve-e no-ah" d="M180 80V86H210V94"/>
+              <g class="ve-n"><rect class="sh" x="104" y="4" width="32" height="26" rx="4"/><rect class="sh" x="44" y="54" width="32" height="26" rx="4"/><rect class="sh" x="14" y="94" width="32" height="14" rx="3"/><rect class="sh" x="74" y="94" width="32" height="14" rx="3"/><rect class="sh" x="194" y="94" width="32" height="14" rx="3"/></g>
+              <g class="ve-n is-key"><rect class="sh" x="164" y="54" width="32" height="26" rx="4"/><rect class="sh" x="134" y="94" width="32" height="14" rx="3"/></g>
+            </svg></div>
+          <div class="case" data-st="ok"><span class="chip info">RL-trained thinking</span><h3>Sequential</h3>
+            <svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="One long chain: think, check, then answer.">
+              <path class="ve-e" d="M70 52H88M152 52H170"/>
+              <g class="ve-n"><rect class="sh" x="6" y="34" width="64" height="36" rx="5"/><text x="38" y="52">think</text><rect class="sh" x="88" y="34" width="64" height="36" rx="5"/><text x="120" y="52">check</text></g>
+              <g class="ve-n is-key"><rect class="sh" x="170" y="34" width="64" height="36" rx="5"/><text x="202" y="52">answer</text></g>
+              <text class="ve-tick l" x="6" y="98">longer chain, more compute</text>
+            </svg></div>
+        </div>
+        <figcaption><span class="fig-n">Fig. 23</span>Parallel accuracy rises roughly log-linearly with N until verifier errors dominate. Learned sequential thinking (o1, R1) scales with the thinking budget.</figcaption>
+      </figure>
+      <p>Snell et al. (2024) showed that spending test-time compute adaptively by prompt difficulty can beat a 14x larger model in FLOPs-matched comparisons, on problems where the base model already has some success. RL training compute and test-time compute are now scaling axes alongside pretraining.</p>
+
+      <h3>2.12 The hard part is systems: generate, train, sync</h3>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 200" role="img" aria-label="The inference engine ships rollouts to the trainer, and the trainer syncs updated weights back to the inference engine every step.">
+            <path class="ve-e" d="M270 78H530"/><text class="ve-el" x="400" y="69">ships rollouts</text>
+            <path class="ve-e is-hot" d="M530 118H270"/><text class="ve-el" x="400" y="140">syncs weights every step</text>
+            <g class="ve-n" transform="translate(20 50)"><rect class="sh" width="250" height="90" rx="6"/><text x="125" y="34">Inference engine</text><text class="sub" x="125" y="58">vLLM or SGLang</text></g>
+            <g class="ve-n is-key" transform="translate(530 50)"><rect class="sh" width="250" height="90" rx="6"/><text x="125" y="34">Trainer</text><text class="sub" x="125" y="58">FSDP or Megatron</text></g>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 24</span>The loop every RL framework has to run, fast.</figcaption>
+      </figure>
+      <div class="cases">
+        <div class="case"><span class="chip info">TRL</span><h3>Hugging Face</h3><p>GRPOTrainer, PPOTrainer, RLOOTrainer and DPOTrainer on top of transformers, with vLLM generation. Easiest start; best for single node and learning.</p></div>
+        <div class="case"><span class="chip info">OpenRLHF</span><h3>Ray + vLLM + DeepSpeed</h3><p>Places the four PPO models on separate GPU groups to scale to 70B.</p></div>
+        <div class="case"><span class="chip info">verl</span><h3>ByteDance, HybridFlow</h3><p>Flexible single and multi-controller design, FSDP or Megatron backends, vLLM or SGLang rollouts. Used for DAPO and many reasoning-RL papers.</p></div>
+      </div>
+
+      <div class="callout confusions">
+        <span class="chip warn">Common confusions</span>
+        <ul>
+          <li><p class="myth">GRPO has no KL.</p><p class="fact">Original GRPO has a KL term in the loss. Some later recipes (DAPO) remove it.</p></li>
+          <li><p class="myth">GRPO does not need a reward model.</p><p class="fact">It does not need a critic. It still needs a reward: a learned reward model or a verifier.</p></li>
+          <li><p class="myth">The reference model and the old policy are the same.</p><p class="fact">\(\pi_{\mathrm{ref}}\) is frozen (the SFT model) and anchors the KL. \(\pi_{\theta_{\mathrm{old}}}\) is the snapshot that generated this batch and defines the PPO ratio. They coincide only at the very start.</p></li>
+          <li><p class="myth">A higher reward model score means a better model.</p><p class="fact">Only up to the overoptimization peak. Past it, true quality falls while the proxy rises.</p></li>
+          <li><p class="myth">Longer responses mean better reasoning.</p><p class="fact">Some length growth is an artifact of per-response normalization (Dr. GRPO).</p></li>
+          <li><p class="myth">RLVR cannot be hacked.</p><p class="fact">Weak verifiers can (format tricks, test special-casing). Verifier quality is part of reward design.</p></li>
+          <li><p class="myth">DPO and PPO optimize different objectives.</p><p class="fact">Same KL-regularized objective. DPO uses offline pairs and a closed-form reparameterization; PPO samples online.</p></li>
+        </ul>
+      </div>
+
+      <div class="callout quiz">
+        <span class="chip info">Check yourself</span>
+        <ol>
+          <li><p>List the four models in PPO-based RLHF, which are trained, and which GRPO removes.</p>
+            <details><summary>Show answer</summary><p>Policy (trained), reference (frozen), reward model (frozen), critic (trained). GRPO removes the critic.</p></details></li>
+          <li><p>Why does PPO-RLHF put a per-token KL penalty into the reward? What happens with \(\beta=0\) against a learned reward model?</p>
+            <details><summary>Show answer</summary><p>The reward model is only reliable near the reference distribution, and the per-token KL keeps the policy there and gives a dense signal. With \(\beta=0\) the policy drifts to regions that exploit reward model errors (length, flattery, odd patterns), and true quality eventually falls (Gao et al.).</p></details></li>
+          <li><p>Derive GRPO's advantage as a Monte Carlo baseline. What happens to the gradient when all \(G\) responses are correct?</p>
+            <details><summary>Show answer</summary><p>The ideal baseline is \(V(q) = \mathbb{E}_{o\sim\pi}[r(q,o)]\). Averaging \(G\) sampled rewards estimates it, and subtracting gives the advantage, normalized by the group std. If all are correct, every \(r_i\) equals the mean, all advantages are zero, and only the KL term produces gradient.</p></details></li>
+          <li><p>How does RLOO's baseline differ from GRPO's group mean, and why is RLOO unbiased?</p>
+            <details><summary>Show answer</summary><p>RLOO uses the mean of the other \(k-1\) rewards, which does not depend on sample \(i\)'s action, so the baseline argument from 1.7 applies exactly. GRPO's mean includes \(r_i\), but \(r_i - \mathrm{mean}(r)\) is \(\frac{G-1}{G}\) times the leave-one-out advantage, so by itself it only rescales the gradient. GRPO's bias comes from the std division and the \(1/|o_i|\) normalization.</p></details></li>
+          <li><p>Explain Dr. GRPO's length bias for both positive and negative advantages.</p>
+            <details><summary>Show answer</summary><p>Each token's gradient weight is \(\hat A_i/|o_i|\). For correct responses, shorter ones get stronger per-token reinforcement. For wrong responses, longer ones get weaker per-token penalties, so being wrong at length costs less and incorrect answers grow.</p></details></li>
+          <li><p>Name DAPO's four techniques and the problem each addresses.</p>
+            <details><summary>Show answer</summary><p>Clip-Higher (entropy collapse; lets low-probability tokens rise). Dynamic sampling (zero-advantage groups waste batch slots). Token-level loss (long responses underweighted, long bad patterns under-penalized). Overlong reward shaping (truncation adds reward noise).</p></details></li>
+        </ol>
+      </div>
+
+      <h3>Resources</h3>
+      <div class="resources"><div class="res-col"><h3>Read</h3><ul class="res-list">
+<li class="res-item is-start"><div class="res-top"><a href="https://rlhfbook.com/">Nathan Lambert, Reinforcement Learning from Human Feedback (rlhfbook.com)</a><span class="start-here">Start here</span></div><div class="res-meta">Nathan Lambert <span class="chip plain">book</span></div><p>A free, current book covering RMs, PPO, GRPO, RLOO, DPO and RLVR with consistent notation.</p></li>
+<li class="res-item"><div class="res-top"><a href="https://arxiv.org/abs/2203.02155">Ouyang et al., Training language models to follow instructions with human feedback (arXiv:2203.02155)</a></div><div class="res-meta">Ouyang et al., 2022 <span class="chip plain">paper</span></div><p>InstructGPT, the canonical RLHF pipeline.</p></li>
+<li class="res-item"><div class="res-top"><a href="https://arxiv.org/abs/2210.10760">Gao et al., Scaling Laws for Reward Model Overoptimization (arXiv:2210.10760)</a></div><div class="res-meta">Gao et al., 2022 <span class="chip plain">paper</span></div><p>The quantitative account of reward hacking.</p></li>
+<li class="res-item"><div class="res-top"><a href="https://arxiv.org/abs/2402.03300">Shao et al., DeepSeekMath (arXiv:2402.03300)</a></div><div class="res-meta">Shao et al., 2024 <span class="chip plain">paper</span></div><p>Introduces GRPO and a unified view of SFT, RFT, DPO, PPO and GRPO gradients.</p></li>
+<li class="res-item"><div class="res-top"><a href="https://arxiv.org/abs/2501.12948">DeepSeek-AI, DeepSeek-R1 (arXiv:2501.12948)</a></div><div class="res-meta">DeepSeek-AI, 2025 <span class="chip plain">paper</span></div><p>R1-Zero, the R1 pipeline, and what did not work (PRMs, MCTS).</p></li>
+<li class="res-item"><div class="res-top"><a href="https://arxiv.org/abs/2402.14740">Ahmadian et al., Back to Basics: REINFORCE-style optimization for RLHF (arXiv:2402.14740)</a></div><div class="res-meta">Ahmadian et al., 2024 <span class="chip plain">paper</span></div><p>RLOO and the case against PPO's complexity.</p></li>
+<li class="res-item"><div class="res-top"><a href="https://arxiv.org/abs/2503.20783">Liu et al., Understanding R1-Zero-Like Training (arXiv:2503.20783)</a></div><div class="res-meta">Liu et al., 2025 <span class="chip plain">paper</span></div><p>Dr. GRPO and GRPO's normalization biases.</p></li>
+<li class="res-item"><div class="res-top"><a href="https://arxiv.org/abs/2503.14476">Yu et al., DAPO (arXiv:2503.14476)</a></div><div class="res-meta">Yu et al., 2025 <span class="chip plain">paper</span></div><p>Four practical fixes for large-scale reasoning RL.</p></li>
+<li class="res-item"><div class="res-top"><a href="http://joschu.net/blog/kl-approx.html">John Schulman, Approximating KL Divergence</a></div><div class="res-meta">John Schulman <span class="chip plain">blog</span></div><p>The k1/k2/k3 estimators used in GRPO.</p></li>
+<li class="res-item"><div class="res-top"><a href="https://huggingface.co/blog/rlhf">Illustrating RLHF (Hugging Face blog)</a></div><div class="res-meta">Hugging Face <span class="chip plain">blog</span></div><p>Also useful.</p></li>
+<li class="res-item"><div class="res-top"><a href="https://arxiv.org/abs/2212.08073">Constitutional AI (arXiv:2212.08073)</a></div><div class="res-meta">Bai et al., 2022 <span class="chip plain">paper</span></div><p>Also useful.</p></li>
+<li class="res-item"><div class="res-top"><a href="https://arxiv.org/abs/2309.00267">RLAIF vs RLHF (arXiv:2309.00267)</a></div><div class="res-meta">Lee et al., 2023 <span class="chip plain">paper</span></div><p>Also useful.</p></li>
+<li class="res-item"><div class="res-top"><a href="https://arxiv.org/abs/2305.20050">Let's Verify Step by Step (arXiv:2305.20050)</a></div><div class="res-meta">Lightman et al., 2023 <span class="chip plain">paper</span></div><p>Also useful.</p></li>
+<li class="res-item"><div class="res-top"><a href="https://arxiv.org/abs/2312.08935">Math-Shepherd (arXiv:2312.08935)</a></div><div class="res-meta">Wang et al., 2023 <span class="chip plain">paper</span></div><p>Also useful.</p></li>
+<li class="res-item"><div class="res-top"><a href="https://arxiv.org/abs/2408.03314">Scaling LLM Test-Time Compute Optimally (arXiv:2408.03314)</a></div><div class="res-meta">Snell et al., 2024 <span class="chip plain">paper</span></div><p>Also useful.</p></li>
+<li class="res-item"><div class="res-top"><a href="https://arxiv.org/abs/2409.19256">HybridFlow / verl (arXiv:2409.19256)</a></div><div class="res-meta">Sheng et al., 2024 <span class="chip plain">paper</span></div><p>Also useful.</p></li>
+<li class="res-item"><div class="res-top"><a href="https://github.com/huggingface/trl">TRL</a></div><div class="res-meta">Hugging Face <span class="chip plain">code</span></div><p>Code.</p></li>
+<li class="res-item"><div class="res-top"><a href="https://github.com/OpenRLHF/OpenRLHF">OpenRLHF</a></div><div class="res-meta">OpenRLHF <span class="chip plain">code</span></div><p>Code.</p></li>
+<li class="res-item"><div class="res-top"><a href="https://github.com/volcengine/verl">verl</a></div><div class="res-meta">ByteDance <span class="chip plain">code</span></div><p>Code.</p></li>
+</ul></div><div class="res-col"><h3>Watch</h3><ul class="res-list">
+<li class="res-item"><div class="res-top"><a href="https://www.youtube.com/watch?v=o6l6tJQgUg4">Nathan Lambert, Post-Training and RLHF Overview (Lecture 1)</a></div><div class="res-meta">Nathan Lambert <span class="chip plain">video</span></div><p>Companion lecture series to the RLHF book.</p></li>
+<li class="res-item"><div class="res-top"><a href="https://www.youtube.com/watch?v=K_Sj_-1BUMM">Nathan Lambert, Understanding Policy Gradient Algorithms for RL on LLMs (Lecture 3)</a></div><div class="res-meta">Nathan Lambert <span class="chip plain">video</span></div><p>PPO, GRPO and friends in LLM terms.</p></li>
+<li class="res-item"><div class="res-top"><a href="https://www.youtube.com/watch?v=y04JhXpiI4s">Nathan Lambert, Over-Optimization and RLHF's Bad Reputation (Lecture 9)</a></div><div class="res-meta">Nathan Lambert <span class="chip plain">video</span></div><p>Reward hacking and overoptimization in practice.</p></li>
+<li class="res-item"><div class="res-top"><a href="https://www.youtube.com/watch?v=bAWV_yrqx4w">GRPO Explained: DeepSeekMath, Yannic Kilcher</a></div><div class="res-meta">Yannic Kilcher <span class="chip plain">video</span></div><p>Paper walkthrough of the GRPO derivation.</p></li>
+</ul></div></div>
+    </section>
+
+    <section class="sec" id="s03" aria-labelledby="s03-h">
+      <div class="sec-head"><p class="sec-num"><span class="n">+</span>Project</p><h2 id="s03-h">Train a small reasoning model with GRPO, then break it</h2></div>
+      <div class="project">
+        <span class="chip info">Chapter project</span>
+        <h3>Train a small reasoning model with GRPO, then break it on purpose</h3>
+        <p>Run GRPO on a verifiable math task, ablate its normalizations, then swap in a weak verifier and watch the model exploit it.</p>
+        <ol>
+          <li><b>Setup.</b> Take a 0.5B to 1.5B instruct model (for example Qwen2.5 Instruct) and GSM8K. Write a verifier: extract the final answer from <code>&lt;answer&gt;...&lt;/answer&gt;</code> and compare it to the reference. Reward = 1 if correct, plus 0.1 for correct format.</li>
+          <li><b>Baseline.</b> Measure pass@1 and pass@8 on a held-out split before training.</li>
+          <li><b>Train</b> with TRL's <code>GRPOTrainer</code> (or your own loop using the <code>grpo_loss</code> above and vLLM rollouts) with \(G=8\). Log mean reward, response length, KL to reference, entropy, and the fraction of zero-advantage groups.</li>
+          <li><b>Ablations</b>, each a short run with everything else fixed: <code>scale_by_std</code> on vs off with <code>agg</code> = <code>seq_mean</code> vs <code>token_mean</code> vs <code>constant</code> (plot response length for correct and incorrect answers separately); \(\beta=0.04\) vs \(\beta=0\); symmetric clip vs Clip-Higher with \(\varepsilon_{\mathrm{high}}=0.28\) (plot entropy).</li>
+          <li><b>Reward hacking.</b> Replace the verifier with a weak one, for example one that rewards any response containing a number equal to the answer anywhere. Train, find what the model learns to exploit, then fix the verifier.</li>
+          <li><b>Report.</b> Final pass@1 and pass@8 for each setting, plots, and a paragraph on two questions: did RL improve pass@8 or mainly pass@1 (sharpening vs new capability)? Which normalization would you choose, and why?</li>
+        </ol>
+        <ul class="done">
+          <li>Baseline and trained pass@1 and pass@8 for every setting.</li>
+          <li>Plots: response length by correctness, entropy, zero-advantage fraction.</li>
+          <li>A weak-verifier run that exposes an exploit, and the fixed verifier.</li>
+          <li>The written answer on sharpening vs new capability, and your choice of normalization.</li>
+        </ul>
+        <p class="meta">needs: GPU for a 0.5B to 1.5B model · uses sections 01 and 02, especially 2.7 to 2.9</p>
+      </div>
+      <p><a href="index.html">← Back to the course index</a></p>
+    </section>
+  </main>
+</div>
+
+<script>
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Linked highlighting: hovering any [data-ref], or focusing a prose term, lights every element that shares a ref.
+  const linked = [...document.querySelectorAll('[data-ref]')], refs = (el) => el.dataset.ref.split(' ');
+  let hovered = null, focused = null;
+  const paint = () => {
+    const keys = (hovered || focused)?.dataset.ref.split(' ') ?? [];
+    for (const t of linked) t.classList.toggle('is-lit', refs(t).some((k) => keys.includes(k)));
+    for (const svg of document.querySelectorAll('svg')) svg.classList.toggle('has-lit', !!svg.querySelector('.is-lit'));
+  };
+  for (const el of linked) {
+    el.addEventListener('pointerenter', () => { hovered = el; paint(); });
+    el.addEventListener('pointerleave', () => { hovered = null; paint(); });
+    el.addEventListener('focus', () => { focused = el; paint(); });
+    el.addEventListener('blur', () => { focused = null; paint(); });
+  }
+
+  // Stepper / scene player. Opens on the full picture, because the first view must show the answer.
+  for (const root of document.querySelectorAll('.ve-steps')) {
+    const parts = [...root.querySelectorAll('[data-s]')], caps = [...root.querySelectorAll('.ve-cap li')];
+    const range = root.querySelector('input[type=range]'), play = root.querySelector('[data-play]');
+    const n = caps.length; let i = 0, timer = null;
+    if (range) range.max = n - 1;
+    const show = (k) => {
+      i = Math.max(0, Math.min(n - 1, k));
+      for (const el of parts) { const s = el.dataset.s.trim().split(' ').map(Number); el.classList.toggle('on', s[0] <= i + 1); el.classList.toggle('now', s.includes(i + 1)); }
+      caps.forEach((c, j) => c.hidden = j !== i);
+      root.classList.toggle('is-full', i === n - 1);
+      if (range) range.value = i;
+    };
+    const stop = () => { clearInterval(timer); timer = null; if (play) play.textContent = 'Play'; };
+    root.addEventListener('click', (e) => { const b = e.target.closest('[data-go]'); if (b) { stop(); show(i + +b.dataset.go); } });
+    range?.addEventListener('input', () => { stop(); show(+range.value); });
+    play?.addEventListener('click', () => {
+      if (timer) return stop();
+      if (i === n - 1) show(0);
+      play.textContent = 'Pause';
+      timer = setInterval(() => (i < n - 1 ? show(i + 1) : stop()), 3500);
+    });
+    show(n - 1);
+    addEventListener('beforeprint', () => show(n - 1));
+  }
+
+  // Copy buttons: clipboard API, with a selection fallback for browsers that block it on file:// pages.
+  for (const btn of document.querySelectorAll('.code .copy')) {
+    btn.addEventListener('click', async () => {
+      const code = btn.closest('.code').querySelector('pre code');
+      try { await navigator.clipboard.writeText(code.innerText); }
+      catch { const r = document.createRange(); r.selectNodeContents(code); const s = getSelection(); s.removeAllRanges(); s.addRange(r); document.execCommand('copy'); s.removeAllRanges(); }
+      btn.textContent = 'Copied'; setTimeout(() => (btn.textContent = 'Copy'), 1500);
+    });
+  }
+
+  // TOC scroll-spy: the section crossing the top tenth of the viewport is the current one.
+  const tocLinks = new Map([...document.querySelectorAll('.toc a[href^="#"]')].map((a) => [a.getAttribute('href').slice(1), a]));
+  const spy = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      for (const a of tocLinks.values()) a.removeAttribute('aria-current');
+      tocLinks.get(e.target.id)?.setAttribute('aria-current', 'true');
+    }
+  }, { rootMargin: '-10% 0px -80% 0px' });
+  for (const id of tocLinks.keys()) { const s = document.getElementById(id); if (s) spy.observe(s); }
+
+  // Entrance: each block rises in once. Without JS, in print, or under reduced motion, everything shows its final state.
+  if (!still) {
+    document.documentElement.classList.add('js-motion');
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) if (e.isIntersecting) { io.unobserve(e.target); e.target.classList.add('in'); }
+    }, { rootMargin: '0px 0px -10% 0px' });
+    for (const el of document.querySelectorAll('.ch-head, .sec > *')) io.observe(el);
+  }
+
+  // Sidebar visibility is a per-reader preference; storage can be blocked, so it only seeds the initial state.
+  (() => {
+    const root = document.documentElement, b = document.getElementById('toc-toggle');
+    const apply = (hidden) => { root.classList.toggle('toc-hidden', hidden); b.setAttribute('aria-expanded', !hidden); b.setAttribute('aria-label', hidden ? 'Show sidebar' : 'Hide sidebar'); };
+    let hidden = false; try { hidden = localStorage.getItem('toc-hidden') === '1'; } catch (e) {}
+    apply(hidden);
+    b.addEventListener('click', () => { hidden = !hidden; apply(hidden); try { localStorage.setItem('toc-hidden', hidden ? '1' : '0'); } catch (e) {} });
+  })();
+  // Theme: explicit choice wins; with none saved the page follows the OS scheme.
+  (() => {
+    const root = document.documentElement, b = document.getElementById('theme-toggle'), mq = matchMedia('(prefers-color-scheme: light)');
+    const mode = () => root.dataset.theme || (mq.matches ? 'light' : 'dark');
+    const sync = () => { const m = mode(); b.dataset.mode = m; b.setAttribute('aria-label', m === 'light' ? 'Switch to dark mode' : 'Switch to light mode'); };
+    sync(); mq.addEventListener('change', sync);
+    b.addEventListener('click', () => { const next = mode() === 'light' ? 'dark' : 'light'; root.dataset.theme = next; try { localStorage.setItem('theme', next); } catch (e) {} sync(); });
+  })();
+</script>
+</body>
+</html>
+

@@ -1,0 +1,20 @@
+<figure>
+<div class="frame">
+<svg class="ve-svg" viewBox="0 -20 800 300" role="img" aria-label="DoRA. The LoRA-updated weight W0 plus BA is normalized per output channel into a direction. A trained magnitude vector m, initialized to the norm of W0, scales it. The product is the new weight W prime.">
+<path class="ve-e" d="M170 135H250V60H330"/><text class="ve-el" x="290" y="51">unit norm</text>
+<path class="ve-e" d="M490 60H575V125H650"/><text class="ve-el" x="532" y="51">orients</text>
+<path class="ve-e is-hot" d="M490 220H575V155H650"/><text class="ve-el" x="532" y="211">scales</text>
+<path class="ann" d="M410 30V14"/><g class="ve-co" transform="translate(410 3)"><circle r="11"/><text>1</text></g>
+<path class="ann" d="M410 190V176"/><g class="ve-co" transform="translate(410 165)"><circle r="11"/><text>2</text></g>
+<g class="ve-n" transform="translate(20 100)"><rect class="sh" width="150" height="70" rx="6"/><text x="75" y="26">W0 + BA</text><text class="sub" x="75" y="48">LoRA weight</text></g>
+<g class="ve-n" transform="translate(330 30)"><rect class="sh" width="160" height="60" rx="6"/><text x="80" y="22">direction</text><text class="sub" x="80" y="44">÷ ‖·‖c</text></g>
+<g class="ve-n is-key" transform="translate(330 190)"><rect class="sh" width="160" height="60" rx="6"/><text x="80" y="22">m</text><text class="sub" x="80" y="44">init ‖W0‖c</text></g>
+<g class="ve-n is-key" transform="translate(650 100)"><rect class="sh" width="130" height="70" rx="6"/><text x="65" y="26">W'</text><text class="sub" x="65" y="48">m ⊙ dir</text></g>
+</svg>
+</div>
+<ol class="callouts">
+<li><span class="co-n">1</span>BA updates only the direction.</li>
+<li><span class="co-n">2</span>m is one trained magnitude per output channel, so it updates only the magnitude.</li>
+</ol>
+<figcaption><span class="fig-n">Fig. 16</span>One norm per output channel; the division and the product broadcast per channel.</figcaption>
+</figure>

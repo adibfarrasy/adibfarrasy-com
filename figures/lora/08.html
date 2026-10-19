@@ -1,0 +1,15 @@
+<figure>
+<div class="frame">
+<svg class="ve-svg" viewBox="0 0 800 245" role="img" aria-label="Merging. The frozen W0 is copied and the scaled product BA is added, giving W merged with the same shape as W0, which runs inference with zero extra latency. Subtracting BA back out unmerges it.">
+<path class="ve-e" d="M150 60H240V100H330"/><text class="ve-el" x="195" y="51">copies</text>
+<path class="ve-e is-hot" d="M150 160H240V120H330"/><text class="ve-el" x="195" y="151">adds</text>
+<path class="ve-e" d="M520 110H610"/><text class="ve-el" x="565" y="101">runs</text>
+<path class="ve-e is-async" d="M425 145V230H85V190"/><text class="ve-el" x="255" y="221">subtracts to unmerge</text>
+<g class="ve-n" transform="translate(20 30)"><rect class="sh" width="130" height="60" rx="6"/><text x="65" y="22">W0</text><text class="sub" x="65" y="44">d_out × d_in</text></g>
+<g class="ve-n is-key" transform="translate(20 130)"><rect class="sh" width="130" height="60" rx="6"/><text x="65" y="22">(α/r) BA</text><text class="sub" x="65" y="44">d_out × d_in</text></g>
+<g class="ve-n is-key" transform="translate(330 75)"><rect class="sh" width="190" height="70" rx="6"/><text x="95" y="26">W merged</text><text class="sub" x="95" y="48">same shape as W0</text></g>
+<g class="ve-n" transform="translate(610 75)"><rect class="sh" width="170" height="70" rx="6"/><text x="85" y="26">inference</text><text class="sub" x="85" y="48">+0 latency</text></g>
+</svg>
+</div>
+<figcaption><span class="fig-n">Fig. 8</span>ΔW has the same shape as W0, so it folds in. Earlier adapter methods added sequential layers; LoRA does not.</figcaption>
+</figure>

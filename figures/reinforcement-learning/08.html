@@ -1,0 +1,16 @@
+<figure>
+<div class="frame">
+<svg class="ve-svg" viewBox="0 0 800 270" role="img" aria-label="A target sequence 3 1 4 1 5 2 and a sampled sequence 3 1 2 1 5 0. Four of six positions match, so the reward is 4 over 6 plus the shift 5, which is 5.67.">
+<text class="ve-tick l" x="20" y="40">target</text>
+<text class="ve-tick l" x="20" y="136">sampled</text>
+<path class="ve-e is-hot no-ah" d="M185 110V58M285 110V58M485 110V58M585 110V58"/>
+<text class="ve-el" x="185" y="84">match</text><text class="ve-el" x="285" y="84">match</text><text class="ve-el" x="385" y="84">miss</text><text class="ve-el" x="485" y="84">match</text><text class="ve-el" x="585" y="84">match</text><text class="ve-el" x="685" y="84">miss</text>
+<g class="ve-n"><rect class="sh" x="150" y="14" width="70" height="44" rx="6"/><text x="185" y="36">3</text><rect class="sh" x="250" y="14" width="70" height="44" rx="6"/><text x="285" y="36">1</text><rect class="sh" x="350" y="14" width="70" height="44" rx="6"/><text x="385" y="36">4</text><rect class="sh" x="450" y="14" width="70" height="44" rx="6"/><text x="485" y="36">1</text><rect class="sh" x="550" y="14" width="70" height="44" rx="6"/><text x="585" y="36">5</text><rect class="sh" x="650" y="14" width="70" height="44" rx="6"/><text x="685" y="36">2</text></g>
+<g class="ve-n is-key"><rect class="sh" x="150" y="110" width="70" height="44" rx="6"/><text x="185" y="132">3</text><rect class="sh" x="250" y="110" width="70" height="44" rx="6"/><text x="285" y="132">1</text><rect class="sh" x="450" y="110" width="70" height="44" rx="6"/><text x="485" y="132">1</text><rect class="sh" x="550" y="110" width="70" height="44" rx="6"/><text x="585" y="132">5</text></g>
+<g class="ve-n"><rect class="sh" x="350" y="110" width="70" height="44" rx="6"/><text x="385" y="132">2</text><rect class="sh" x="650" y="110" width="70" height="44" rx="6"/><text x="685" y="132">0</text></g>
+<path class="ve-e is-hot" d="M435 154V196"/><text class="ve-el r" x="447" y="180">mean match + shift 5</text>
+<g class="ve-n is-key" transform="translate(335 196)"><rect class="sh" width="200" height="54" rx="6"/><text x="100" y="20">reward 5.67</text><text class="sub" x="100" y="40">4/6 matched + 5</text></g>
+</svg>
+</div>
+<figcaption><span class="fig-n">Fig. 8</span>One rollout of the toy. The reward shift of 5 makes every reward positive, which is where a missing baseline hurts most.</figcaption>
+</figure>

@@ -1,0 +1,13 @@
+<figure>
+<div class="frame">
+<svg class="ve-svg" viewBox="0 0 800 210" role="img" aria-label="Overhead of the per-block constants. Without double quantization 0.5 bits per parameter. With it about 0.127 bits per parameter. The saving is about 0.37 bits per parameter, roughly 3 GB on a 65B model.">
+<text class="ve-tick l" x="20" y="28">fp32 constant per 64 weights</text>
+<rect class="ve-bar" x="20" y="38" width="300" height="22" rx="2"/><text class="ve-bar-v" x="330" y="49">0.5 bits/param</text>
+<text class="ve-tick l" x="20" y="96">8-bit constants, + one fp32 per 256 constants</text>
+<rect class="ve-bar hot" x="20" y="106" width="76" height="22" rx="2"/><text class="ve-bar-v" x="106" y="117">0.127 bits/param</text>
+<g class="ve-dim is-key"><path class="ext" d="M96 132V168M320 132V168"/><path class="ln" d="M96 162H320"/><text x="208" y="156">saves 0.37 bits</text></g>
+<text class="ve-tick l" x="20" y="198">about 3 GB on a 65B model</text>
+</svg>
+</div>
+<figcaption><span class="fig-n">Fig. 14</span>Overhead per parameter, without and with double quantization.</figcaption>
+</figure>

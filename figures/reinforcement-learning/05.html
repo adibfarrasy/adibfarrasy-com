@@ -1,0 +1,21 @@
+<figure>
+<div class="frame">
+<svg class="ve-svg" viewBox="0 0 800 290" role="img" aria-label="Left: four samples with rewards 6, 9, 7 and 8 are all pushed up when there is no baseline. Right: subtracting the mean 7.5 gives weights minus 1.5, plus 1.5, minus 0.5 and plus 0.5, so worse samples go down and better samples go up.">
+<text class="ve-tick l" x="20" y="16">no baseline: every sample pushed up</text>
+<path class="ve-grid" d="M20 230H380"/>
+<rect class="ve-bar" x="50" y="122" width="44" height="108"/><text class="ve-bar-v" text-anchor="middle" x="72" y="108">6</text>
+<rect class="ve-bar" x="135" y="68" width="44" height="162"/><text class="ve-bar-v" text-anchor="middle" x="157" y="54">9</text>
+<rect class="ve-bar" x="220" y="104" width="44" height="126"/><text class="ve-bar-v" text-anchor="middle" x="242" y="90">7</text>
+<rect class="ve-bar" x="305" y="86" width="44" height="144"/><text class="ve-bar-v" text-anchor="middle" x="327" y="72">8</text>
+<text class="ve-tick" x="72" y="252">o1</text><text class="ve-tick" x="157" y="252">o2</text><text class="ve-tick" x="242" y="252">o3</text><text class="ve-tick" x="327" y="252">o4</text>
+<text class="ve-tick l" x="420" y="16">minus the mean (7.5): above up, below down</text>
+<path class="ve-grid" d="M420 150H780"/>
+<rect class="ve-bar" x="450" y="150" width="44" height="60"/><text class="ve-bar-v" text-anchor="middle" x="472" y="224">−1.5</text>
+<rect class="ve-bar hot" x="535" y="90" width="44" height="60"/><text class="ve-bar-v" text-anchor="middle" x="557" y="76">+1.5</text>
+<rect class="ve-bar" x="620" y="150" width="44" height="20"/><text class="ve-bar-v" text-anchor="middle" x="642" y="184">−0.5</text>
+<rect class="ve-bar hot" x="705" y="130" width="44" height="20"/><text class="ve-bar-v" text-anchor="middle" x="727" y="116">+0.5</text>
+<text class="ve-tick" x="472" y="252">o1</text><text class="ve-tick" x="557" y="252">o2</text><text class="ve-tick" x="642" y="252">o3</text><text class="ve-tick" x="727" y="252">o4</text>
+</svg>
+</div>
+<figcaption><span class="fig-n">Fig. 5</span>Same four samples, same rewards. The baseline changes only the weights, and the expected gradient stays the same.</figcaption>
+</figure>

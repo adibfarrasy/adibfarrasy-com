@@ -1,0 +1,26 @@
+<figure>
+<div class="cases">
+<div class="case" data-st="warn"><span class="chip warn">Cache grows with n</span><h3>Softmax attention</h3>
+<svg class="ve-mini" viewBox="0 0 240 130" role="img" aria-label="Memory against length: softmax rises steeply, linear stays flat, hybrid rises gently. Softmax is highlighted.">
+<path class="ve-e no-ah" d="M30 10V110H230"/><text class="ve-tick l" x="38" y="22">memory</text><text class="ve-tick" x="210" y="126">n</text>
+<path class="ve-e no-ah" d="M30 80H225"/><path class="ve-e no-ah" d="M30 100L225 70"/>
+<path class="ve-e no-ah is-st" d="M30 105L225 25"/>
+</svg>
+<p class="meta">Train O(n²d). Decode cost grows with n. Recall: excellent. Ecosystem: FlashAttention, paged KV.</p></div>
+<div class="case" data-st="risk"><span class="chip risk">Recall limited</span><h3>Linear / SSM</h3>
+<svg class="ve-mini" viewBox="0 0 240 130" role="img" aria-label="Memory against length: linear stays flat and is highlighted.">
+<path class="ve-e no-ah" d="M30 10V110H230"/><text class="ve-tick l" x="38" y="22">memory</text><text class="ve-tick" x="210" y="126">n</text>
+<path class="ve-e no-ah" d="M30 105L225 25"/><path class="ve-e no-ah" d="M30 100L225 70"/>
+<path class="ve-e no-ah is-st" d="M30 80H225"/>
+</svg>
+<p class="meta">Train O(n d²). Constant state and decode. Recall: limited by state size. Ecosystem: flash-linear-attention, mamba-ssm.</p></div>
+<div class="case" data-st="ok"><span class="chip ok">Small cache, good recall</span><h3>Hybrid</h3>
+<svg class="ve-mini" viewBox="0 0 240 130" role="img" aria-label="Memory against length: hybrid rises gently and is highlighted.">
+<path class="ve-e no-ah" d="M30 10V110H230"/><text class="ve-tick l" x="38" y="22">memory</text><text class="ve-tick" x="210" y="126">n</text>
+<path class="ve-e no-ah" d="M30 105L225 25"/><path class="ve-e no-ah" d="M30 80H225"/>
+<path class="ve-e no-ah is-st" d="M30 100L225 70"/>
+</svg>
+<p class="meta">Training between the two. Cache only on few layers, decode mostly constant. Recall: good. Ecosystem: improving.</p></div>
+</div>
+<figcaption><span class="fig-n">Fig. 15</span>Memory against context length, the three designs side by side (sketch, not measured).</figcaption>
+</figure>

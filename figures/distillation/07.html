@@ -1,0 +1,23 @@
+<figure>
+<div class="cases">
+<div class="case" data-st="warn"><span class="chip warn">Prefix from data</span><h3>Token-level KD, fixed data</h3>
+<svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="The prefix comes from a fixed dataset, so the student trains on prefixes it will not see at inference.">
+<path class="ve-e is-st" d="M120 40V66"/><text class="ve-el r" x="128" y="57">prefix</text>
+<g class="ve-n is-st"><rect class="sh" x="20" y="4" width="200" height="36" rx="5"/><text x="120" y="22">Dataset</text></g>
+<g class="ve-n"><rect class="sh" x="20" y="68" width="200" height="36" rx="5"/><text x="120" y="86">Student trains</text></g>
+</svg><p>At inference the student sees its own prefix. One slip and errors compound.</p></div>
+<div class="case" data-st="warn"><span class="chip warn">Prefix from teacher</span><h3>Sequence-level KD</h3>
+<svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="The prefix comes from the teacher beam output, so the student still trains on prefixes it will not see at inference.">
+<path class="ve-e is-st" d="M120 40V66"/><text class="ve-el r" x="128" y="57">prefix</text>
+<g class="ve-n is-st"><rect class="sh" x="20" y="4" width="200" height="36" rx="5"/><text x="120" y="22">Teacher output</text></g>
+<g class="ve-n"><rect class="sh" x="20" y="68" width="200" height="36" rx="5"/><text x="120" y="86">Student trains</text></g>
+</svg><p>Same mismatch. It hurts small students most, since they slip most.</p></div>
+<div class="case" data-st="ok"><span class="chip ok">Prefix from student</span><h3>On-policy (GKD)</h3>
+<svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="The prefix comes from the student's own samples, which matches inference.">
+<path class="ve-e is-st" d="M120 40V66"/><text class="ve-el r" x="128" y="57">prefix</text>
+<g class="ve-n is-st"><rect class="sh" x="20" y="4" width="200" height="36" rx="5"/><text x="120" y="22">Student samples</text></g>
+<g class="ve-n"><rect class="sh" x="20" y="68" width="200" height="36" rx="5"/><text x="120" y="86">Student trains</text></g>
+</svg><p>Training visits the states inference will visit.</p></div>
+</div>
+<figcaption><span class="fig-n">Fig. 7</span>Where the prefix comes from decides whether training matches inference.</figcaption>
+</figure>

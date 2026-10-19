@@ -1,0 +1,19 @@
+<figure>
+<div class="cases">
+<div class="case" data-st="risk"><span class="chip risk">Corrupted read</span><h3>Additive write</h3>
+<svg class="ve-mini" viewBox="0 0 240 160" role="img" aria-label="Additive: the state holds v_old under key k, a new value v_new is added on top, and reading with k returns the sum of old and new.">
+<text class="ve-tick l" x="12" y="14">stored under k</text><rect class="ve-bar" x="12" y="22" width="80" height="16" rx="2"/><text class="ve-bar-v" x="100" y="30">v_old</text>
+<text class="ve-tick l" x="12" y="62">new write</text><rect class="ve-bar hot" x="12" y="70" width="80" height="16" rx="2"/><text class="ve-bar-v" x="100" y="78">v_new</text>
+<text class="ve-tick l" x="12" y="110">read with k</text><rect class="ve-bar" x="12" y="118" width="80" height="16" rx="2"/><rect class="ve-bar hot" x="92" y="118" width="80" height="16" rx="2"/>
+<text class="ve-tick l" x="12" y="154">old + new: a mix</text>
+</svg></div>
+<div class="case" data-st="ok"><span class="chip ok">Exact read</span><h3>Delta rule</h3>
+<svg class="ve-mini" viewBox="0 0 240 160" role="img" aria-label="Delta rule: the state first reads v_old under key k, then writes the difference, so reading with k returns exactly v_new.">
+<text class="ve-tick l" x="12" y="14">stored under k</text><rect class="ve-bar" x="12" y="22" width="80" height="16" rx="2"/><text class="ve-bar-v" x="100" y="30">v_old</text>
+<text class="ve-tick l" x="12" y="62">writes v_new − v_old</text><rect class="ve-bar hot" x="12" y="70" width="80" height="16" rx="2"/><text class="ve-bar-v" x="100" y="78">β = 1</text>
+<text class="ve-tick l" x="12" y="110">read with k</text><rect class="ve-bar hot" x="12" y="118" width="80" height="16" rx="2"/><text class="ve-bar-v" x="100" y="126">v_new</text>
+<text class="ve-tick l" x="12" y="154">old erased, new stored</text>
+</svg></div>
+</div>
+<figcaption><span class="fig-n">Fig. 11</span>Reading under the same key: additive linear attention returns a mix, the delta rule returns the new value.</figcaption>
+</figure>

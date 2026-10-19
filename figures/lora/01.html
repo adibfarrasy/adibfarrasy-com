@@ -1,0 +1,18 @@
+<figure>
+<div class="frame">
+<svg class="ve-svg" viewBox="0 0 800 240" role="img" aria-label="A LoRA layer. The input x, width d_in, goes two ways. Through the frozen weight W0 it gives W0 x. Through the down projection A (r by d_in) and then the up projection B (d_out by r) it gives a correction that is scaled by alpha over r and added. Together A and B hold r times d_in plus d_out trainable parameters.">
+<path class="ve-e" d="M130 115H160V50H270"/><text class="ve-el" x="215" y="41">multiplies</text>
+<path class="ve-e" d="M130 160H240"/><text class="ve-el" x="185" y="151">down to r</text>
+<path class="ve-e" d="M360 160H440"/><text class="ve-el" x="400" y="151">expands</text>
+<path class="ve-e" d="M450 50H590V125H630"/><text class="ve-el" x="520" y="41">carries W0x</text>
+<path class="ve-e is-hot" d="M560 160H630"/><text class="ve-el" x="595" y="151">× α/r</text>
+<g class="ve-n" transform="translate(20 95)"><rect class="sh" width="110" height="90" rx="6"/><text x="55" y="34">x</text><text class="sub" x="55" y="58">d_in</text></g>
+<g class="ve-n" transform="translate(270 20)"><rect class="sh is-off" width="180" height="60" rx="6"/><text x="90" y="22">W0</text><text class="sub" x="90" y="44">frozen</text></g>
+<g class="ve-n is-key" data-ref="a" transform="translate(240 130)"><rect class="sh" width="120" height="60" rx="6"/><text x="60" y="22">A</text><text class="sub" x="60" y="44">r × d_in</text></g>
+<g class="ve-n is-key" data-ref="b" transform="translate(440 130)"><rect class="sh" width="120" height="60" rx="6"/><text x="60" y="22">B</text><text class="sub" x="60" y="44">d_out × r</text></g>
+<g class="ve-n" transform="translate(630 110)"><rect class="sh" width="150" height="60" rx="6"/><text x="75" y="22">h</text><text class="sub" x="75" y="44">output</text></g>
+<g class="ve-dim is-key"><path class="ext" d="M240 190V226M560 190V226"/><path class="ln" d="M240 220H560"/><text x="400" y="212">r(d_in + d_out) trainable</text></g>
+</svg>
+</div>
+<figcaption><span class="fig-n">Fig. 1</span>The whole idea: one frozen path, plus a bottleneck of width r that is trained and added back.</figcaption>
+</figure>

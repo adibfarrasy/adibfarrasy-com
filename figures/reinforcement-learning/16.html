@@ -1,0 +1,45 @@
+<figure class="ve-steps">
+<div class="frame">
+<svg class="ve-svg" viewBox="0 0 800 392" role="img" aria-label="Prompt one: four sampled responses with rewards 1, 0, 0, 1 have mean 0.5 and standard deviation 0.58, so advantages are plus 0.87, minus 0.87, minus 0.87, plus 0.87, shared by every token of each response. Prompt two: all four responses get reward 0, so every advantage is zero and the prompt adds no policy gradient.">
+<path class="ve-e" data-s="1" pathLength="1" d="M130 45H214"/><text class="ve-el" data-s="1" x="172" y="36">samples</text>
+<g class="ve-zone" data-s="1"><rect x="214" y="0" width="322" height="80" rx="8"/><text x="224" y="14">GROUP, G = 4</text></g>
+<g class="ve-n" data-s="1" transform="translate(20 20)"><rect class="sh" width="110" height="50" rx="6"/><text x="55" y="25">prompt q</text></g>
+<g class="ve-n" data-s="1" transform="translate(230 22)"><rect class="sh" width="62" height="46" rx="6"/><text x="31" y="23">o1</text></g>
+<g class="ve-n" data-s="1" transform="translate(306 22)"><rect class="sh" width="62" height="46" rx="6"/><text x="31" y="23">o2</text></g>
+<g class="ve-n" data-s="1" transform="translate(382 22)"><rect class="sh" width="62" height="46" rx="6"/><text x="31" y="23">o3</text></g>
+<g class="ve-n" data-s="1" transform="translate(458 22)"><rect class="sh" width="62" height="46" rx="6"/><text x="31" y="23">o4</text></g>
+<text class="ve-tick" data-s="2" x="261" y="96">r = 1</text><text class="ve-tick" data-s="2" x="337" y="96">r = 0</text><text class="ve-tick" data-s="2" x="413" y="96">r = 0</text><text class="ve-tick" data-s="2" x="489" y="96">r = 1</text>
+<path class="ve-grid" data-s="3" d="M214 160H536"/>
+<rect class="ve-bar hot" data-s="3" x="246" y="130" width="30" height="30"/><text class="ve-bar-v" data-s="3" text-anchor="middle" x="261" y="118">+0.87</text>
+<rect class="ve-bar" data-s="3" x="322" y="160" width="30" height="30"/><text class="ve-bar-v" data-s="3" text-anchor="middle" x="337" y="204">−0.87</text>
+<rect class="ve-bar" data-s="3" x="398" y="160" width="30" height="30"/><text class="ve-bar-v" data-s="3" text-anchor="middle" x="413" y="204">−0.87</text>
+<rect class="ve-bar hot" data-s="3" x="474" y="130" width="30" height="30"/><text class="ve-bar-v" data-s="3" text-anchor="middle" x="489" y="118">+0.87</text>
+<text class="ve-tick l" data-s="3" x="560" y="130">mean 0.5, std 0.58</text>
+<text class="ve-tick l" data-s="3" x="560" y="156">A = (r − mean) / std</text>
+<text class="ve-tick l" data-s="4" x="560" y="190">same A on every token of oi</text>
+<path class="ve-e" data-s="1" pathLength="1" d="M130 275H214"/><text class="ve-el" data-s="1" x="172" y="266">samples</text>
+<g class="ve-zone" data-s="1"><rect x="214" y="230" width="322" height="80" rx="8"/><text x="224" y="244">GROUP, G = 4</text></g>
+<g class="ve-n" data-s="1" transform="translate(20 250)"><rect class="sh" width="110" height="50" rx="6"/><text x="55" y="25">prompt q'</text></g>
+<g class="ve-n" data-s="1" transform="translate(230 252)"><rect class="sh" width="62" height="46" rx="6"/><text x="31" y="23">o1</text></g>
+<g class="ve-n" data-s="1" transform="translate(306 252)"><rect class="sh" width="62" height="46" rx="6"/><text x="31" y="23">o2</text></g>
+<g class="ve-n" data-s="1" transform="translate(382 252)"><rect class="sh" width="62" height="46" rx="6"/><text x="31" y="23">o3</text></g>
+<g class="ve-n" data-s="1" transform="translate(458 252)"><rect class="sh" width="62" height="46" rx="6"/><text x="31" y="23">o4</text></g>
+<text class="ve-tick" data-s="2" x="261" y="326">r = 0</text><text class="ve-tick" data-s="2" x="337" y="326">r = 0</text><text class="ve-tick" data-s="2" x="413" y="326">r = 0</text><text class="ve-tick" data-s="2" x="489" y="326">r = 0</text>
+<text class="ve-tick l" data-s="3" x="214" y="356">A = 0 for all four</text>
+<text class="ve-tick l" data-s="4" x="214" y="380">adds no policy gradient, only the KL term</text>
+</svg>
+</div>
+<div class="ve-player">
+<ol class="ve-cap">
+<li data-n="1/4">For each prompt, sample a group of G responses from the old policy.</li>
+<li data-n="2/4">Score each response with the reward model or verifier.</li>
+<li data-n="3/4">Center the rewards on the group mean and divide by the group std. A tie group (all right or all wrong) has zero advantage.</li>
+<li data-n="4/4">Each response's single advantage is copied to all of its tokens (outcome supervision), then fed to PPO's clipped loss.</li>
+</ol>
+<button data-go="-1" aria-label="Previous step">←</button>
+<button data-play>Play</button>
+<input type="range" min="0" value="0" aria-label="Step">
+<button data-go="1" aria-label="Next step">→</button>
+</div>
+<figcaption><span class="fig-n">Fig. 16</span>GRPO advantages for two prompts. The second prompt shows why dynamic sampling in DAPO exists.</figcaption>
+</figure>

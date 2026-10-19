@@ -1,0 +1,17 @@
+<figure>
+<div class="frame">
+<svg class="ve-svg" viewBox="0 0 800 290" role="img" aria-label="Score against distance from the initial policy. The proxy reward model score rises forever. The gold, true score rises, peaks, then falls.">
+<path class="ve-grid" d="M60 250H770M60 20V250"/>
+<path class="ve-grid" d="M400 80V250"/>
+<path class="ve-e no-ah" d="M60 245C200 140 420 70 760 40"/>
+<path class="ve-e is-hot no-ah" d="M60 245C180 140 300 80 400 80C520 80 640 160 760 245"/>
+<text class="ve-el l" x="770" y="24">proxy RM score</text>
+<text class="ve-el l" x="392" y="68">gold (true) score</text>
+<path class="ann" d="M400 48V76"/><g class="ve-co" transform="translate(400 36)"><circle r="11"/><text>1</text></g>
+<text class="ve-tick l" x="70" y="16">score</text>
+<text class="ve-tick" x="415" y="276">distance from the start policy, d = √KL</text>
+</svg>
+</div>
+<figcaption><span class="fig-n">Fig. 13</span>Shape only, not measured data. Larger reward models and more data push the peak further out and higher.</figcaption>
+<ol class="callouts"><li><span class="co-n">1</span>Past the peak the proxy still climbs while real quality drops. Use the KL penalty or early stopping, and evaluate with something other than the reward model you optimized.</li></ol>
+</figure>

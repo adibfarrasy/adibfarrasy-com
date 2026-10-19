@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Learn AI Fundamentals</title>
+<meta name="description" content="Learn AI fundamentals: a self-study LLM course, 2 courses, 9 chapters, 27 sections.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23282828'/%3E%3Cpath d='M14 20h14M36 20h14M14 44h14M36 44h14M28 20l8 24' stroke='%23fe8019' stroke-width='5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body, { delimiters: [{ left: '$$', right: '$$', display: true }, { left: '\\(', right: '\\)', display: false }], throwOnError: false })"></script>
+<script>
+  // Runs before first paint so a saved theme choice never flashes the other scheme.
+  try { const t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+<style>
+  /* tokens: gruvbox-dark by default, gruvbox-light when the reader's system asks for light */
+  :root {
+    color-scheme: dark;
+    --bg: #282828; --surface: #3c3836; --border: rgba(255,255,255,.08); --border-bright: #afa18e;
+    --text: #ebdbb2; --text-dim: #afa18e; --accent: #fe8019; --accent-dim: #fe80191f;
+    --ok: #b8bb26; --warn: #fabd2f; --risk: #fc7c6d; --info: #88a99c;
+    --syn-k: #fc7c6d; --syn-s: #b8bb26; --syn-n: #d3869b; --syn-f: #fabd2f; --syn-c: #afa18e;
+    --node-top: color-mix(in srgb, var(--text) 7%, var(--surface)); --lift: rgb(0 0 0 / .45); --halo: 32%;
+    --font-body: 'JetBrains Mono', ui-monospace, monospace;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    --t-label: .75rem; --t-small: .875rem; --t-body: 1rem; --t-lead: 1.25rem; --t-h2: 1.625rem; --t-h1: clamp(2.25rem, 5.5vw, 4rem);
+    --s-1: .25rem; --s-2: .5rem; --s-3: .75rem; --s-4: 1rem; --s-5: 1.5rem; --s-6: 2rem; --s-7: 3rem; --s-8: 4.5rem;
+    --r-1: 4px; --r-2: 10px;
+    --ease: cubic-bezier(.16,1,.3,1); --fast: 150ms; --med: 300ms; --slow: 500ms;
+  }
+  :root[data-theme="light"] {
+      color-scheme: light;
+      --bg: #fbf1c7; --surface: #ebdbb2; --border: rgba(0,0,0,.08); --border-bright: #6b5f56;
+      --text: #3c3836; --text-dim: #6b5f56; --accent: #ad3903; --accent-dim: #ad39031f;
+      --ok: #67630c; --warn: #7a5200; --risk: #9d0006; --info: #076678;
+      --syn-k: #9d0006; --syn-s: #67630c; --syn-n: #8f3f71; --syn-f: #076678; --syn-c: #6b5f56;
+      --node-top: var(--surface); --lift: rgb(60 56 54 / .14); --halo: 22%;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      color-scheme: light;
+      --bg: #fbf1c7; --surface: #ebdbb2; --border: rgba(0,0,0,.08); --border-bright: #6b5f56;
+      --text: #3c3836; --text-dim: #6b5f56; --accent: #ad3903; --accent-dim: #ad39031f;
+      --ok: #67630c; --warn: #7a5200; --risk: #9d0006; --info: #076678;
+      --syn-k: #9d0006; --syn-s: #67630c; --syn-n: #8f3f71; --syn-f: #076678; --syn-c: #6b5f56;
+      --node-top: var(--surface); --lift: rgb(60 56 54 / .14); --halo: 22%;
+    }
+  }
+
+  /* base */
+  html { font-size: 17px; }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--text); font: 400 var(--t-body)/1.6 var(--font-body); text-wrap: pretty; font-kerning: normal; font-synthesis: none; -webkit-font-smoothing: antialiased; }
+  ::selection { background: var(--accent-dim); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  a { color: var(--text); text-decoration: underline 1px var(--accent); text-underline-offset: .22em; transition: color var(--fast) var(--ease); }
+  a:hover { color: var(--accent); }
+  code { font: .875em var(--font-mono); font-variant-ligatures: none; }
+  h1, h2 { text-box: trim-both cap alphabetic; }
+  h1 { font-size: var(--t-h1); line-height: 1.08; font-weight: 600; letter-spacing: -.035em; text-wrap: balance; max-width: 20ch; }
+  h1 .num { color: var(--accent); font-variant-numeric: tabular-nums; }
+  h2 { font-size: var(--t-h2); line-height: 1.2; font-weight: 600; letter-spacing: -.015em; text-wrap: balance; }
+  h3 { font-size: var(--t-body); line-height: 1.3; font-weight: 600; }
+  p, li { max-width: 66ch; }
+  ul, ol { padding-left: 1.25em; }
+  .eyebrow { display: flex; align-items: center; gap: var(--s-2); font: 600 var(--t-label) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+  .eyebrow::before { content: ''; width: 1.25rem; height: 2px; background: currentColor; }
+  .ve-label { font: 600 var(--t-label) var(--font-mono); color: var(--text-dim); }
+  .caps { text-transform: uppercase; letter-spacing: .08em; }
+  .lead { font-size: var(--t-lead); line-height: 1.5; color: var(--text-dim); max-width: 48ch; }
+  .lead b { color: var(--text); font-weight: 600; }
+  .meta { font: 400 var(--t-label) var(--font-mono); color: var(--text-dim); font-variant-numeric: tabular-nums; }
+
+  /* top bar: course breadcrumb left, chapter pager right */
+  .topbar { border-bottom: 1px solid var(--border); }
+  .topbar-in { max-width: 82rem; margin: 0 auto; padding: var(--s-3) var(--s-5); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-2) var(--s-5); font: 400 var(--t-small) var(--font-mono); }
+  .topbar a { text-decoration: none; }
+  .topbar a:hover { color: var(--accent); }
+  .crumbs { display: flex; flex-wrap: wrap; list-style: none; padding: 0; gap: var(--s-2); color: var(--text-dim); }
+  .crumbs li + li::before { content: '/'; margin-right: var(--s-2); color: var(--text-dim); }
+  .crumbs [aria-current] { color: var(--text); font-weight: 600; }
+  .pager { display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-5); }
+  .pager a { color: var(--text-dim); }
+
+  /* page: sticky TOC column + main; below 1000px the TOC becomes a sticky bar */
+  .page { max-width: 82rem; margin: 0 auto; padding: 0 var(--s-5); }
+  main { min-width: 0; max-width: 64rem; padding: var(--s-7) 0 var(--s-8); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-8); }
+  .toc { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--border); margin: 0 calc(-1 * var(--s-5)); padding: var(--s-2) var(--s-5); }
+  .toc > .ve-label { display: none; }
+  .toc ol { list-style: none; padding: 0; display: flex; gap: var(--s-4); overflow-x: auto; scrollbar-width: none; mask-image: linear-gradient(90deg, #000 85%, transparent); }
+  .toc ol::-webkit-scrollbar { display: none; }
+  .toc li { max-width: none; }
+  .toc a { display: block; white-space: nowrap; font: 400 var(--t-small) var(--font-mono); color: var(--text-dim); text-decoration: none; padding: var(--s-1) 0; border-bottom: 2px solid transparent; }
+  .toc a .n { color: var(--text-dim); margin-right: var(--s-1); }
+  .toc a:hover { color: var(--text); }
+  .toc a[aria-current] { color: var(--text); border-color: var(--accent); }
+  .toc a[aria-current] .n { color: var(--accent); }
+  @media (min-width: 1000px) {
+    .page { display: grid; grid-template-columns: 12rem minmax(0, 1fr); column-gap: var(--s-7); }
+    .toc { align-self: start; margin: 0; padding: var(--s-7) 0 var(--s-5); border: 0; background: none; max-height: 100vh; overflow-y: auto; }
+    .toc > .ve-label { display: block; margin-bottom: var(--s-3); }
+    .toc ol { flex-direction: column; gap: 0; overflow: visible; mask-image: none; }
+    .toc a { white-space: normal; border-bottom: 0; border-left: 2px solid var(--border); padding: var(--s-1) 0 var(--s-1) var(--s-3); }
+    .toc a[aria-current] { border-left-color: var(--accent); }
+  }
+
+  /* chapter header */
+  .ch-head { display: grid; gap: var(--s-4); }
+  .ch-head h1 { margin-bottom: var(--s-2); }
+  .ch-head + figure { margin-top: calc(var(--s-6) - var(--s-8)); }
+
+  /* sections: a 12-column grid on one flush-left axis; prose spans 8 columns, figures all 12 */
+  .sec { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--s-5); row-gap: var(--s-5); scroll-margin-top: 4rem; }
+  .sec > * { grid-column: 1 / -1; min-width: 0; }
+  @media (min-width: 52rem) { .sec > :is(p, ul, ol, h3) { grid-column: 1 / span 8; } }
+  .sec > h3 { margin-top: var(--s-5); }
+  /* section opener (kicker head): section number + name above the takeaway h2 */
+  .sec-head { display: grid; gap: var(--s-3); border-top: 1px solid var(--border); padding-top: var(--s-5); margin-bottom: var(--s-2); }
+  .sec-num { font: 600 var(--t-label) var(--font-mono); color: var(--text-dim); letter-spacing: .04em; }
+  .sec-num .n { color: var(--accent); margin-right: var(--s-2); font-variant-numeric: tabular-nums; }
+
+  /* figure: the stage is a faint dot grid, so nodes read as objects placed on it */
+  figure { min-width: 0; }
+  .frame { background: radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--text) 13%, transparent) 1px, transparent 1.5px) 0 0 / 20px 20px, var(--bg); border: 1px solid var(--border); border-radius: var(--r-2); padding: var(--s-5); overflow-x: auto; }
+  .ve-svg { overflow: visible; }
+  figcaption { font-size: var(--t-small); color: var(--text-dim); margin-top: var(--s-3); }
+  .fig-n { font: 600 var(--t-label) var(--font-mono); color: var(--text); margin-right: var(--s-2); }
+  .callouts { list-style: none; padding: 0; margin-top: var(--s-3); display: grid; gap: var(--s-2); color: var(--text-dim); }
+  .co-n { display: inline-grid; place-items: center; width: 1.4rem; height: 1.4rem; margin-right: var(--s-2); border: 1.5px solid var(--accent); border-radius: 50%; font: 600 var(--t-label) var(--font-mono); color: var(--accent); }
+
+  /* diagram kit */
+  /* min-width keeps 14-unit labels >= 12px as rendered; narrow screens scroll the frame instead. Wider viewBoxes set min-width inline (viewBox width x 0.86). */
+  .ve-svg { width: 100%; min-width: 700px; height: auto; display: block; font: 600 15px var(--font-mono); }
+  .ve-n .sh { fill: url(#ve-node); stroke: var(--border-bright); stroke-width: 1.5; filter: drop-shadow(0 6px 14px var(--lift)); transition: stroke var(--fast) var(--ease), opacity var(--med) var(--ease); }
+  .ve-n .lid { fill: var(--node-top); }
+  .ve-n.is-key .sh { fill: color-mix(in srgb, var(--accent) 11%, var(--surface)); stroke: var(--accent); stroke-width: 2; filter: drop-shadow(0 0 16px color-mix(in srgb, var(--accent) var(--halo), transparent)); }
+  .ve-n text { fill: var(--text); text-anchor: middle; dominant-baseline: central; font-weight: 600; }
+  .ve-n .sub { fill: var(--text-dim); font: 400 14px var(--font-mono); }
+  .ve-n .is-off { stroke-dasharray: 5 4; fill: none; filter: none; }
+  .ve-e { fill: none; stroke: var(--text-dim); stroke-width: 1.75; marker-end: url(#ve-ah); }
+  .ve-e.no-ah { marker-end: none; }
+  .ve-e.is-hot { stroke: var(--accent); stroke-width: 2.75; filter: drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 55%, transparent)); }
+  .ve-e.is-async { stroke-dasharray: 6 5; }
+  .ve-el { fill: var(--text-dim); font: 400 14px var(--font-mono); text-anchor: middle; paint-order: stroke; stroke: var(--bg); stroke-width: 5px; stroke-linejoin: round; }
+  .ve-el.l { text-anchor: end; } .ve-el.r { text-anchor: start; }
+  .ve-tick { fill: var(--text-dim); font: 400 14px var(--font-mono); text-anchor: middle; }
+  .ve-tick.l { text-anchor: start; }
+  .ve-grid { stroke: var(--border); stroke-width: 1; }
+  .ve-zone rect { fill: none; stroke: var(--border-bright); stroke-width: 1; stroke-dasharray: 4 4; }
+  .ve-zone text { fill: var(--text-dim); font: 600 14px var(--font-mono); letter-spacing: .08em; }
+  .ve-bar { fill: var(--border-bright); }
+  .ve-bar.hot { fill: var(--accent); }
+  .ve-bar-v { fill: var(--text-dim); font: 400 14px var(--font-mono); dominant-baseline: central; }
+  .ve-dim path { fill: none; stroke-width: 1; } .ve-dim .ext { stroke: var(--border-bright); } .ve-dim .ln { stroke: var(--text-dim); }
+  .ve-dim text { fill: var(--text); font: 600 14px var(--font-mono); text-anchor: middle; }
+  .ve-dim .ln { marker-start: url(#ve-ah2); marker-end: url(#ve-ah2); } .ve-dim .ln.ticks { marker-start: none; marker-end: none; }
+  .ve-dim.is-key .ln { stroke: var(--accent); } .ve-dim.is-key text { fill: var(--accent); }
+  .ann { fill: none; stroke: var(--text-dim); stroke-width: 1; }
+  .ve-co circle { fill: var(--surface); stroke: var(--accent); stroke-width: 1.75; }
+  .ve-co text { fill: var(--accent); font: 600 14px var(--font-mono); text-anchor: middle; dominant-baseline: central; }
+  .ve-co.now circle { fill: var(--accent); } .ve-co.now text { fill: var(--surface); }
+
+  /* linked highlighting: same data-ref lights up together; unlit labels drop to --text-dim instead of fading */
+  .ve-ref { text-decoration: underline dotted var(--text-dim) 1px; text-underline-offset: .22em; border-radius: var(--r-1); transition: background var(--fast) var(--ease); }
+  .ve-ref.is-lit { background: var(--accent-dim); text-decoration-color: var(--accent); }
+  svg [data-ref] { transition: opacity var(--med) var(--ease); }
+  svg.has-lit path[data-ref]:not(.is-lit), svg.has-lit g[data-ref]:not(.is-lit) .sh, svg.has-lit rect[data-ref]:not(.is-lit) { opacity: .25; }
+  svg.has-lit g[data-ref]:not(.is-lit) text, svg.has-lit text[data-ref]:not(.is-lit) { fill: var(--text-dim); }
+  .ve-n.is-lit .sh { stroke: var(--accent); }
+  .ve-e.is-lit { stroke: var(--accent); }
+  .ve-el.is-lit { fill: var(--text); }
+  .case.is-lit, .ch-card.is-lit { border-color: var(--accent); }
+
+  /* stepper / scene player: future parts stay a faint outline, their labels hidden */
+  .ve-steps [data-s] { transition: opacity var(--slow) var(--ease), stroke-dashoffset var(--slow) var(--ease); }
+  .ve-steps [data-s]:not(.on) { opacity: .15; }
+  .ve-steps g[data-s]:not(.on) text, .ve-steps text[data-s]:not(.on) { opacity: 0; }
+  .ve-steps path[pathLength][data-s] { stroke-dasharray: 1; stroke-dashoffset: 1; }
+  .ve-steps path[pathLength][data-s].on { stroke-dashoffset: 0; }
+  .ve-steps .ve-n.now > .sh { stroke: var(--accent); }
+  .ve-steps:not(.is-full) .ve-e.now { stroke: var(--accent); stroke-width: 2.75; }
+  .ve-player { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: center; gap: var(--s-2) var(--s-3); margin-top: var(--s-4); }
+  .ve-cap { grid-column: 1 / -1; list-style: none; padding: 0; min-height: 3.2em; }
+  .ve-cap li::before { content: attr(data-n); font: 600 var(--t-label) var(--font-mono); color: var(--accent); margin-right: var(--s-3); font-variant-numeric: tabular-nums; }
+  .ve-player input { accent-color: var(--accent); min-width: 0; }
+  button { font: 400 var(--t-small) var(--font-mono); color: var(--text); background: var(--surface); border: 1px solid var(--border-bright); border-radius: var(--r-1); padding: var(--s-2) var(--s-3); cursor: pointer; transition: border-color var(--fast) var(--ease); }
+  button:hover, button:focus-visible { border-color: var(--accent); }
+
+  /* small multiples: one mini diagram per case; the changed part takes the case's status color */
+  .cases { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14.5rem), 1fr)); gap: var(--s-4); }
+  .case { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-2); padding: var(--s-4); display: grid; gap: var(--s-3); align-content: start; min-width: 0; transition: border-color var(--fast) var(--ease); }
+  .case[data-st=ok] { --st: var(--ok); } .case[data-st=warn] { --st: var(--warn); } .case[data-st=risk] { --st: var(--risk); }
+  .ve-mini { width: 100%; height: auto; font: 600 15px var(--font-mono); }
+  .ve-mini .ve-n .sh { filter: none; }
+  .ve-mini .is-st.ve-e { stroke: var(--st); stroke-width: 2.75; }
+  .ve-mini .is-st .sh { stroke: var(--st); stroke-width: 2; }
+  .ve-mini .ve-el { stroke: var(--surface); }
+
+  /* chips: shape and word, never color alone */
+  .chip { display: inline-flex; align-items: center; gap: var(--s-2); font: 600 var(--t-label) var(--font-mono); padding: 2px var(--s-2); border: 1px solid currentColor; border-radius: var(--r-1); white-space: nowrap; justify-self: start; }
+  .chip::before { content: ''; width: .5rem; height: .5rem; background: currentColor; }
+  .chip.ok { color: var(--ok); } .chip.ok::before { border-radius: 50%; }
+  .chip.warn { color: var(--warn); } .chip.warn::before { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+  .chip.risk { color: var(--risk); }
+  .chip.info { color: var(--info); } .chip.info::before { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+  .chip.plain { color: var(--text-dim); font-weight: 400; } .chip.plain::before { display: none; }
+
+  /* equation + symbols legend */
+  .eq { display: grid; gap: var(--s-4) var(--s-6); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-2); padding: var(--s-5); }
+  @media (min-width: 52rem) { .eq { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); align-items: center; } }
+  .eq-math { min-width: 0; overflow-x: auto; overflow-y: hidden; }
+  .eq-math .katex-display { margin: var(--s-2) 0; }
+  .symbols { display: grid; gap: var(--s-2); }
+  .symbols > div { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr); gap: var(--s-3); align-items: baseline; }
+  .symbols dd { margin: 0; color: var(--text-dim); }
+
+  /* code: scroll container, copy button, gruvbox syntax tokens; code sits on --bg so every token reaches 4.5:1 */
+  .code { border: 1px solid var(--border); border-radius: var(--r-2); background: var(--bg); min-width: 0; }
+  .code-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); padding: var(--s-2) var(--s-2) var(--s-2) var(--s-4); background: var(--surface); border-bottom: 1px solid var(--border); border-radius: var(--r-2) var(--r-2) 0 0; }
+  .code pre { margin: 0; padding: var(--s-4); overflow-x: auto; font: 400 var(--t-small)/1.6 var(--font-mono); font-variant-ligatures: none; tab-size: 4; }
+  .code pre code { font: inherit; }
+  .tk-k { color: var(--syn-k); } .tk-s { color: var(--syn-s); } .tk-n { color: var(--syn-n); } .tk-f { color: var(--syn-f); } .tk-c { color: var(--syn-c); }
+
+  /* callouts: common confusions and check yourself */
+  .callout { background: var(--surface); border-radius: var(--r-2); padding: var(--s-5); display: grid; gap: var(--s-4); }
+  .confusions ul { list-style: none; padding: 0; display: grid; gap: var(--s-4); }
+  .confusions p { padding-left: 1.5em; text-indent: -1.5em; }
+  .confusions .myth { color: var(--text-dim); }
+  .confusions .myth::before { content: '✕'; display: inline-block; width: 1.5em; text-indent: 0; color: var(--risk); font-weight: 600; }
+  .confusions .fact::before { content: '✓'; display: inline-block; width: 1.5em; text-indent: 0; color: var(--ok); font-weight: 600; }
+  .quiz ol { display: grid; gap: var(--s-4); padding-left: 1.75em; }
+  .quiz li::marker { font: 600 var(--t-label) var(--font-mono); color: var(--accent); }
+  .quiz details { margin-top: var(--s-2); }
+  .quiz summary { cursor: pointer; font: 600 var(--t-small) var(--font-mono); color: var(--accent); width: fit-content; }
+  .quiz details p { margin-top: var(--s-2); padding-left: var(--s-3); border-left: 1px solid var(--border-bright); }
+
+  /* resources: Read and Watch columns; "start here" = star shape + word + accent frame */
+  .resources { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: var(--s-5) var(--s-6); }
+  .pre-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 13.5rem), 1fr)); gap: var(--s-4); }
+  .pre-card { min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-2); padding: var(--s-4); display: grid; align-content: start; gap: var(--s-2); }
+  .pre-card h3 { font: 600 var(--t-body) var(--font-body); }
+  .pre-card > p { color: var(--text-dim); font-size: var(--t-small); }
+  .pre-card ul { list-style: none; margin: var(--s-2) 0 0; padding: 0; display: grid; gap: var(--s-3); }
+  .pre-card li { display: block; }
+  .pre-card li a { font-size: var(--t-small); overflow-wrap: anywhere; }
+  .pre-card li .start-here { display: flex; margin-top: var(--s-1); }
+  .pre-meta { display: block; color: var(--text-dim); font-size: var(--t-label); margin-top: 2px; }
+  .res-col { min-width: 0; }
+  .res-col > h3 { font: 600 var(--t-label) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--text-dim); padding-bottom: var(--s-2); border-bottom: 1px solid var(--border-bright); }
+  .res-list { list-style: none; padding: 0; }
+  .res-item { padding: var(--s-3) 0; border-bottom: 1px solid var(--border); display: grid; gap: var(--s-1); }
+  .res-item.is-start { border: 1px solid var(--accent); border-radius: var(--r-2); padding: var(--s-3) var(--s-4); margin: var(--s-2) 0; }
+  .res-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-1) var(--s-3); }
+  .res-top a { font-weight: 600; overflow-wrap: anywhere; }
+  .res-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); font: 400 var(--t-label) var(--font-mono); color: var(--text-dim); }
+  .res-item p { color: var(--text-dim); }
+  .start-here { display: inline-flex; align-items: center; gap: var(--s-1); font: 600 var(--t-label) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); white-space: nowrap; }
+  .start-here::before { content: ''; width: .8rem; height: .8rem; background: currentColor; clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+
+  /* chapter project */
+  .project { border: 1px solid var(--border-bright); border-radius: var(--r-2); padding: var(--s-5); display: grid; gap: var(--s-4); }
+  .project h3 { font-size: var(--t-lead); }
+  .project ol, .project ul { display: grid; gap: var(--s-2); }
+  .project .done { list-style: none; padding: 0; }
+  .project .done li::before { content: '□'; color: var(--accent); margin-right: var(--s-2); }
+
+  /* index only: chapter cards and how-to steps */
+  .ch-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14.5rem), 1fr)); gap: var(--s-4); }
+  .ch-card { display: grid; gap: var(--s-3); align-content: start; min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-2); padding: var(--s-4); color: var(--text); text-decoration: none; transition: border-color var(--fast) var(--ease); }
+  .ch-card:hover, .ch-card:focus-visible { border-color: var(--accent); color: var(--text); }
+  .ch-card h3 { font-size: var(--t-lead); }
+  .ch-card p, .ch-card ol { color: var(--text-dim); }
+  .ch-card .go { font: 600 var(--t-label) var(--font-mono); color: var(--accent); }
+  .pips { display: flex; flex-wrap: wrap; gap: var(--s-1); }
+  .pips i { width: .55rem; height: .55rem; background: var(--text-dim); }
+  .howto { list-style: none; padding: 0; counter-reset: step; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); gap: var(--s-5) var(--s-4); }
+  .howto li { counter-increment: step; border-top: 1px solid var(--border-bright); padding-top: var(--s-3); }
+  .howto li::before { content: counter(step, decimal-leading-zero); display: block; font: 600 var(--t-label) var(--font-mono); color: var(--accent); margin-bottom: var(--s-2); }
+
+  /* entrance: blocks rise in once (JS adds .js-motion only when motion is allowed) */
+  .js-motion :is(.ch-head, .sec > *) { transition: opacity var(--slow) var(--ease), transform var(--slow) var(--ease); }
+  .js-motion :is(.ch-head, .sec > *):not(.in) { opacity: 0; transform: translateY(1rem); }
+  .topbar-in .pager { margin-left: auto; }
+  .icon-btn { background: none; border: 0; padding: var(--s-1); color: var(--text-dim); display: inline-flex; line-height: 0; }
+  .icon-btn:hover { color: var(--text); }
+  .icon-btn svg { width: 1.1rem; height: 1.1rem; }
+  .icon-btn .i-moon, .icon-btn[data-mode="light"] .i-sun { display: none; }
+  .icon-btn[data-mode="light"] .i-moon { display: block; }
+  .toc-head { display: none; }
+  .toc-btn { background: none; border: 0; padding: var(--s-1); color: var(--text-dim); display: inline-flex; line-height: 0; }
+  .toc-btn:hover { color: var(--text); }
+  .toc-btn svg { width: 1rem; height: 1rem; transition: transform var(--fast) var(--ease); }
+  @media (min-width: 1000px) {
+    .toc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--s-3); }
+    .toc-head .ve-label { margin: 0; }
+    html.toc-hidden .page { grid-template-columns: 2rem minmax(0, 1fr); }
+    html.toc-hidden .toc-head .ve-label, html.toc-hidden .toc ol { display: none; }
+    html.toc-hidden .toc-btn svg { transform: rotate(180deg); }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  @media print {
+    :root { --bg: #fff; --surface: #fff; --border: #ebdbb2; --border-bright: #6b5f56; --text: #3c3836; --text-dim: #6b5f56; --accent: #ad3903; --ok: #67630c; --warn: #7a5200; --risk: #9d0006; --info: #076678;
+      --syn-k: #9d0006; --syn-s: #67630c; --syn-n: #8f3f71; --syn-f: #076678; --syn-c: #6b5f56; --node-top: #fff; }
+    .toc, .toc-btn, .icon-btn, .pager, .copy, .ve-player button, .ve-player input { display: none; }
+    .page { display: block; }
+    .frame { overflow: visible; background: #fff; } .ve-svg { min-width: 0 !important; }
+    .frame, .case, .ch-card, .callout, .project, .eq, .code { break-inside: avoid; } h2 { break-after: avoid; }
+    svg * { filter: none !important; }
+    .js-motion :is(.ch-head, .sec > *) { opacity: 1 !important; transform: none !important; }
+    .ve-steps [data-s]:not(.on), .ve-steps g[data-s]:not(.on) text, .ve-steps text[data-s]:not(.on) { opacity: 1; }
+    .ve-steps path[pathLength][data-s] { stroke-dashoffset: 0; }
+  }
+</style>
+</head>
+<body>
+<!-- Shared defs: one arrowhead (context-stroke follows each edge's color), the node fill, and the section pip. -->
+<svg class="ve-defs" width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <marker id="ve-ah" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker>
+    <marker id="ve-ah2" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker>
+    <linearGradient id="ve-node" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--node-top)"/><stop offset="1" style="stop-color:var(--surface)"/></linearGradient>
+    <pattern id="ve-pip" width="13" height="9" patternUnits="userSpaceOnUse"><rect width="9" height="9" style="fill:var(--text-dim)"/></pattern>
+  </defs>
+</svg>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <nav aria-label="Breadcrumb">
+      <ol class="crumbs">
+        <li aria-current="page">Learn AI Fundamentals</li>
+      </ol>
+    </nav>
+    <nav class="pager" aria-label="Chapters">
+      <a href="01-architecture.html" rel="next">Start: Architecture →</a>
+    </nav>
+    <button type="button" class="icon-btn" id="theme-toggle" aria-label="Switch to light mode"><svg class="i-sun" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1"/></svg><svg class="i-moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 9.6A5.8 5.8 0 0 1 6.4 2.5a5.8 5.8 0 1 0 7.1 7.1z"/></svg></button>
+  </div>
+</header>
+
+<div class="page">
+  <nav class="toc" aria-label="Sections">
+    <div class="toc-head"><p class="ve-label caps">On this page</p><button type="button" class="toc-btn" id="toc-toggle" aria-controls="toc-list" aria-expanded="true" aria-label="Hide sidebar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg></button></div>
+    <ol id="toc-list">
+      <li><a href="#chapters">Chapters</a></li>
+      <li><a href="#pace">Pace</a></li>
+      <li><a href="#how">How to use</a></li>
+      <li><a href="#prereqs">Prerequisites</a></li>
+      <li><a href="#companions">Companions</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header class="ch-head">
+      <p class="eyebrow">Self-study · 2 courses · 9 chapters</p>
+      <h1>Learn AI Fundamentals: from a blank transformer to RLHF</h1>
+      <p class="meta">8–10 weeks · 6–8 h per week · needs Python, basic PyTorch, linear algebra</p>
+    </header>
+
+    <figure>
+      <div class="frame">
+        <svg class="ve-svg" style="min-width:860px" viewBox="0 0 1000 440" role="img" aria-label="Course 1 runs in order: Architecture (7 sections), then Pre-training (8 sections), then Post-training (5 sections). Course 2 chapters branch from the chapter they build on: Linear attention from Architecture; Optimizers and Mixture of Experts from Pre-training; LoRA, Distillation, and Reinforcement learning from Post-training.">
+          <g class="ve-zone"><rect x="10" y="10" width="980" height="170" rx="6"/><text x="26" y="34">COURSE 1 · FUNDAMENTALS · IN ORDER</text></g>
+          <g class="ve-zone"><rect x="10" y="240" width="980" height="190" rx="6"/><text x="26" y="418">COURSE 2 · ADVANCED · ANY ORDER</text></g>
+
+          <path class="ve-e is-hot" d="M200 100H280"/><text class="ve-el" x="240" y="91">train it</text>
+          <path class="ve-e is-hot" d="M500 100H580"/><text class="ve-el" x="540" y="91">tune it</text>
+          <path class="ve-e is-async" data-ref="ch5" d="M115 150V290"/><text class="ve-el r" data-ref="ch5" x="123" y="214">speeds up attention</text>
+          <path class="ve-e is-async" data-ref="ch8" d="M325 150V290"/><text class="ve-el r" data-ref="ch8" x="333" y="214">tunes updates</text>
+          <path class="ve-e is-async" data-ref="ch7" d="M475 150V290"/><text class="ve-el r" data-ref="ch7" x="483" y="214">splits the FFN</text>
+          <path class="ve-e is-async" data-ref="ch6" d="M628 150V290"/><text class="ve-el r" data-ref="ch6" x="636" y="214">adapts cheaply</text>
+          <path class="ve-e is-async" data-ref="ch4" d="M770 150V290"/><text class="ve-el r" data-ref="ch4" x="778" y="214">shrinks it</text>
+          <path class="ve-e is-async" data-ref="ch9" d="M912 150V290"/><text class="ve-el r" data-ref="ch9" x="920" y="214">rewards</text>
+
+          <g class="ve-n is-key" data-ref="ch1" transform="translate(30 50)"><rect class="sh" width="170" height="100" rx="6"/><text x="85" y="30">Architecture</text><g transform="translate(41.5 50)"><rect width="87" height="9" fill="url(#ve-pip)"/></g><text class="sub" x="85" y="80">weeks 1–3</text></g>
+          <g class="ve-n" data-ref="ch2" transform="translate(280 50)"><rect class="sh" width="220" height="100" rx="6"/><text x="110" y="30">Pre-training</text><g transform="translate(60 50)"><rect width="100" height="9" fill="url(#ve-pip)"/></g><text class="sub" x="110" y="80">weeks 4–5</text></g>
+          <g class="ve-n" data-ref="ch3" transform="translate(580 50)"><rect class="sh" width="390" height="100" rx="6"/><text x="195" y="30">Post-training</text><g transform="translate(164.5 50)"><rect width="61" height="9" fill="url(#ve-pip)"/></g><text class="sub" x="195" y="80">week 6</text></g>
+
+          <g class="ve-n" data-ref="ch5" transform="translate(53 290)"><rect class="sh" width="124" height="100" rx="6"/><text x="62" y="26">Linear</text><text x="62" y="45">attention</text><g transform="translate(57.5 70)"><rect width="9" height="9" fill="url(#ve-pip)"/></g></g>
+          <g class="ve-n" data-ref="ch8" transform="translate(263 290)"><rect class="sh" width="124" height="100" rx="6"/><text x="62" y="36">Optimizers</text><g transform="translate(57.5 70)"><rect width="9" height="9" fill="url(#ve-pip)"/></g></g>
+          <g class="ve-n" data-ref="ch7" transform="translate(413 290)"><rect class="sh" width="124" height="100" rx="6"/><text x="62" y="26">Mixture of</text><text x="62" y="45">Experts</text><g transform="translate(57.5 70)"><rect width="9" height="9" fill="url(#ve-pip)"/></g></g>
+          <g class="ve-n" data-ref="ch6" transform="translate(566 290)"><rect class="sh" width="124" height="100" rx="6"/><text x="62" y="36">LoRA</text><g transform="translate(57.5 70)"><rect width="9" height="9" fill="url(#ve-pip)"/></g></g>
+          <g class="ve-n" data-ref="ch4" transform="translate(708 290)"><rect class="sh" width="124" height="100" rx="6"/><text x="62" y="36">Distillation</text><g transform="translate(57.5 70)"><rect width="9" height="9" fill="url(#ve-pip)"/></g></g>
+          <g class="ve-n" data-ref="ch9" transform="translate(850 290)"><rect class="sh" width="124" height="100" rx="6"/><text x="62" y="26">Reinforcement</text><text x="62" y="45">learning</text><g transform="translate(51 70)"><rect width="22" height="9" fill="url(#ve-pip)"/></g></g>
+        </svg>
+      </div>
+    </figure>
+
+    <section class="sec" id="chapters" aria-label="Chapters">
+      <div class="sec-head"><p class="sec-num">Chapters</p></div>
+      <h3>Course 1 · LLM Fundamentals, in order</h3>
+      <div class="ch-cards">
+        <a class="ch-card" href="01-architecture.html" data-ref="ch1">
+          <span class="ve-label">Ch 01 · weeks 1–3</span><h3>Architecture</h3>
+          <span class="pips" role="img" aria-label="7 sections"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          <ol><li>Introduction</li><li>Tokenization</li><li>The Embedding Layer</li><li>Positional Encoding</li><li>Attention</li><li>Layers of Understanding</li><li>GPT-2 from Scratch</li></ol>
+          <span class="go">Open chapter →</span>
+        </a>
+        <a class="ch-card" href="02-pretraining.html" data-ref="ch2">
+          <span class="ve-label">Ch 02 · weeks 4–5</span><h3>Pre-training</h3>
+          <span class="pips" role="img" aria-label="8 sections"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          <ol><li>Overview</li><li>Training Objectives and Architectural Details</li><li>Scaling Laws and Optimization</li><li>Training Data Engineering</li><li>Training Infrastructure and Systems</li><li>Advanced Pretraining Objectives</li><li>Evaluation During Pretraining</li><li>Case Study: LLaMA 3</li></ol>
+          <span class="go">Open chapter →</span>
+        </a>
+        <a class="ch-card" href="03-post-training.html" data-ref="ch3">
+          <span class="ve-label">Ch 03 · week 6</span><h3>Post-training</h3>
+          <span class="pips" role="img" aria-label="5 sections"><i></i><i></i><i></i><i></i><i></i></span>
+          <ol><li>Overview</li><li>Supervised Fine-Tuning</li><li>Preference Optimization</li><li>Tools and Safety Tuning</li><li>Case Study on Tulu 3</li></ol>
+          <span class="go">Open chapter →</span>
+        </a>
+      </div>
+      <h3>Course 2 · LLM Advanced, easiest first</h3>
+      <div class="ch-cards">
+        <a class="ch-card" href="06-lora.html" data-ref="ch6">
+          <span class="ve-label">Ch 06 · builds on Post-training</span><h3>LoRA</h3>
+          <span class="pips" role="img" aria-label="1 section"><i></i></span>
+          <p>Fine-tune a large model by training small low-rank adapters beside frozen weights.</p>
+          <span class="go">Open chapter →</span>
+        </a>
+        <a class="ch-card" href="04-distillation.html" data-ref="ch4">
+          <span class="ve-label">Ch 04 · builds on Post-training</span><h3>Distillation</h3>
+          <span class="pips" role="img" aria-label="1 section"><i></i></span>
+          <p>Train a small student model to copy the outputs of a large teacher.</p>
+          <span class="go">Open chapter →</span>
+        </a>
+        <a class="ch-card" href="08-optimizers.html" data-ref="ch8">
+          <span class="ve-label">Ch 08 · builds on Pre-training</span><h3>Optimizers</h3>
+          <span class="pips" role="img" aria-label="1 section"><i></i></span>
+          <p>How SGD, Adam, and newer optimizers turn a gradient into a weight update.</p>
+          <span class="go">Open chapter →</span>
+        </a>
+        <a class="ch-card" href="07-mixture-of-experts.html" data-ref="ch7">
+          <span class="ve-label">Ch 07 · builds on Pre-training</span><h3>Mixture of Experts</h3>
+          <span class="pips" role="img" aria-label="1 section"><i></i></span>
+          <p>Send each token to a few expert feed-forward layers, so parameters grow faster than compute.</p>
+          <span class="go">Open chapter →</span>
+        </a>
+        <a class="ch-card" href="05-linear-attention.html" data-ref="ch5">
+          <span class="ve-label">Ch 05 · builds on Attention</span><h3>Linear Attention</h3>
+          <span class="pips" role="img" aria-label="1 section"><i></i></span>
+          <p>Replace softmax attention with a form whose cost grows linearly with sequence length.</p>
+          <span class="go">Open chapter →</span>
+        </a>
+        <a class="ch-card" href="09-reinforcement-learning.html" data-ref="ch9">
+          <span class="ve-label">Ch 09 · builds on Post-training</span><h3>Reinforcement Learning</h3>
+          <span class="pips" role="img" aria-label="2 sections"><i></i><i></i></span>
+          <ol><li>RL Fundamentals</li><li>RLHF</li></ol>
+          <span class="go">Open chapter →</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="sec" id="pace" aria-label="Pace">
+      <div class="sec-head"><p class="sec-num">Pace</p></div>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" style="min-width:860px" viewBox="0 0 1000 220" role="img" aria-label="Weeks 1 to 3: Architecture, with GPT-2 from scratch in week 3. Weeks 4 to 5: Pre-training. Week 6: Post-training. Weeks 7 to 8: Advanced chapters at one or two per week, with weeks 9 to 10 if you take one per week. 8 weeks at 6 to 8 hours each, plus 2 if needed.">
+            <text class="ve-tick l" x="10" y="24">week</text>
+            <text class="ve-tick" x="106" y="24">1</text><text class="ve-tick" x="198" y="24">2</text><text class="ve-tick" x="290" y="24">3</text><text class="ve-tick" x="382" y="24">4</text><text class="ve-tick" x="474" y="24">5</text>
+            <text class="ve-tick" x="566" y="24">6</text><text class="ve-tick" x="658" y="24">7</text><text class="ve-tick" x="750" y="24">8</text><text class="ve-tick" x="842" y="24">9</text><text class="ve-tick" x="934" y="24">10</text>
+            <path class="ve-grid" d="M60 34V108M152 34V108M244 34V108M336 34V108M428 34V108M520 34V108M612 34V108M704 34V108M796 34V108M888 34V108M980 34V108"/>
+            <g class="ve-n is-key" data-ref="ch1"><rect class="sh" x="63" y="44" width="270" height="56" rx="6"/><text x="198" y="72">Architecture</text></g>
+            <g class="ve-n" data-ref="ch2"><rect class="sh" x="339" y="44" width="178" height="56" rx="6"/><text x="428" y="72">Pre-training</text></g>
+            <g class="ve-n" data-ref="ch3"><rect class="sh" x="523" y="44" width="86" height="56" rx="6"/><text x="566" y="62">Post-</text><text x="566" y="82">training</text></g>
+            <g class="ve-n"><rect class="sh" x="615" y="44" width="178" height="56" rx="6"/><text x="704" y="62">Advanced</text><text class="sub" x="704" y="83">1–2 ch / wk</text></g>
+            <g class="ve-n"><rect class="sh is-off" x="799" y="44" width="178" height="56" rx="6"/><text class="sub" x="888" y="72">if 1 ch / wk</text></g>
+            <path class="ann" d="M290 100V117"/><g class="ve-co" transform="translate(290 128)"><circle r="11"/><text>1</text></g>
+            <text class="ve-el r" x="308" y="133">GPT-2 from scratch</text>
+            <g class="ve-dim"><path class="ext" d="M60 150V171M336 150V171M520 150V171M612 150V171M796 150V171"/>
+              <path class="ln ticks" d="M60 165H796M56 169l8-8M332 169l8-8M516 169l8-8M608 169l8-8M792 169l8-8"/>
+              <text x="198" y="159">3 wk</text><text x="428" y="159">2 wk</text><text x="566" y="159">1 wk</text><text x="704" y="159">2 wk</text></g>
+            <g class="ve-dim is-key"><path class="ext" d="M60 171V211M796 171V211"/><path class="ln" d="M60 205H796"/><text x="428" y="199">8 weeks · 6–8 h each</text></g>
+            <g class="ve-dim"><path class="ext" d="M980 150V211"/><path class="ln ticks" d="M796 205H980M976 209l8-8"/><text x="888" y="199">+2 if needed</text></g>
+          </svg>
+        </div>
+        <ol class="callouts"><li><span class="co-n">1</span>Spend most of week 3 on GPT-2 from Scratch.</li></ol>
+      </figure>
+    </section>
+
+    <section class="sec" id="how" aria-label="How to use">
+      <div class="sec-head"><p class="sec-num">How to use</p></div>
+      <ol class="howto">
+        <li>Read the section notes first. They stand alone.</li>
+        <li>Run the code yourself. Change a number, predict the result, then check.</li>
+        <li>Answer "Check yourself" before you open the answers.</li>
+        <li>Use the <span class="start-here">Start here</span> resource, then go deeper only where you feel shaky.</li>
+        <li>Do the chapter project before the next chapter.</li>
+      </ol>
+    </section>
+
+    <section class="sec" id="prereqs" aria-label="Prerequisites">
+      <div class="sec-head"><p class="sec-num">Prerequisites</p></div>
+      <div class="pre-grid">
+        <article class="pre-card">
+          <h3>PyTorch</h3>
+          <p>Tensors and shapes, <code>nn.Module</code>, autograd, a training loop. Skip CNNs and deployment.</p>
+          <ul>
+            <li><a href="https://pytorch.org/tutorials/beginner/basics/intro.html">Learn the Basics</a><span class="start-here">Start here</span><span class="pre-meta">PyTorch docs · tutorial · 2 to 3 hours</span></li>
+            <li><a href="https://karpathy.ai/zero-to-hero.html">Neural Networks: Zero to Hero</a><span class="pre-meta">Andrej Karpathy · videos 1 to 4</span></li>
+            <li><a href="https://www.learnpytorch.io/">Learn PyTorch for Deep Learning</a><span class="pre-meta">Daniel Bourke · online book</span></li>
+            <li><a href="https://github.com/rasbt/LLMs-from-scratch">LLMs-from-scratch, Appendix A</a><span class="pre-meta">Sebastian Raschka · code + notes</span></li>
+          </ul>
+        </article>
+        <article class="pre-card">
+          <h3>Python</h3>
+          <p>Functions, classes, lists and dicts, NumPy-style arrays.</p>
+          <ul>
+            <li><a href="https://docs.python.org/3/tutorial/">The Python Tutorial</a><span class="start-here">Start here</span><span class="pre-meta">Python docs · tutorial</span></li>
+            <li><a href="https://numpy.org/doc/stable/user/absolute_beginners.html">NumPy: absolute beginners</a><span class="pre-meta">NumPy docs · tutorial</span></li>
+          </ul>
+        </article>
+        <article class="pre-card">
+          <h3>Linear algebra</h3>
+          <p>Matrix multiply, dot product, shapes.</p>
+          <ul>
+            <li><a href="https://www.youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab">Essence of Linear Algebra</a><span class="start-here">Start here</span><span class="pre-meta">3Blue1Brown · video series</span></li>
+            <li><a href="https://mml-book.github.io/">Mathematics for Machine Learning</a><span class="pre-meta">Deisenroth, Faisal, Ong · chapters 2 and 3</span></li>
+          </ul>
+        </article>
+        <article class="pre-card">
+          <h3>Calculus and probability</h3>
+          <p>Gradients, chain rule, softmax, log-likelihood.</p>
+          <ul>
+            <li><a href="https://karpathy.ai/zero-to-hero.html">Neural Networks: Zero to Hero, video 1</a><span class="start-here">Start here</span><span class="pre-meta">Andrej Karpathy · video</span></li>
+            <li><a href="https://statquest.org/">StatQuest</a><span class="pre-meta">Josh Starmer · video library</span></li>
+            <li><a href="https://mml-book.github.io/">Mathematics for Machine Learning</a><span class="pre-meta">Deisenroth, Faisal, Ong · chapters 5 and 6</span></li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="sec" id="companions" aria-label="Companions">
+      <div class="sec-head"><p class="sec-num">Companions</p></div>
+      <div class="resources">
+        <div class="res-col">
+          <h3>Watch</h3>
+          <ul class="res-list">
+            <li class="res-item is-start">
+              <div class="res-top"><a href="https://karpathy.ai/zero-to-hero.html">Neural Networks: Zero to Hero</a><span class="start-here">Start here</span></div>
+              <div class="res-meta">Andrej Karpathy <span class="chip plain">video series</span></div>
+              <p>Ends with building GPT and the tokenizer from scratch.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://stanford-cs336.github.io/">CS336: Language Modeling from Scratch</a></div>
+              <div class="res-meta">Stanford <span class="chip plain">lectures + assignments</span></div>
+              <p>Covers nearly this whole curriculum.</p>
+            </li>
+          </ul>
+        </div>
+        <div class="res-col">
+          <h3>Read</h3>
+          <ul class="res-list">
+            <li class="res-item">
+              <div class="res-top"><a href="https://github.com/rasbt/LLMs-from-scratch">Build a Large Language Model (From Scratch)</a></div>
+              <div class="res-meta">Sebastian Raschka <span class="chip plain">book + code</span></div>
+              <p>Architecture through fine-tuning, with a code repo.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://huggingface.co/spaces/nanotron/ultrascale-playbook">The Ultra-Scale Playbook</a></div>
+              <div class="res-meta">Hugging Face <span class="chip plain">online book</span></div>
+              <p>Distributed training; pairs with Pre-training section 05.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://rlhfbook.com/">RLHF Book</a></div>
+              <div class="res-meta">Nathan Lambert <span class="chip plain">online book</span></div>
+              <p>Post-training and RLHF; pairs with Post-training and RL.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://lilianweng.github.io/">Lil'Log</a></div>
+              <div class="res-meta">Lilian Weng <span class="chip plain">blog</span></div>
+              <p>Deep surveys on attention, RL, alignment, and more.</p>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Linked highlighting: hovering any [data-ref], or focusing a prose term, lights every element that shares a ref.
+  const linked = [...document.querySelectorAll('[data-ref]')], refs = (el) => el.dataset.ref.split(' ');
+  let hovered = null, focused = null;
+  const paint = () => {
+    const keys = (hovered || focused)?.dataset.ref.split(' ') ?? [];
+    for (const t of linked) t.classList.toggle('is-lit', refs(t).some((k) => keys.includes(k)));
+    for (const svg of document.querySelectorAll('svg')) svg.classList.toggle('has-lit', !!svg.querySelector('.is-lit'));
+  };
+  for (const el of linked) {
+    el.addEventListener('pointerenter', () => { hovered = el; paint(); });
+    el.addEventListener('pointerleave', () => { hovered = null; paint(); });
+    el.addEventListener('focus', () => { focused = el; paint(); });
+    el.addEventListener('blur', () => { focused = null; paint(); });
+  }
+
+  // Stepper / scene player. Opens on the full picture, because the first view must show the answer.
+  for (const root of document.querySelectorAll('.ve-steps')) {
+    const parts = [...root.querySelectorAll('[data-s]')], caps = [...root.querySelectorAll('.ve-cap li')];
+    const range = root.querySelector('input[type=range]'), play = root.querySelector('[data-play]');
+    const n = caps.length; let i = 0, timer = null;
+    if (range) range.max = n - 1;
+    const show = (k) => {
+      i = Math.max(0, Math.min(n - 1, k));
+      for (const el of parts) { const s = el.dataset.s.trim().split(' ').map(Number); el.classList.toggle('on', s[0] <= i + 1); el.classList.toggle('now', s.includes(i + 1)); }
+      caps.forEach((c, j) => c.hidden = j !== i);
+      root.classList.toggle('is-full', i === n - 1);
+      if (range) range.value = i;
+    };
+    const stop = () => { clearInterval(timer); timer = null; if (play) play.textContent = 'Play'; };
+    root.addEventListener('click', (e) => { const b = e.target.closest('[data-go]'); if (b) { stop(); show(i + +b.dataset.go); } });
+    range?.addEventListener('input', () => { stop(); show(+range.value); });
+    play?.addEventListener('click', () => {
+      if (timer) return stop();
+      if (i === n - 1) show(0);
+      play.textContent = 'Pause';
+      timer = setInterval(() => (i < n - 1 ? show(i + 1) : stop()), 3500);
+    });
+    show(n - 1);
+    addEventListener('beforeprint', () => show(n - 1));
+  }
+
+  // Copy buttons: clipboard API, with a selection fallback for browsers that block it on file:// pages.
+  for (const btn of document.querySelectorAll('.code .copy')) {
+    btn.addEventListener('click', async () => {
+      const code = btn.closest('.code').querySelector('pre code');
+      try { await navigator.clipboard.writeText(code.innerText); }
+      catch { const r = document.createRange(); r.selectNodeContents(code); const s = getSelection(); s.removeAllRanges(); s.addRange(r); document.execCommand('copy'); s.removeAllRanges(); }
+      btn.textContent = 'Copied'; setTimeout(() => (btn.textContent = 'Copy'), 1500);
+    });
+  }
+
+  // TOC scroll-spy: the section crossing the top tenth of the viewport is the current one.
+  const tocLinks = new Map([...document.querySelectorAll('.toc a[href^="#"]')].map((a) => [a.getAttribute('href').slice(1), a]));
+  const spy = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      for (const a of tocLinks.values()) a.removeAttribute('aria-current');
+      tocLinks.get(e.target.id)?.setAttribute('aria-current', 'true');
+    }
+  }, { rootMargin: '-10% 0px -80% 0px' });
+  for (const id of tocLinks.keys()) { const s = document.getElementById(id); if (s) spy.observe(s); }
+
+  // Entrance: each block rises in once. Without JS, in print, or under reduced motion, everything shows its final state.
+  if (!still) {
+    document.documentElement.classList.add('js-motion');
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) if (e.isIntersecting) { io.unobserve(e.target); e.target.classList.add('in'); }
+    }, { rootMargin: '0px 0px -10% 0px' });
+    for (const el of document.querySelectorAll('.ch-head, .sec > *')) io.observe(el);
+  }
+
+  // Sidebar visibility is a per-reader preference; storage can be blocked, so it only seeds the initial state.
+  (() => {
+    const root = document.documentElement, b = document.getElementById('toc-toggle');
+    const apply = (hidden) => { root.classList.toggle('toc-hidden', hidden); b.setAttribute('aria-expanded', !hidden); b.setAttribute('aria-label', hidden ? 'Show sidebar' : 'Hide sidebar'); };
+    let hidden = false; try { hidden = localStorage.getItem('toc-hidden') === '1'; } catch (e) {}
+    apply(hidden);
+    b.addEventListener('click', () => { hidden = !hidden; apply(hidden); try { localStorage.setItem('toc-hidden', hidden ? '1' : '0'); } catch (e) {} });
+  })();
+  // Theme: explicit choice wins; with none saved the page follows the OS scheme.
+  (() => {
+    const root = document.documentElement, b = document.getElementById('theme-toggle'), mq = matchMedia('(prefers-color-scheme: light)');
+    const mode = () => root.dataset.theme || (mq.matches ? 'light' : 'dark');
+    const sync = () => { const m = mode(); b.dataset.mode = m; b.setAttribute('aria-label', m === 'light' ? 'Switch to dark mode' : 'Switch to light mode'); };
+    sync(); mq.addEventListener('change', sync);
+    b.addEventListener('click', () => { const next = mode() === 'light' ? 'dark' : 'light'; root.dataset.theme = next; try { localStorage.setItem('theme', next); } catch (e) {} sync(); });
+  })();
+</script>
+</body>
+</html>

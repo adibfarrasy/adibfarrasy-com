@@ -1,0 +1,15 @@
+<figure>
+<div class="frame">
+<svg class="ve-svg" viewBox="0 0 800 250" role="img" aria-label="Minitron estimates importance on about 1k calibration samples, prunes width or depth, then retrains with logit KL from the unpruned teacher. This uses up to 40 times fewer tokens than training from scratch.">
+<path class="ve-e" d="M210 55H305"/><text class="ve-el" x="257" y="45">ranks</text>
+<path class="ve-e is-hot" d="M495 55H590"/><text class="ve-el" x="542" y="45">retrains</text>
+<g class="ve-n" transform="translate(20 20)"><rect class="sh" width="190" height="70" rx="6"/><text x="95" y="26">Estimate</text><text class="sub" x="95" y="48">~1k samples</text></g>
+<g class="ve-n" transform="translate(305 20)"><rect class="sh" width="190" height="70" rx="6"/><text x="95" y="26">Prune</text><text class="sub" x="95" y="48">width beats depth</text></g>
+<g class="ve-n is-key" transform="translate(590 20)"><rect class="sh" width="190" height="70" rx="6"/><text x="95" y="26">Distill</text><text class="sub" x="95" y="48">logit KL</text></g>
+<text class="ve-tick l" x="20" y="135">Training tokens for the 8B and 4B models</text>
+<text class="ve-tick l" x="20" y="177">From scratch</text><rect class="ve-bar" x="190" y="163" width="400" height="18" rx="2"/><text class="ve-bar-v" x="598" y="172">40×</text>
+<text class="ve-tick l" x="20" y="222">Prune + distill</text><rect class="ve-bar hot" x="190" y="208" width="10" height="18" rx="2"/><text class="ve-bar-v" x="208" y="217">1×, up to 40× fewer</text>
+</svg>
+</div>
+<figcaption><span class="fig-n">Fig. 13</span>Train the largest model once, then cut smaller siblings. From Nemotron-4 15B, NVIDIA derived 8B and 4B models with quality comparable to or better than similar-size open models.</figcaption>
+</figure>

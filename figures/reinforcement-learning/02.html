@@ -1,0 +1,28 @@
+<figure>
+<div class="cases">
+<div class="case" data-st="warn"><span class="chip warn">Data moves</span><h3>Data depends on the policy</h3>
+<svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="Policy version 1 samples data A. After an update, policy version 2 samples data B, so the training data changes with the model.">
+<path class="ve-e" d="M60 36V72"/><text class="ve-el" x="60" y="54">samples</text>
+<path class="ve-e is-st" d="M180 36V72"/><text class="ve-el" x="180" y="54">samples</text>
+<g class="ve-n"><rect class="sh" x="10" y="4" width="100" height="32" rx="5"/><text x="60" y="20">π v1</text></g>
+<g class="ve-n"><rect class="sh" x="130" y="4" width="100" height="32" rx="5"/><text x="180" y="20">π v2</text></g>
+<g class="ve-n"><rect class="sh" x="10" y="72" width="100" height="32" rx="5"/><text x="60" y="88">data A</text></g>
+<g class="ve-n is-st"><rect class="sh" x="130" y="72" width="100" height="32" rx="5"/><text x="180" y="88">data B</text></g>
+</svg></div>
+<div class="case" data-st="risk"><span class="chip risk">Late reward</span><h3>Delayed credit</h3>
+<svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="Five tokens are generated, but the reward arrives only after the last one, so it is unclear which tokens deserve it.">
+<path class="ve-e is-st" d="M209 38V72"/><text class="ve-el l" x="201" y="56">at end</text>
+<g class="ve-n"><rect class="sh" x="6" y="8" width="38" height="30" rx="4"/><text x="25" y="23">t1</text><rect class="sh" x="52" y="8" width="38" height="30" rx="4"/><text x="71" y="23">t2</text><rect class="sh" x="98" y="8" width="38" height="30" rx="4"/><text x="117" y="23">t3</text><rect class="sh" x="144" y="8" width="38" height="30" rx="4"/><text x="163" y="23">t4</text></g>
+<g class="ve-n is-st"><rect class="sh" x="190" y="8" width="38" height="30" rx="4"/><text x="209" y="23">t5</text><rect class="sh" x="150" y="72" width="80" height="32" rx="5"/><text x="190" y="88">reward</text></g>
+<text class="ve-tick l" x="6" y="88">who gets credit?</text>
+</svg></div>
+<div class="case" data-st="warn"><span class="chip warn">Only what it samples</span><h3>Exploration</h3>
+<svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="From one prompt the model sampled one path and never tried the other, which has probability near zero, so it can never be rewarded.">
+<path class="ve-e" d="M120 34V50H55V68"/>
+<path class="ve-e is-async is-st" d="M120 34V50H185V68"/>
+<g class="ve-n"><rect class="sh" x="80" y="4" width="80" height="30" rx="5"/><text x="120" y="19">prompt</text><rect class="sh" x="10" y="68" width="90" height="36" rx="5"/><text x="55" y="86">sampled</text></g>
+<g class="ve-n is-st"><rect class="sh is-off" x="140" y="68" width="90" height="36" rx="5"/><text x="185" y="86">p ≈ 0</text></g>
+</svg></div>
+</div>
+<figcaption><span class="fig-n">Fig. 2</span>Three properties that set RL apart from supervised learning, and all three show up in LLM training.</figcaption>
+</figure>

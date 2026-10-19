@@ -1,0 +1,28 @@
+<figure>
+<div class="frame">
+<svg class="ve-svg" style="min-width:602px" viewBox="0 0 700 250" role="img" aria-label="The 4 by 4 decay mask L. The diagonal is 1. Below it, entry i, j is the product of the gates a from j plus 1 to i, so the farther apart two tokens are, the more factors. Above the diagonal every entry is 0.">
+<text class="ve-tick" x="175" y="50">j = 1</text><text class="ve-tick" x="285" y="50">j = 2</text><text class="ve-tick" x="395" y="50">j = 3</text><text class="ve-tick" x="505" y="50">j = 4</text>
+<text class="ve-tick" x="75" y="84">i = 1</text><text class="ve-tick" x="75" y="124">i = 2</text><text class="ve-tick" x="75" y="164">i = 3</text><text class="ve-tick" x="75" y="204">i = 4</text>
+<g class="ve-n is-key" transform="translate(122 62)"><rect class="sh" width="106" height="36" rx="5"/><text x="53" y="18">1</text></g>
+<text class="ve-tick" x="285" y="84">0</text><text class="ve-tick" x="395" y="84">0</text><text class="ve-tick" x="505" y="84">0</text>
+<g class="ve-n" transform="translate(122 102)"><rect class="sh" width="106" height="36" rx="5"/><text x="53" y="18">a₂</text></g>
+<g class="ve-n is-key" transform="translate(232 102)"><rect class="sh" width="106" height="36" rx="5"/><text x="53" y="18">1</text></g>
+<text class="ve-tick" x="395" y="124">0</text><text class="ve-tick" x="505" y="124">0</text>
+<g class="ve-n" transform="translate(122 142)"><rect class="sh" width="106" height="36" rx="5"/><text x="53" y="18">a₂a₃</text></g>
+<g class="ve-n" transform="translate(232 142)"><rect class="sh" width="106" height="36" rx="5"/><text x="53" y="18">a₃</text></g>
+<g class="ve-n is-key" transform="translate(342 142)"><rect class="sh" width="106" height="36" rx="5"/><text x="53" y="18">1</text></g>
+<text class="ve-tick" x="505" y="164">0</text>
+<g class="ve-n" transform="translate(122 182)"><rect class="sh" width="106" height="36" rx="5"/><text x="53" y="18">a₂a₃a₄</text></g>
+<g class="ve-n" transform="translate(232 182)"><rect class="sh" width="106" height="36" rx="5"/><text x="53" y="18">a₃a₄</text></g>
+<g class="ve-n" transform="translate(342 182)"><rect class="sh" width="106" height="36" rx="5"/><text x="53" y="18">a₄</text></g>
+<g class="ve-n is-key" transform="translate(452 182)"><rect class="sh" width="106" height="36" rx="5"/><text x="53" y="18">1</text></g>
+<path class="ann" d="M562 200H584"/><g class="ve-co" transform="translate(598 200)"><circle r="11"/><text>1</text></g>
+<path class="ann" d="M562 80H584"/><g class="ve-co" transform="translate(598 80)"><circle r="11"/><text>2</text></g>
+</svg>
+</div>
+<figcaption><span class="fig-n">Fig. 7</span>The decay mask L: each entry multiplies the gates between token j and token i.</figcaption>
+<ol class="callouts">
+<li><span class="co-n">1</span>The farthest pair multiplies every gate between them, so old tokens fade.</li>
+<li><span class="co-n">2</span>The diagonal is 1: a token is never decayed against itself.</li>
+</ol>
+</figure>

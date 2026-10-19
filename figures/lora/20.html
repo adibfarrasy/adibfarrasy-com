@@ -1,0 +1,12 @@
+<figure>
+<div class="frame">
+<svg class="ve-svg" viewBox="0 0 800 180" role="img" aria-label="Memory for 500 customer fine-tunes of an 8B model. 500 merged bf16 copies take 8 terabytes. One shared 16 gigabyte base plus 500 rank-16 adapters of about 85 megabytes takes about 58 gigabytes.">
+<text class="ve-tick l" x="20" y="28">500 merged copies of an 8B model, 16 GB each</text>
+<rect class="ve-bar" x="20" y="38" width="720" height="22" rx="2"/><text class="ve-bar-v" x="748" y="49">8 TB</text>
+<text class="ve-tick l" x="20" y="100">one shared base + 500 unmerged rank-16 adapters</text>
+<rect class="ve-bar hot" x="20" y="110" width="5.2" height="22" rx="1"/><text class="ve-bar-v" x="36" y="121">~58 GB: 16 GB base + ~42 GB of adapters (~85 MB each)</text>
+<text class="ve-tick l" x="20" y="164">with S-LoRA-style paging, only the active adapters need to sit on the GPU</text>
+</svg>
+</div>
+<figcaption><span class="fig-n">Fig. 20</span>Why "one fine-tuned model per customer" is affordable. Rough numbers for a Llama-3-8B-style model: 32 layers, seven linear projections each.</figcaption>
+</figure>

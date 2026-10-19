@@ -1,0 +1,28 @@
+<figure>
+<div class="cases">
+<div class="case" data-st="ok"><span class="chip ok">Keeps entropy</span><h3>1 Clip-Higher</h3>
+<svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="The lower clip range is 0.2 and the upper clip range is raised to 0.28.">
+<text class="ve-tick l" x="8" y="26">low</text><rect class="ve-bar" x="60" y="18" width="80" height="16"/><text class="ve-bar-v" x="148" y="26">0.20</text>
+<text class="ve-tick l" x="8" y="70">high</text><rect class="ve-bar hot" x="60" y="62" width="112" height="16"/><text class="ve-bar-v" x="180" y="70">0.28</text>
+</svg></div>
+<div class="case" data-st="ok"><span class="chip ok">No wasted rows</span><h3>2 Dynamic sampling</h3>
+<svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="Five prompts with group accuracies 0, 0.5, 1, 0.25 and 1. Those with accuracy 0 or 1 are dashed and dropped; the batch is refilled.">
+<g class="ve-n"><rect class="sh is-off" x="6" y="8" width="38" height="30" rx="4"/><text x="25" y="23">0</text><rect class="sh" x="52" y="8" width="38" height="30" rx="4"/><text x="71" y="23">0.5</text><rect class="sh is-off" x="98" y="8" width="38" height="30" rx="4"/><text x="117" y="23">1</text><rect class="sh" x="144" y="8" width="38" height="30" rx="4"/><text x="163" y="23">.25</text><rect class="sh is-off" x="190" y="8" width="38" height="30" rx="4"/><text x="209" y="23">1</text></g>
+<text class="ve-tick l" x="6" y="64">drop accuracy 0 or 1</text><text class="ve-tick l" x="6" y="88">refill the batch</text>
+</svg></div>
+<div class="case" data-st="ok"><span class="chip ok">Long answers count</span><h3>3 Token-level loss</h3>
+<svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="A short and a long response; every token has the same weight.">
+<text class="ve-tick l" x="6" y="30">short</text><rect class="ve-bar" x="60" y="19" width="22" height="22"/><rect class="ve-bar" x="88" y="19" width="22" height="22"/>
+<text class="ve-tick l" x="6" y="66">long</text><rect class="ve-bar" x="60" y="55" width="22" height="22"/><rect class="ve-bar" x="88" y="55" width="22" height="22"/><rect class="ve-bar" x="116" y="55" width="22" height="22"/><rect class="ve-bar" x="144" y="55" width="22" height="22"/><rect class="ve-bar" x="172" y="55" width="22" height="22"/>
+<text class="ve-tick l" x="6" y="102">every token, same weight</text>
+</svg></div>
+<div class="case" data-st="ok"><span class="chip ok">Less noise</span><h3>4 Overlong shaping</h3>
+<svg class="ve-mini" viewBox="0 0 240 120" role="img" aria-label="Reward is flat until the maximum length, then falls gently instead of dropping to wrong.">
+<path class="ve-grid" d="M10 90H230"/>
+<path class="ve-e is-hot no-ah" d="M20 30H150L210 80"/>
+<path class="ve-grid" d="M150 20V90"/>
+<text class="ve-tick" x="150" y="110">max length</text><text class="ve-tick l" x="20" y="62">soft penalty</text>
+</svg></div>
+</div>
+<figcaption><span class="fig-n">Fig. 21</span>DAPO's four changes: asymmetric clip range, filter zero-advantage prompts, average the loss over all tokens in the batch, and soften the penalty for truncated responses (which can also be masked).</figcaption>
+</figure>

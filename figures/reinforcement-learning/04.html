@@ -1,0 +1,29 @@
+<figure class="ve-steps">
+<div class="frame">
+<svg class="ve-svg" viewBox="0 0 800 372" role="img" aria-label="Four stacked expressions. The objective J of theta becomes an expectation of grad log p times R by the log-derivative trick. The dynamics then drop out because only the policy terms depend on theta. Finally only rewards from step t onward are kept, giving the REINFORCE gradient.">
+<path class="ve-e" data-s="2" pathLength="1" d="M290 56V100"/><text class="ve-el r" data-s="2" x="302" y="82">log-derivative trick: ∇p = p ∇log p</text>
+<path class="ve-e" data-s="3" pathLength="1" d="M290 156V200"/><text class="ve-el r" data-s="3" x="302" y="182">only the policy terms carry θ</text>
+<path class="ve-e is-hot" data-s="4" pathLength="1" d="M290 256V300"/><text class="ve-el r" data-s="4" x="302" y="282">earlier rewards drop out: reward-to-go</text>
+<g class="ve-n" data-s="1" transform="translate(20 0)"><rect class="sh" width="540" height="56" rx="6"/><text x="270" y="28">J(θ) = E[ R(τ) ]</text></g>
+<g class="ve-n" data-s="2" transform="translate(20 100)"><rect class="sh" width="540" height="56" rx="6"/><text x="270" y="28">∇J = E[ ∇ log p(τ) · R(τ) ]</text></g>
+<g class="ve-n" data-s="3" transform="translate(20 200)"><rect class="sh" width="540" height="56" rx="6"/><text x="270" y="28">∇J = E[ Σt ∇ log π(at|st) · R(τ) ]</text></g>
+<g class="ve-n is-key" data-s="4" transform="translate(20 300)"><rect class="sh" width="540" height="56" rx="6"/><text x="270" y="28">∇J = E[ Σt ∇ log π(at|st) · Gt ]</text></g>
+<text class="ve-tick l" data-s="2" x="580" y="128">reward = black box</text>
+<text class="ve-tick l" data-s="3" x="580" y="228">no model of P needed</text>
+<text class="ve-tick l" data-s="4" x="580" y="328">= REINFORCE</text>
+</svg>
+</div>
+<div class="ve-player">
+<ol class="ve-cap">
+<li data-n="1/4">Start from the expected return over trajectories sampled from the policy.</li>
+<li data-n="2/4">The log-derivative trick turns the gradient of an expectation into an expectation we can sample. The reward is never differentiated, so it can be a unit test, a click or a regex.</li>
+<li data-n="3/4">The log of the trajectory probability splits into initial state, policy and dynamics terms. Only the policy terms depend on θ, so we need no model of the environment.</li>
+<li data-n="4/4">An action cannot change rewards before it, so replace R(τ) by the return from t onward. This is REINFORCE.</li>
+</ol>
+<button data-go="-1" aria-label="Previous step">←</button>
+<button data-play>Play</button>
+<input type="range" min="0" value="0" aria-label="Step">
+<button data-go="1" aria-label="Next step">→</button>
+</div>
+<figcaption><span class="fig-n">Fig. 4</span>The derivation of the policy gradient, one move per step.</figcaption>
+</figure>

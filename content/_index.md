@@ -1,5 +1,5 @@
 ---
-title: "adibfarrasy"
+title: "Adib Farrasy"
 ---
 
-software engineer. world leader in the making.
+Software engineer. World leader in the making.

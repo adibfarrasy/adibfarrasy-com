@@ -1,0 +1,26 @@
+<figure>
+<div class="frame">
+<svg class="ve-svg" style="min-width:740px" viewBox="0 0 860 280" role="img" aria-label="A sequence of 50 tokens is cut into chunks of 16, 16, 16 and 2 tokens, with the state passed from chunk to chunk. The parallel, recurrent and chunked outputs equal each other and differ by about 1e-7.">
+<text class="ve-tick l" x="40" y="20">Chunk size C = 16 over N = 50 tokens</text>
+<path class="ve-e" d="M232 68H256"/><path class="ve-e" d="M448 68H472"/><path class="ve-e" d="M664 68H688"/>
+<text class="ve-el" x="244" y="56">S</text><text class="ve-el" x="460" y="56">S</text><text class="ve-el" x="676" y="56">S</text>
+<g class="ve-n" transform="translate(40 40)"><rect class="sh" width="192" height="56" rx="6"/><text x="96" y="20">chunk 1</text><text class="sub" x="96" y="40">16 tokens</text></g>
+<g class="ve-n" transform="translate(256 40)"><rect class="sh" width="192" height="56" rx="6"/><text x="96" y="20">chunk 2</text><text class="sub" x="96" y="40">16 tokens</text></g>
+<g class="ve-n" transform="translate(472 40)"><rect class="sh" width="192" height="56" rx="6"/><text x="96" y="20">chunk 3</text><text class="sub" x="96" y="40">16 tokens</text></g>
+<g class="ve-n is-key" transform="translate(688 40)"><rect class="sh" width="24" height="56" rx="6"/><text x="12" y="28">2</text></g>
+<path class="ann" d="M700 40V30"/><g class="ve-co" transform="translate(700 18)"><circle r="11"/><text>1</text></g>
+<g class="ve-dim"><path class="ext" d="M40 102V132M712 102V132"/><path class="ln" d="M40 126H712"/><text x="376" y="120">N = 50 tokens</text></g>
+<path class="ve-e" d="M190 218H260"/><text class="ve-el" x="225" y="209">equals</text>
+<path class="ve-e" d="M410 218H480"/><text class="ve-el" x="445" y="209">equals</text>
+<path class="ve-e" d="M630 218H700"/><text class="ve-el" x="665" y="209">differs</text>
+<g class="ve-n" transform="translate(40 190)"><rect class="sh" width="150" height="56" rx="6"/><text x="75" y="20">parallel</text><text class="sub" x="75" y="40">n × n masked</text></g>
+<g class="ve-n" transform="translate(260 190)"><rect class="sh" width="150" height="56" rx="6"/><text x="75" y="20">recurrent</text><text class="sub" x="75" y="40">loop over t</text></g>
+<g class="ve-n" transform="translate(480 190)"><rect class="sh" width="150" height="56" rx="6"/><text x="75" y="20">chunked</text><text class="sub" x="75" y="40">C = 16</text></g>
+<g class="ve-n is-key" transform="translate(700 190)"><rect class="sh" width="130" height="56" rx="6"/><text x="65" y="20">~1e-7</text><text class="sub" x="65" y="40">max diff</text></g>
+</svg>
+</div>
+<figcaption><span class="fig-n">Fig. 6</span>The script checks all three forms against each other. The differences come from summing in a different order.</figcaption>
+<ol class="callouts">
+<li><span class="co-n">1</span>N = 50 is not a multiple of 16 on purpose: the partial last chunk exercises the slicing logic.</li>
+</ol>
+</figure>

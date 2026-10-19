@@ -1,0 +1,20 @@
+<figure>
+<div class="frame">
+<svg class="ve-svg" viewBox="0 0 800 250" role="img" aria-label="Bytes per parameter. Full fine-tuning: weight 2, gradient 2, fp32 master weight 4, Adam moments 8, total 16. LoRA: frozen weight 2 plus a sliver of adapter state, because only 0.1 to 1 percent of parameters are trained. For an 8B model that is about 128 gigabytes against about 16 gigabytes plus under 1 gigabyte.">
+<text class="ve-tick l" x="20" y="22">Full fine-tuning</text>
+<rect class="ve-bar" x="20" y="34" width="80" height="36" rx="2"/>
+<rect class="ve-bar hot" x="104" y="34" width="80" height="36" rx="2"/>
+<rect class="ve-bar hot" x="188" y="34" width="160" height="36" rx="2"/>
+<rect class="ve-bar hot" x="352" y="34" width="320" height="36" rx="2"/>
+<text class="ve-tick" x="60" y="92">weight 2</text><text class="ve-tick" x="144" y="92">grad 2</text><text class="ve-tick" x="268" y="92">master 4</text><text class="ve-tick" x="512" y="92">Adam moments 8</text>
+<text class="ve-bar-v" x="684" y="52">16 B/param</text>
+<text class="ve-tick l" x="20" y="132">LoRA</text>
+<rect class="ve-bar" x="20" y="144" width="80" height="36" rx="2"/>
+<rect class="ve-bar hot" x="104" y="144" width="6" height="36" rx="2"/>
+<text class="ve-tick" x="60" y="202">weight 2</text>
+<text class="ve-bar-v" x="122" y="162">+ adapter state on 0.1% to 1% of params</text>
+<text class="ve-tick l" x="20" y="236">8B model: ~128 GB of state, versus ~16 GB frozen + under 1 GB adapter</text>
+</svg>
+</div>
+<figcaption><span class="fig-n">Fig. 2</span>Gradients, master weights and Adam moments (orange) exist only for trained parameters. Freeze the base and they shrink to the adapter.</figcaption>
+</figure>

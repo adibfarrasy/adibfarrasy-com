@@ -1,0 +1,19 @@
+<figure>
+<div class="frame">
+<svg class="ve-svg" viewBox="0 0 800 270" role="img" aria-label="Four samples with rewards 1, 0, 0, 1. The group-mean advantage is plus or minus 0.50. The leave-one-out advantage is plus or minus 0.67, which is the group-mean advantage times k over k minus 1, so they differ only by a constant factor.">
+<rect class="ve-bar" x="40" y="12" width="16" height="12"/><text class="ve-bar-v" x="62" y="18">group mean</text>
+<rect class="ve-bar hot" x="260" y="12" width="16" height="12"/><text class="ve-bar-v" x="282" y="18">leave-one-out (RLOO)</text>
+<path class="ve-grid" d="M40 140H780"/>
+<rect class="ve-bar" x="74" y="90" width="40" height="50"/><text class="ve-bar-v" text-anchor="middle" x="94" y="76">+0.50</text>
+<rect class="ve-bar hot" x="126" y="73" width="40" height="67"/><text class="ve-bar-v" text-anchor="middle" x="146" y="59">+0.67</text>
+<rect class="ve-bar" x="264" y="140" width="40" height="50"/><text class="ve-bar-v" text-anchor="middle" x="284" y="204">−0.50</text>
+<rect class="ve-bar hot" x="316" y="140" width="40" height="67"/><text class="ve-bar-v" text-anchor="middle" x="336" y="221">−0.67</text>
+<rect class="ve-bar" x="454" y="140" width="40" height="50"/><text class="ve-bar-v" text-anchor="middle" x="474" y="204">−0.50</text>
+<rect class="ve-bar hot" x="506" y="140" width="40" height="67"/><text class="ve-bar-v" text-anchor="middle" x="526" y="221">−0.67</text>
+<rect class="ve-bar" x="644" y="90" width="40" height="50"/><text class="ve-bar-v" text-anchor="middle" x="664" y="76">+0.50</text>
+<rect class="ve-bar hot" x="696" y="73" width="40" height="67"/><text class="ve-bar-v" text-anchor="middle" x="716" y="59">+0.67</text>
+<text class="ve-tick" x="120" y="256">o1, r = 1</text><text class="ve-tick" x="310" y="256">o2, r = 0</text><text class="ve-tick" x="500" y="256">o3, r = 0</text><text class="ve-tick" x="690" y="256">o4, r = 1</text>
+</svg>
+</div>
+<figcaption><span class="fig-n">Fig. 18</span>The group mean includes the sample itself, but the result is only the leave-one-out advantage times (k−1)/k = 0.75. So GRPO's bias comes from its other normalizations.</figcaption>
+</figure>

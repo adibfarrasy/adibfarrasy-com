@@ -1,0 +1,19 @@
+<figure>
+<div class="cases">
+<div class="case" data-st="risk"><span class="chip risk">Do not merge</span><h3>Many adapters, one base</h3>
+<svg class="ve-mini" viewBox="0 0 240 130" role="img" aria-label="Merging each adapter into the base needs one full model copy per adapter.">
+<path class="ve-e is-st" d="M120 38V80"/><text class="ve-el r" x="128" y="62">merges each</text>
+<g class="ve-n"><rect class="sh" x="20" y="4" width="200" height="34" rx="5"/><text x="120" y="21">shared base</text></g>
+<g class="ve-n is-st"><rect class="sh" x="6" y="84" width="70" height="34" rx="5"/><text x="41" y="101">copy 1</text><rect class="sh" x="85" y="84" width="70" height="34" rx="5"/><text x="120" y="101">copy 2</text><rect class="sh" x="164" y="84" width="70" height="34" rx="5"/><text x="199" y="101">copy 3</text></g>
+</svg></div>
+<div class="case" data-st="risk"><span class="chip risk">Do not merge</span><h3>Quantized base</h3>
+<svg class="ve-mini" viewBox="0 0 240 130" role="img" aria-label="Merging into a 4-bit base means dequantize, add, then requantize, and the rounding changes the model's outputs.">
+<path class="ve-e" d="M120 30V52"/><text class="ve-el r" x="128" y="46">dequant, add</text>
+<g class="ve-n"><rect class="sh" x="20" y="2" width="200" height="28" rx="5"/><text x="120" y="16">4-bit base</text></g>
+<g class="ve-n"><rect class="sh" x="20" y="52" width="200" height="28" rx="5"/><text x="120" y="66">bf16 + BA</text></g>
+<path class="ve-e is-st" d="M120 80V100"/><text class="ve-el r" x="128" y="94">requantize</text>
+<g class="ve-n is-st"><rect class="sh" x="20" y="100" width="200" height="28" rx="5"/><text x="120" y="114">outputs shift</text></g>
+</svg></div>
+</div>
+<figcaption><span class="fig-n">Fig. 9</span>Two cases for staying unmerged. For a quantized base, load a bf16 copy, merge there, and quantize the merged model afterwards if needed.</figcaption>
+</figure>

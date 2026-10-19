@@ -1,0 +1,23 @@
+<figure>
+<div class="cases">
+<div class="case" data-st="ok"><span class="chip ok">Most bits per token</span><h3>White-box (logit)</h3>
+<svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="The teacher sends its full distribution to the student, which must share its tokenizer.">
+<path class="ve-e is-st" d="M120 40V66"/><text class="ve-el r" x="128" y="57">full p(V)</text>
+<g class="ve-n"><rect class="sh" x="20" y="4" width="200" height="36" rx="5"/><text x="120" y="22">Teacher</text></g>
+<g class="ve-n is-st"><rect class="sh" x="20" y="68" width="200" height="36" rx="5"/><text x="120" y="86">Student</text></g>
+</svg><p>You run the teacher. Same tokenizer required.</p></div>
+<div class="case" data-st="warn"><span class="chip info">In between</span><h3>Top-k log-probs</h3>
+<svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="The teacher API sends the top k probabilities. The student renormalizes and treats the remainder as one bucket.">
+<path class="ve-e is-st" d="M120 40V66"/><text class="ve-el r" x="128" y="57">top-k probs</text>
+<g class="ve-n"><rect class="sh" x="20" y="4" width="200" height="36" rx="5"/><text x="120" y="22">Teacher API</text></g>
+<g class="ve-n is-st"><rect class="sh" x="20" y="68" width="200" height="36" rx="5"/><text x="120" y="86">Student</text></g>
+</svg><p>Renormalize the top k, treat the remainder as one bucket.</p></div>
+<div class="case" data-st="risk"><span class="chip risk">Fewest bits per token</span><h3>Black-box (text)</h3>
+<svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="A closed teacher sends only sampled text. The student fine-tunes with ordinary cross-entropy.">
+<path class="ve-e is-st" d="M120 40V66"/><text class="ve-el r" x="128" y="57">1 sampled tok</text>
+<g class="ve-n"><rect class="sh" x="20" y="4" width="200" height="36" rx="5"/><text x="120" y="22">Closed teacher</text></g>
+<g class="ve-n is-st"><rect class="sh" x="20" y="68" width="200" height="36" rx="5"/><text x="120" y="86">Student</text></g>
+</svg><p>Plain SFT on teacher text. Works across tokenizers. This is most "distillation from GPT-4".</p></div>
+</div>
+<figcaption><span class="fig-n">Fig. 5</span>Same teacher, three access levels. Each position collapses to fewer bits as you move right.</figcaption>
+</figure>

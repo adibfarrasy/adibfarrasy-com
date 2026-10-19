@@ -1,0 +1,30 @@
+<figure>
+<div class="cases">
+<div class="case" data-st="warn"><span class="chip warn">Quadratic cost</span><h3>Parallel</h3>
+<svg class="ve-mini" viewBox="0 0 240 130" role="img" aria-label="Parallel form: a lower-triangular n by n masked score matrix, multiplied by V.">
+<path class="ve-e is-st" d="M150 62H178"/><text class="ve-el" x="164" y="52">×V</text>
+<g class="ve-n is-st"><path class="sh" d="M20 10V120H130Z"/><text x="52" y="92">n×n</text></g>
+<g class="ve-n"><rect class="sh" x="180" y="44" width="50" height="36" rx="5"/><text x="205" y="62">O</text></g>
+</svg>
+<p class="meta">O(n²d). Large matmuls. For understanding.</p></div>
+<div class="case" data-st="ok"><span class="chip ok">Constant state</span><h3>Recurrent</h3>
+<svg class="ve-mini" viewBox="0 0 240 130" role="img" aria-label="Recurrent form: a chain of states, each step adds one outer product.">
+<path class="ve-e is-st" d="M70 65H90"/><path class="ve-e is-st" d="M150 65H170"/>
+<text class="ve-tick" x="120" y="30">adds k vᵀ</text>
+<g class="ve-n"><rect class="sh" x="10" y="47" width="60" height="36" rx="5"/><text x="40" y="65">S(t-1)</text></g>
+<g class="ve-n is-st"><rect class="sh" x="90" y="47" width="60" height="36" rx="5"/><text x="120" y="65">S(t)</text></g>
+<g class="ve-n"><rect class="sh" x="170" y="47" width="60" height="36" rx="5"/><text x="200" y="65">S(t+1)</text></g>
+</svg>
+<p class="meta">O(d_k d_v) per token. For inference.</p></div>
+<div class="case" data-st="ok"><span class="chip ok">Linear, matmul blocks</span><h3>Chunkwise</h3>
+<svg class="ve-mini" viewBox="0 0 240 130" role="img" aria-label="Chunkwise form: three chunks, each uses the parallel form inside and passes the state to the next.">
+<path class="ve-e is-st" d="M50 46V66H90"/><text class="ve-el l" x="44" y="62">state</text>
+<path class="ve-e is-st" d="M120 84V104H160"/><text class="ve-el l" x="114" y="100">state</text>
+<g class="ve-n"><rect class="sh" x="20" y="10" width="60" height="36" rx="5"/><text x="50" y="28">chunk</text></g>
+<g class="ve-n"><rect class="sh" x="90" y="48" width="60" height="36" rx="5"/><text x="120" y="66">chunk</text></g>
+<g class="ve-n"><rect class="sh" x="160" y="86" width="60" height="36" rx="5"/><text x="190" y="104">chunk</text></g>
+</svg>
+<p class="meta">O(nCd + nd²), C = 64 to 256. For training.</p></div>
+</div>
+<figcaption><span class="fig-n">Fig. 4</span>One function, three forms. Parallel to understand, recurrent to infer, chunkwise to train.</figcaption>
+</figure>

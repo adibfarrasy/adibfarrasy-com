@@ -1,0 +1,25 @@
+<figure>
+<div class="frame">
+<svg class="ve-svg" viewBox="0 0 800 250" role="img" aria-label="Teacher distribution has two modes. Under forward KL the small student spreads mass over both and between them. Under reverse KL the student covers one mode and ignores the other.">
+<text class="ve-tick" x="200" y="24">Forward KL: mode-covering</text>
+<text class="ve-tick" x="200" y="44">samples from the teacher p</text>
+<path class="ve-grid" d="M20 200H380"/>
+<path class="ve-e no-ah is-async" d="M30 200C70 200 80 90 110 90C140 90 150 200 200 200C230 200 250 90 290 90C320 90 330 200 370 200"/>
+<path class="ve-e no-ah is-hot" d="M30 200C100 200 120 125 200 125C280 125 300 200 370 200"/>
+<text class="ve-tick" x="290" y="78">teacher p</text>
+<text class="ve-tick" x="200" y="113">student q</text>
+<text class="ve-el" x="200" y="226">mass between modes: a blend</text>
+<g transform="translate(400 0)">
+<text class="ve-tick" x="200" y="24">Reverse KL: mode-seeking</text>
+<text class="ve-tick" x="200" y="44">samples from the student q</text>
+<path class="ve-grid" d="M20 200H380"/>
+<path class="ve-e no-ah is-async" d="M30 200C70 200 80 90 110 90C140 90 150 200 200 200C230 200 250 90 290 90C320 90 330 200 370 200"/>
+<path class="ve-e no-ah is-hot" d="M30 200C70 200 80 90 110 90C140 90 150 200 190 200H370"/>
+<text class="ve-tick" x="290" y="78">teacher p</text>
+<text class="ve-tick" x="110" y="78">student q</text>
+<text class="ve-el" x="200" y="226">one mode, always plausible</text>
+</g>
+</svg>
+</div>
+<figcaption><span class="fig-n">Fig. 6</span>A student that cannot hold every teacher mode either blends them (forward) or drops one and stays sharp (reverse). The price of reverse KL is lower diversity.</figcaption>
+</figure>

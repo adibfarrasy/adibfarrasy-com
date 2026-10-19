@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<!--
+  CHAPTER PAGE KIT (reference page, placeholder content).
+
+  How to build a chapter page from this file:
+  1. Copy everything from <!DOCTYPE html> through </head> verbatim (change only <title> and the meta description).
+  2. Copy the <svg class="ve-defs"> block at the top of <body> and the final <script> block verbatim.
+  3. Write only the body content: .topbar, .page > nav.toc + main (header + one section.sec per course section).
+  Do not add CSS. If a page needs something the kit lacks, add it to this kit first so every page stays identical.
+
+  Component class names:
+    chrome     .topbar .crumbs .pager  .page  nav.toc (scroll-spy: links point at section ids)
+    header     .ch-head .eyebrow h1 .lead .meta
+    section    section.sec#sNN > .sec-head > p.sec-num(span.n) + h2   (12-col grid; text spans 8, figures 12)
+    figure     figure > .frame > svg.ve-svg[role=img][aria-label] + figcaption > span.fig-n
+               svg parts: g.ve-n[.is-key] > rect.sh + text + text.sub   path.ve-e[.is-hot|.is-async|.no-ah]
+                          text.ve-el[.l|.r] (edge verb)  g.ve-dim[.is-key] (dimension)  g.ve-co + path.ann (callout)
+                          g.ve-zone (dashed boundary)  .ve-tick (axis text)  .ve-bar[.hot] + .ve-bar-v (inline bars)
+               ol.callouts > li > span.co-n   (one-line notes under a figure with callouts)
+               svg.ve-svg min-width: viewBox width x 0.86 (inline style) so 14-unit labels stay >= 12px.
+    stepper    figure.ve-steps: parts carry data-s="N"; .ve-player > ol.ve-cap > li[data-n="1/4"] + button[data-go] + input[type=range]
+    linked     .ve-ref[data-ref][tabindex=0] in prose + [data-ref] on svg parts
+    multiples  .cases > .case[data-st=ok|warn|risk] > .chip + h3 + svg.ve-mini (.is-st marks the changed part)
+    chips      .chip.ok (circle) .chip.warn (triangle) .chip.risk (square) .chip.info (diamond) .chip.plain (no shape)
+    equation   figure > .eq > .eq-math ($$ ... $$) + dl.symbols > div > dt + dd   (write < as &lt; inside math)
+    code       .code > .code-bar(span.ve-label + button.copy) + pre[tabindex=0] > code; tokens .tk-k .tk-s .tk-n .tk-f .tk-c
+    callouts   .callout.confusions > .chip.warn + ul > li > p.myth + p.fact
+               .callout.quiz > .chip.info + ol > li > p + details > summary + p
+    resources  .resources > .res-col > h3 + ul.res-list > li.res-item[.is-start] > .res-top(a + .start-here) + .res-meta(.chip.plain) + p
+    project    .project > .chip.info + h3 + p + ol + ul.done + p.meta
+    index only .ch-cards > a.ch-card (.pips > i)   ol.howto
+  Motion: JS adds .js-motion to <html> only when motion is allowed; without it every block shows its final state.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linear Attention</title>
+<meta name="description" content="Linear attention, state space models and hybrids: replace the growing KV cache with a fixed-size state.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23282828'/%3E%3Cpath d='M14 20h14M36 20h14M14 44h14M36 44h14M28 20l8 24' stroke='%23fe8019' stroke-width='5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body, { delimiters: [{ left: '$$', right: '$$', display: true }, { left: '\\(', right: '\\)', display: false }], throwOnError: false })"></script>
+<script>
+  // Runs before first paint so a saved theme choice never flashes the other scheme.
+  try { const t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+<style>
+  /* tokens: gruvbox-dark by default, gruvbox-light when the reader's system asks for light */
+  :root {
+    color-scheme: dark;
+    --bg: #282828; --surface: #3c3836; --border: rgba(255,255,255,.08); --border-bright: #afa18e;
+    --text: #ebdbb2; --text-dim: #afa18e; --accent: #fe8019; --accent-dim: #fe80191f;
+    --ok: #b8bb26; --warn: #fabd2f; --risk: #fc7c6d; --info: #88a99c;
+    --syn-k: #fc7c6d; --syn-s: #b8bb26; --syn-n: #d3869b; --syn-f: #fabd2f; --syn-c: #afa18e;
+    --node-top: color-mix(in srgb, var(--text) 7%, var(--surface)); --lift: rgb(0 0 0 / .45); --halo: 32%;
+    --font-body: 'JetBrains Mono', ui-monospace, monospace;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    --t-label: .75rem; --t-small: .875rem; --t-body: 1rem; --t-lead: 1.25rem; --t-h2: 1.625rem; --t-h1: clamp(2.25rem, 5.5vw, 4rem);
+    --s-1: .25rem; --s-2: .5rem; --s-3: .75rem; --s-4: 1rem; --s-5: 1.5rem; --s-6: 2rem; --s-7: 3rem; --s-8: 4.5rem;
+    --r-1: 4px; --r-2: 10px;
+    --ease: cubic-bezier(.16,1,.3,1); --fast: 150ms; --med: 300ms; --slow: 500ms;
+  }
+  :root[data-theme="light"] {
+      color-scheme: light;
+      --bg: #fbf1c7; --surface: #ebdbb2; --border: rgba(0,0,0,.08); --border-bright: #6b5f56;
+      --text: #3c3836; --text-dim: #6b5f56; --accent: #ad3903; --accent-dim: #ad39031f;
+      --ok: #67630c; --warn: #7a5200; --risk: #9d0006; --info: #076678;
+      --syn-k: #9d0006; --syn-s: #67630c; --syn-n: #8f3f71; --syn-f: #076678; --syn-c: #6b5f56;
+      --node-top: var(--surface); --lift: rgb(60 56 54 / .14); --halo: 22%;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      color-scheme: light;
+      --bg: #fbf1c7; --surface: #ebdbb2; --border: rgba(0,0,0,.08); --border-bright: #6b5f56;
+      --text: #3c3836; --text-dim: #6b5f56; --accent: #ad3903; --accent-dim: #ad39031f;
+      --ok: #67630c; --warn: #7a5200; --risk: #9d0006; --info: #076678;
+      --syn-k: #9d0006; --syn-s: #67630c; --syn-n: #8f3f71; --syn-f: #076678; --syn-c: #6b5f56;
+      --node-top: var(--surface); --lift: rgb(60 56 54 / .14); --halo: 22%;
+    }
+  }
+
+  /* base */
+  html { font-size: 17px; }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--text); font: 400 var(--t-body)/1.6 var(--font-body); text-wrap: pretty; font-kerning: normal; font-synthesis: none; -webkit-font-smoothing: antialiased; }
+  ::selection { background: var(--accent-dim); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  a { color: var(--text); text-decoration: underline 1px var(--accent); text-underline-offset: .22em; transition: color var(--fast) var(--ease); }
+  a:hover { color: var(--accent); }
+  code { font: .875em var(--font-mono); font-variant-ligatures: none; }
+  h1, h2 { text-box: trim-both cap alphabetic; }
+  h1 { font-size: var(--t-h1); line-height: 1.08; font-weight: 600; letter-spacing: -.035em; text-wrap: balance; max-width: 20ch; }
+  h1 .num { color: var(--accent); font-variant-numeric: tabular-nums; }
+  h2 { font-size: var(--t-h2); line-height: 1.2; font-weight: 600; letter-spacing: -.015em; text-wrap: balance; }
+  h3 { font-size: var(--t-body); line-height: 1.3; font-weight: 600; }
+  p, li { max-width: 66ch; }
+  ul, ol { padding-left: 1.25em; }
+  .eyebrow { display: flex; align-items: center; gap: var(--s-2); font: 600 var(--t-label) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+  .eyebrow::before { content: ''; width: 1.25rem; height: 2px; background: currentColor; }
+  .ve-label { font: 600 var(--t-label) var(--font-mono); color: var(--text-dim); }
+  .caps { text-transform: uppercase; letter-spacing: .08em; }
+  .lead { font-size: var(--t-lead); line-height: 1.5; color: var(--text-dim); max-width: 48ch; }
+  .lead b { color: var(--text); font-weight: 600; }
+  .meta { font: 400 var(--t-label) var(--font-mono); color: var(--text-dim); font-variant-numeric: tabular-nums; }
+
+  /* top bar: course breadcrumb left, chapter pager right */
+  .topbar { border-bottom: 1px solid var(--border); }
+  .topbar-in { max-width: 82rem; margin: 0 auto; padding: var(--s-3) var(--s-5); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-2) var(--s-5); font: 400 var(--t-small) var(--font-mono); }
+  .topbar a { text-decoration: none; }
+  .topbar a:hover { color: var(--accent); }
+  .crumbs { display: flex; flex-wrap: wrap; list-style: none; padding: 0; gap: var(--s-2); color: var(--text-dim); }
+  .crumbs li + li::before { content: '/'; margin-right: var(--s-2); color: var(--text-dim); }
+  .crumbs [aria-current] { color: var(--text); font-weight: 600; }
+  .pager { display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-5); }
+  .pager a { color: var(--text-dim); }
+
+  /* page: sticky TOC column + main; below 1000px the TOC becomes a sticky bar */
+  .page { max-width: 82rem; margin: 0 auto; padding: 0 var(--s-5); }
+  main { min-width: 0; max-width: 64rem; padding: var(--s-7) 0 var(--s-8); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-8); }
+  .toc { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--border); margin: 0 calc(-1 * var(--s-5)); padding: var(--s-2) var(--s-5); }
+  .toc > .ve-label { display: none; }
+  .toc ol { list-style: none; padding: 0; display: flex; gap: var(--s-4); overflow-x: auto; scrollbar-width: none; mask-image: linear-gradient(90deg, #000 85%, transparent); }
+  .toc ol::-webkit-scrollbar { display: none; }
+  .toc li { max-width: none; }
+  .toc a { display: block; white-space: nowrap; font: 400 var(--t-small) var(--font-mono); color: var(--text-dim); text-decoration: none; padding: var(--s-1) 0; border-bottom: 2px solid transparent; }
+  .toc a .n { color: var(--text-dim); margin-right: var(--s-1); }
+  .toc a:hover { color: var(--text); }
+  .toc a[aria-current] { color: var(--text); border-color: var(--accent); }
+  .toc a[aria-current] .n { color: var(--accent); }
+  @media (min-width: 1000px) {
+    .page { display: grid; grid-template-columns: 12rem minmax(0, 1fr); column-gap: var(--s-7); }
+    .toc { align-self: start; margin: 0; padding: var(--s-7) 0 var(--s-5); border: 0; background: none; max-height: 100vh; overflow-y: auto; }
+    .toc > .ve-label { display: block; margin-bottom: var(--s-3); }
+    .toc ol { flex-direction: column; gap: 0; overflow: visible; mask-image: none; }
+    .toc a { white-space: normal; border-bottom: 0; border-left: 2px solid var(--border); padding: var(--s-1) 0 var(--s-1) var(--s-3); }
+    .toc a[aria-current] { border-left-color: var(--accent); }
+  }
+
+  /* chapter header */
+  .ch-head { display: grid; gap: var(--s-4); }
+  .ch-head h1 { margin-bottom: var(--s-2); }
+  .ch-head + figure { margin-top: calc(var(--s-6) - var(--s-8)); }
+
+  /* sections: a 12-column grid on one flush-left axis; prose spans 8 columns, figures all 12 */
+  .sec { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--s-5); row-gap: var(--s-5); scroll-margin-top: 4rem; }
+  .sec > * { grid-column: 1 / -1; min-width: 0; }
+  @media (min-width: 52rem) { .sec > :is(p, ul, ol, h3) { grid-column: 1 / span 8; } }
+  .sec > h3 { margin-top: var(--s-5); }
+  /* section opener (kicker head): section number + name above the takeaway h2 */
+  .sec-head { display: grid; gap: var(--s-3); border-top: 1px solid var(--border); padding-top: var(--s-5); margin-bottom: var(--s-2); }
+  .sec-num { font: 600 var(--t-label) var(--font-mono); color: var(--text-dim); letter-spacing: .04em; }
+  .sec-num .n { color: var(--accent); margin-right: var(--s-2); font-variant-numeric: tabular-nums; }
+
+  /* figure: the stage is a faint dot grid, so nodes read as objects placed on it */
+  figure { min-width: 0; }
+  .frame { background: radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--text) 13%, transparent) 1px, transparent 1.5px) 0 0 / 20px 20px, var(--bg); border: 1px solid var(--border); border-radius: var(--r-2); padding: var(--s-5); overflow-x: auto; }
+  .ve-svg { overflow: visible; }
+  figcaption { font-size: var(--t-small); color: var(--text-dim); margin-top: var(--s-3); }
+  .fig-n { font: 600 var(--t-label) var(--font-mono); color: var(--text); margin-right: var(--s-2); }
+  .callouts { list-style: none; padding: 0; margin-top: var(--s-3); display: grid; gap: var(--s-2); color: var(--text-dim); }
+  .co-n { display: inline-grid; place-items: center; width: 1.4rem; height: 1.4rem; margin-right: var(--s-2); border: 1.5px solid var(--accent); border-radius: 50%; font: 600 var(--t-label) var(--font-mono); color: var(--accent); }
+
+  /* diagram kit */
+  /* min-width keeps 14-unit labels >= 12px as rendered; narrow screens scroll the frame instead. Wider viewBoxes set min-width inline (viewBox width x 0.86). */
+  .ve-svg { width: 100%; min-width: 700px; height: auto; display: block; font: 600 15px var(--font-mono); }
+  .ve-n .sh { fill: url(#ve-node); stroke: var(--border-bright); stroke-width: 1.5; filter: drop-shadow(0 6px 14px var(--lift)); transition: stroke var(--fast) var(--ease), opacity var(--med) var(--ease); }
+  .ve-n .lid { fill: var(--node-top); }
+  .ve-n.is-key .sh { fill: color-mix(in srgb, var(--accent) 11%, var(--surface)); stroke: var(--accent); stroke-width: 2; filter: drop-shadow(0 0 16px color-mix(in srgb, var(--accent) var(--halo), transparent)); }
+  .ve-n text { fill: var(--text); text-anchor: middle; dominant-baseline: central; font-weight: 600; }
+  .ve-n .sub { fill: var(--text-dim); font: 400 14px var(--font-mono); }
+  .ve-n .is-off { stroke-dasharray: 5 4; fill: none; filter: none; }
+  .ve-e { fill: none; stroke: var(--text-dim); stroke-width: 1.75; marker-end: url(#ve-ah); }
+  .ve-e.no-ah { marker-end: none; }
+  .ve-e.is-hot { stroke: var(--accent); stroke-width: 2.75; filter: drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 55%, transparent)); }
+  .ve-e.is-async { stroke-dasharray: 6 5; }
+  .ve-el { fill: var(--text-dim); font: 400 14px var(--font-mono); text-anchor: middle; paint-order: stroke; stroke: var(--bg); stroke-width: 5px; stroke-linejoin: round; }
+  .ve-el.l { text-anchor: end; } .ve-el.r { text-anchor: start; }
+  .ve-tick { fill: var(--text-dim); font: 400 14px var(--font-mono); text-anchor: middle; }
+  .ve-tick.l { text-anchor: start; }
+  .ve-grid { stroke: var(--border); stroke-width: 1; }
+  .ve-zone rect { fill: none; stroke: var(--border-bright); stroke-width: 1; stroke-dasharray: 4 4; }
+  .ve-zone text { fill: var(--text-dim); font: 600 14px var(--font-mono); letter-spacing: .08em; }
+  .ve-bar { fill: var(--border-bright); }
+  .ve-bar.hot { fill: var(--accent); }
+  .ve-bar-v { fill: var(--text-dim); font: 400 14px var(--font-mono); dominant-baseline: central; }
+  .ve-dim path { fill: none; stroke-width: 1; } .ve-dim .ext { stroke: var(--border-bright); } .ve-dim .ln { stroke: var(--text-dim); }
+  .ve-dim text { fill: var(--text); font: 600 14px var(--font-mono); text-anchor: middle; }
+  .ve-dim .ln { marker-start: url(#ve-ah2); marker-end: url(#ve-ah2); } .ve-dim .ln.ticks { marker-start: none; marker-end: none; }
+  .ve-dim.is-key .ln { stroke: var(--accent); } .ve-dim.is-key text { fill: var(--accent); }
+  .ann { fill: none; stroke: var(--text-dim); stroke-width: 1; }
+  .ve-co circle { fill: var(--surface); stroke: var(--accent); stroke-width: 1.75; }
+  .ve-co text { fill: var(--accent); font: 600 14px var(--font-mono); text-anchor: middle; dominant-baseline: central; }
+  .ve-co.now circle { fill: var(--accent); } .ve-co.now text { fill: var(--surface); }
+
+  /* linked highlighting: same data-ref lights up together; unlit labels drop to --text-dim instead of fading */
+  .ve-ref { text-decoration: underline dotted var(--text-dim) 1px; text-underline-offset: .22em; border-radius: var(--r-1); transition: background var(--fast) var(--ease); }
+  .ve-ref.is-lit { background: var(--accent-dim); text-decoration-color: var(--accent); }
+  svg [data-ref] { transition: opacity var(--med) var(--ease); }
+  svg.has-lit path[data-ref]:not(.is-lit), svg.has-lit g[data-ref]:not(.is-lit) .sh, svg.has-lit rect[data-ref]:not(.is-lit) { opacity: .25; }
+  svg.has-lit g[data-ref]:not(.is-lit) text, svg.has-lit text[data-ref]:not(.is-lit) { fill: var(--text-dim); }
+  .ve-n.is-lit .sh { stroke: var(--accent); }
+  .ve-e.is-lit { stroke: var(--accent); }
+  .ve-el.is-lit { fill: var(--text); }
+  .case.is-lit, .ch-card.is-lit { border-color: var(--accent); }
+
+  /* stepper / scene player: future parts stay a faint outline, their labels hidden */
+  .ve-steps [data-s] { transition: opacity var(--slow) var(--ease), stroke-dashoffset var(--slow) var(--ease); }
+  .ve-steps [data-s]:not(.on) { opacity: .15; }
+  .ve-steps g[data-s]:not(.on) text, .ve-steps text[data-s]:not(.on) { opacity: 0; }
+  .ve-steps path[pathLength][data-s] { stroke-dasharray: 1; stroke-dashoffset: 1; }
+  .ve-steps path[pathLength][data-s].on { stroke-dashoffset: 0; }
+  .ve-steps .ve-n.now > .sh { stroke: var(--accent); }
+  .ve-steps:not(.is-full) .ve-e.now { stroke: var(--accent); stroke-width: 2.75; }
+  .ve-player { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: center; gap: var(--s-2) var(--s-3); margin-top: var(--s-4); }
+  .ve-cap { grid-column: 1 / -1; list-style: none; padding: 0; min-height: 3.2em; }
+  .ve-cap li::before { content: attr(data-n); font: 600 var(--t-label) var(--font-mono); color: var(--accent); margin-right: var(--s-3); font-variant-numeric: tabular-nums; }
+  .ve-player input { accent-color: var(--accent); min-width: 0; }
+  button { font: 400 var(--t-small) var(--font-mono); color: var(--text); background: var(--surface); border: 1px solid var(--border-bright); border-radius: var(--r-1); padding: var(--s-2) var(--s-3); cursor: pointer; transition: border-color var(--fast) var(--ease); }
+  button:hover, button:focus-visible { border-color: var(--accent); }
+
+  /* small multiples: one mini diagram per case; the changed part takes the case's status color */
+  .cases { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14.5rem), 1fr)); gap: var(--s-4); }
+  .case { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-2); padding: var(--s-4); display: grid; gap: var(--s-3); align-content: start; min-width: 0; transition: border-color var(--fast) var(--ease); }
+  .case[data-st=ok] { --st: var(--ok); } .case[data-st=warn] { --st: var(--warn); } .case[data-st=risk] { --st: var(--risk); }
+  .ve-mini { width: 100%; height: auto; font: 600 15px var(--font-mono); }
+  .ve-mini .ve-n .sh { filter: none; }
+  .ve-mini .is-st.ve-e { stroke: var(--st); stroke-width: 2.75; }
+  .ve-mini .is-st .sh { stroke: var(--st); stroke-width: 2; }
+  .ve-mini .ve-el { stroke: var(--surface); }
+
+  /* chips: shape and word, never color alone */
+  .chip { display: inline-flex; align-items: center; gap: var(--s-2); font: 600 var(--t-label) var(--font-mono); padding: 2px var(--s-2); border: 1px solid currentColor; border-radius: var(--r-1); white-space: nowrap; justify-self: start; }
+  .chip::before { content: ''; width: .5rem; height: .5rem; background: currentColor; }
+  .chip.ok { color: var(--ok); } .chip.ok::before { border-radius: 50%; }
+  .chip.warn { color: var(--warn); } .chip.warn::before { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+  .chip.risk { color: var(--risk); }
+  .chip.info { color: var(--info); } .chip.info::before { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+  .chip.plain { color: var(--text-dim); font-weight: 400; } .chip.plain::before { display: none; }
+
+  /* equation + symbols legend */
+  .eq { display: grid; gap: var(--s-4) var(--s-6); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-2); padding: var(--s-5); }
+  @media (min-width: 52rem) { .eq { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); align-items: center; } }
+  .eq-math { min-width: 0; overflow-x: auto; overflow-y: hidden; }
+  .eq-math .katex-display { margin: var(--s-2) 0; }
+  .symbols { display: grid; gap: var(--s-2); }
+  .symbols > div { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr); gap: var(--s-3); align-items: baseline; }
+  .symbols dd { margin: 0; color: var(--text-dim); }
+
+  /* code: scroll container, copy button, gruvbox syntax tokens; code sits on --bg so every token reaches 4.5:1 */
+  .code { border: 1px solid var(--border); border-radius: var(--r-2); background: var(--bg); min-width: 0; }
+  .code-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); padding: var(--s-2) var(--s-2) var(--s-2) var(--s-4); background: var(--surface); border-bottom: 1px solid var(--border); border-radius: var(--r-2) var(--r-2) 0 0; }
+  .code pre { margin: 0; padding: var(--s-4); overflow-x: auto; font: 400 var(--t-small)/1.6 var(--font-mono); font-variant-ligatures: none; tab-size: 4; }
+  .code pre code { font: inherit; }
+  .tk-k { color: var(--syn-k); } .tk-s { color: var(--syn-s); } .tk-n { color: var(--syn-n); } .tk-f { color: var(--syn-f); } .tk-c { color: var(--syn-c); }
+
+  /* callouts: common confusions and check yourself */
+  .callout { background: var(--surface); border-radius: var(--r-2); padding: var(--s-5); display: grid; gap: var(--s-4); }
+  .confusions ul { list-style: none; padding: 0; display: grid; gap: var(--s-4); }
+  .confusions p { padding-left: 1.5em; text-indent: -1.5em; }
+  .confusions .myth { color: var(--text-dim); }
+  .confusions .myth::before { content: '✕'; display: inline-block; width: 1.5em; text-indent: 0; color: var(--risk); font-weight: 600; }
+  .confusions .fact::before { content: '✓'; display: inline-block; width: 1.5em; text-indent: 0; color: var(--ok); font-weight: 600; }
+  .quiz ol { display: grid; gap: var(--s-4); padding-left: 1.75em; }
+  .quiz li::marker { font: 600 var(--t-label) var(--font-mono); color: var(--accent); }
+  .quiz details { margin-top: var(--s-2); }
+  .quiz summary { cursor: pointer; font: 600 var(--t-small) var(--font-mono); color: var(--accent); width: fit-content; }
+  .quiz details p { margin-top: var(--s-2); padding-left: var(--s-3); border-left: 1px solid var(--border-bright); }
+
+  /* resources: Read and Watch columns; "start here" = star shape + word + accent frame */
+  .resources { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: var(--s-5) var(--s-6); }
+  .res-col { min-width: 0; }
+  .res-col > h3 { font: 600 var(--t-label) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--text-dim); padding-bottom: var(--s-2); border-bottom: 1px solid var(--border-bright); }
+  .res-list { list-style: none; padding: 0; }
+  .res-item { padding: var(--s-3) 0; border-bottom: 1px solid var(--border); display: grid; gap: var(--s-1); }
+  .res-item.is-start { border: 1px solid var(--accent); border-radius: var(--r-2); padding: var(--s-3) var(--s-4); margin: var(--s-2) 0; }
+  .res-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-1) var(--s-3); }
+  .res-top a { font-weight: 600; overflow-wrap: anywhere; }
+  .res-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); font: 400 var(--t-label) var(--font-mono); color: var(--text-dim); }
+  .res-item p { color: var(--text-dim); }
+  .start-here { display: inline-flex; align-items: center; gap: var(--s-1); font: 600 var(--t-label) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); white-space: nowrap; }
+  .start-here::before { content: ''; width: .8rem; height: .8rem; background: currentColor; clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+
+  /* chapter project */
+  .project { border: 1px solid var(--border-bright); border-radius: var(--r-2); padding: var(--s-5); display: grid; gap: var(--s-4); }
+  .project h3 { font-size: var(--t-lead); }
+  .project ol, .project ul { display: grid; gap: var(--s-2); }
+  .project .done { list-style: none; padding: 0; }
+  .project .done li::before { content: '□'; color: var(--accent); margin-right: var(--s-2); }
+
+  /* index only: chapter cards and how-to steps */
+  .ch-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14.5rem), 1fr)); gap: var(--s-4); }
+  .ch-card { display: grid; gap: var(--s-3); align-content: start; min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-2); padding: var(--s-4); color: var(--text); text-decoration: none; transition: border-color var(--fast) var(--ease); }
+  .ch-card:hover, .ch-card:focus-visible { border-color: var(--accent); color: var(--text); }
+  .ch-card h3 { font-size: var(--t-lead); }
+  .ch-card p, .ch-card ol { color: var(--text-dim); }
+  .ch-card .go { font: 600 var(--t-label) var(--font-mono); color: var(--accent); }
+  .pips { display: flex; flex-wrap: wrap; gap: var(--s-1); }
+  .pips i { width: .55rem; height: .55rem; background: var(--text-dim); }
+  .howto { list-style: none; padding: 0; counter-reset: step; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); gap: var(--s-5) var(--s-4); }
+  .howto li { counter-increment: step; border-top: 1px solid var(--border-bright); padding-top: var(--s-3); }
+  .howto li::before { content: counter(step, decimal-leading-zero); display: block; font: 600 var(--t-label) var(--font-mono); color: var(--accent); margin-bottom: var(--s-2); }
+
+  /* entrance: blocks rise in once (JS adds .js-motion only when motion is allowed) */
+  .js-motion :is(.ch-head, .sec > *) { transition: opacity var(--slow) var(--ease), transform var(--slow) var(--ease); }
+  .js-motion :is(.ch-head, .sec > *):not(.in) { opacity: 0; transform: translateY(1rem); }
+  .topbar-in .pager { margin-left: auto; }
+  .icon-btn { background: none; border: 0; padding: var(--s-1); color: var(--text-dim); display: inline-flex; line-height: 0; }
+  .icon-btn:hover { color: var(--text); }
+  .icon-btn svg { width: 1.1rem; height: 1.1rem; }
+  .icon-btn .i-moon, .icon-btn[data-mode="light"] .i-sun { display: none; }
+  .icon-btn[data-mode="light"] .i-moon { display: block; }
+  .toc-head { display: none; }
+  .toc-btn { background: none; border: 0; padding: var(--s-1); color: var(--text-dim); display: inline-flex; line-height: 0; }
+  .toc-btn:hover { color: var(--text); }
+  .toc-btn svg { width: 1rem; height: 1rem; transition: transform var(--fast) var(--ease); }
+  @media (min-width: 1000px) {
+    .toc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--s-3); }
+    .toc-head .ve-label { margin: 0; }
+    html.toc-hidden .page { grid-template-columns: 2rem minmax(0, 1fr); }
+    html.toc-hidden .toc-head .ve-label, html.toc-hidden .toc ol { display: none; }
+    html.toc-hidden .toc-btn svg { transform: rotate(180deg); }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  @media print {
+    :root { --bg: #fff; --surface: #fff; --border: #ebdbb2; --border-bright: #6b5f56; --text: #3c3836; --text-dim: #6b5f56; --accent: #ad3903; --ok: #67630c; --warn: #7a5200; --risk: #9d0006; --info: #076678;
+      --syn-k: #9d0006; --syn-s: #67630c; --syn-n: #8f3f71; --syn-f: #076678; --syn-c: #6b5f56; --node-top: #fff; }
+    .toc, .toc-btn, .icon-btn, .pager, .copy, .ve-player button, .ve-player input { display: none; }
+    .page { display: block; }
+    .frame { overflow: visible; background: #fff; } .ve-svg { min-width: 0 !important; }
+    .frame, .case, .ch-card, .callout, .project, .eq, .code { break-inside: avoid; } h2 { break-after: avoid; }
+    svg * { filter: none !important; }
+    .js-motion :is(.ch-head, .sec > *) { opacity: 1 !important; transform: none !important; }
+    .ve-steps [data-s]:not(.on), .ve-steps g[data-s]:not(.on) text, .ve-steps text[data-s]:not(.on) { opacity: 1; }
+    .ve-steps path[pathLength][data-s] { stroke-dashoffset: 0; }
+  }
+</style>
+</head>
+<body>
+<!-- Shared defs: one arrowhead, the node fill, and the section pip. -->
+<svg class="ve-defs" width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <marker id="ve-ah" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker>
+    <marker id="ve-ah2" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker>
+    <linearGradient id="ve-node" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--node-top)"/><stop offset="1" style="stop-color:var(--surface)"/></linearGradient>
+    <pattern id="ve-pip" width="13" height="9" patternUnits="userSpaceOnUse"><rect width="9" height="9" style="fill:var(--text-dim)"/></pattern>
+  </defs>
+</svg>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <nav aria-label="Breadcrumb">
+      <ol class="crumbs">
+        <li><a href="index.html">Learn AI Fundamentals</a></li>
+        <li>LLM Advanced</li>
+        <li aria-current="page">Linear Attention</li>
+      </ol>
+    </nav>
+    <nav class="pager" aria-label="Chapters">
+      <a href="04-distillation.html" rel="prev">← Distillation</a>
+      <a href="06-lora.html" rel="next">Next: LoRA →</a>
+    </nav>
+    <button type="button" class="icon-btn" id="theme-toggle" aria-label="Switch to light mode"><svg class="i-sun" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1"/></svg><svg class="i-moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 9.6A5.8 5.8 0 0 1 6.4 2.5a5.8 5.8 0 1 0 7.1 7.1z"/></svg></button>
+  </div>
+</header>
+
+<div class="page">
+  <nav class="toc" aria-label="Sections">
+    <div class="toc-head"><p class="ve-label caps">On this page</p><button type="button" class="toc-btn" id="toc-toggle" aria-controls="toc-list" aria-expanded="true" aria-label="Hide sidebar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg></button></div>
+    <ol id="toc-list">
+      <li><a href="#s01"><span class="n">01</span>Intuition</a></li>
+      <li><a href="#s02"><span class="n">02</span>The math</a></li>
+      <li><a href="#s03"><span class="n">03</span>Code</a></li>
+      <li><a href="#s04"><span class="n">04</span>Modern family</a></li>
+      <li><a href="#s05"><span class="n">05</span>Tradeoffs</a></li>
+      <li><a href="#s06"><span class="n">06</span>Wrap-up</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header class="ch-head">
+      <p class="eyebrow">Chapter 5 · LLM Advanced</p>
+      <h1>Swap the growing cache for a fixed-size <span class="num">state</span></h1>
+      <p class="lead">Softmax attention stays quadratic even with FlashAttention and GQA. Linear attention, SSMs and Mamba change the <b>asymptotics</b> with one idea: a constant-size memory, written and forgotten in different ways.</p>
+      <p class="meta">5 sections · needs: attention, GQA and KV cache, FlashAttention, RoPE, outer products</p>
+    </header>
+
+    <figure>
+      <div class="frame">
+        <svg class="ve-svg" style="min-width:826px" viewBox="0 -20 960 350" role="img" aria-label="Two orders of the same product. Softmax: Q and K multiply into an n by n score matrix, then softmax and multiplying by V give O, costing order n squared d. Linear: K and V sum outer products into a d_k by d_v state S, then Q reads S to give O, costing order n d squared.">
+          <text class="ve-tick l" x="20" y="14">Softmax: (Q Kᵀ) V</text>
+          <path class="ve-e" d="M170 75H270"/><text class="ve-el" x="220" y="66">multiplies</text>
+          <path class="ve-e" d="M440 75H560"/><text class="ve-el" x="500" y="66">softmax, ×V</text>
+          <g class="ve-n" transform="translate(20 45)"><rect class="sh" width="150" height="60" rx="6"/><text x="75" y="22">Q, K</text><text class="sub" x="75" y="44">n × d_k</text></g>
+          <g class="ve-n" transform="translate(270 20)"><rect class="sh" width="170" height="110" rx="6"/><text x="85" y="42">Q Kᵀ</text><text class="sub" x="85" y="68">n × n scores</text></g>
+          <g class="ve-n" transform="translate(560 45)"><rect class="sh" width="130" height="60" rx="6"/><text x="65" y="22">O</text><text class="sub" x="65" y="44">n × d_v</text></g>
+          <rect class="ve-bar" x="740" y="67" width="150" height="16" rx="2"/><text class="ve-bar-v" x="898" y="75">O(n²d)</text>
+          <path class="ann" d="M355 20V4"/><g class="ve-co" transform="translate(355 -8)"><circle r="11"/><text>2</text></g>
+
+          <text class="ve-tick l" x="20" y="184">Linear: Q (Kᵀ V)</text>
+          <path class="ve-e" d="M170 245H270"/><text class="ve-el" x="220" y="236">sums k vᵀ</text>
+          <path class="ve-e is-hot" d="M440 245H560"/><text class="ve-el" x="500" y="236">Q reads S</text>
+          <g class="ve-n" transform="translate(20 215)"><rect class="sh" width="150" height="60" rx="6"/><text x="75" y="22">K, V</text><text class="sub" x="75" y="44">n × d</text></g>
+          <g class="ve-n is-key" transform="translate(270 215)"><rect class="sh" width="170" height="60" rx="6"/><text x="85" y="22">S = Kᵀ V</text><text class="sub" x="85" y="44">d_k × d_v</text></g>
+          <g class="ve-n" transform="translate(560 215)"><rect class="sh" width="130" height="60" rx="6"/><text x="65" y="22">O</text><text class="sub" x="65" y="44">n × d_v</text></g>
+          <rect class="ve-bar hot" x="740" y="237" width="14" height="16" rx="2"/><text class="ve-bar-v" x="762" y="245">O(n d²)</text>
+          <path class="ann" d="M355 215V200"/><g class="ve-co" transform="translate(355 188)"><circle r="11"/><text>1</text></g>
+        </svg>
+      </div>
+      <figcaption><span class="fig-n">Fig. 1</span>The same product in two orders. Moving Q to the end replaces an n × n matrix with a d_k × d_v state.</figcaption>
+      <ol class="callouts">
+        <li><span class="co-n">1</span>S has the same size at n = 2 and n = 1,000,000.</li>
+        <li><span class="co-n">2</span>The softmax sits between Q Kᵀ and V, so Kᵀ V cannot be formed first.</li>
+      </ol>
+    </figure>
+
+    <section class="sec" id="s01" aria-labelledby="s01-h">
+      <div class="sec-head"><p class="sec-num"><span class="n">01</span>Intuition</p><h2 id="s01-h">The softmax blocks the reorder; a feature map removes the block</h2></div>
+      <p>Causal softmax attention builds an n × n matrix: O(n² d) FLOPs. At inference each new token reads all n cached keys and values. FlashAttention avoids storing that matrix in HBM but still does all the arithmetic.</p>
+      <p>Matrix products are associative, so (Q Kᵀ) V = Q (Kᵀ V) and Kᵀ V is only d_k × d_v. The softmax applies a nonlinearity to every entry and normalizes each row, so the product no longer factors.</p>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$o_i = \sum_{j=1}^{i} \frac{\exp(q_i^\top k_j / \sqrt{d})}{\sum_{l=1}^{i} \exp(q_i^\top k_l / \sqrt{d})}\, v_j$$
+            $$O = \mathrm{softmax}\!\left(\frac{QK^\top}{\sqrt{d}} + M\right) V$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(q_i, k_j\)</dt><dd>query and key vectors, width \(d_k = d\)</dd></div>
+            <div><dt>\(v_j\)</dt><dd>value vector, width \(d_v\)</dd></div>
+            <div><dt>\(M\)</dt><dd>causal mask: 0 on and below the diagonal, \(-\infty\) above</dd></div>
+            <div><dt>\(n\)</dt><dd>sequence length; \(QK^\top\) is \(n \times n\)</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 1</span>Causal softmax attention for one head, per position and in matrix form.</figcaption>
+      </figure>
+      <p>The fix: replace \(\exp(q^\top k)\) with a similarity that factors, \(\mathrm{sim}(q,k) = \phi(q)^\top \phi(k)\). Then the query leaves the sum, and what stays inside is a running state.</p>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$o_i = \frac{\phi(q_i)^\top S_i}{\phi(q_i)^\top z_i}, \quad S_i = \sum_{j \le i} \phi(k_j)\, v_j^\top, \quad z_i = \sum_{j \le i} \phi(k_j)$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(\phi\)</dt><dd>feature map applied to queries and keys</dd></div>
+            <div><dt>\(S_i\)</dt><dd>sum of outer products, \(d_k \times d_v\); independent of \(q_i\)</dd></div>
+            <div><dt>\(z_i\)</dt><dd>sum of key features, \(d_k\); the normalizer</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 2</span>The kernel trick. This is the whole engine of the chapter.</figcaption>
+      </figure>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" style="min-width:774px" viewBox="0 0 900 300" role="img" aria-label="Memory view. A token's feature-mapped key and value write an outer product into the d_k by d_v state matrix S. A query reads S and returns a mix of stored values weighted by how well the query matches each stored key.">
+            <path class="ve-e is-hot" d="M170 130H290"/><text class="ve-el" x="230" y="121">writes</text>
+            <path class="ve-e" d="M350 245V202"/><text class="ve-el r" x="358" y="226">matches</text>
+            <path class="ve-e is-hot" d="M410 130H570"/><text class="ve-el" x="490" y="121">returns mix</text>
+            <g class="ve-n" transform="translate(20 100)"><rect class="sh" width="150" height="60" rx="6"/><text x="75" y="22">φ(k), v</text><text class="sub" x="75" y="44">one token</text></g>
+            <g class="ve-n is-key" transform="translate(290 60)"><rect class="sh" width="120" height="140" rx="6"/><path class="ve-grid" d="M320 60V200M350 60V200M380 60V200M290 95H410M290 130H410M290 165H410" transform="translate(-290 -60)"/></g>
+            <text class="ve-tick" x="350" y="48">S: d_k × d_v</text>
+            <g class="ve-n" transform="translate(275 245)"><rect class="sh" width="150" height="46" rx="6"/><text x="75" y="23">φ(q)</text></g>
+            <g class="ve-n" transform="translate(570 100)"><rect class="sh" width="150" height="60" rx="6"/><text x="75" y="22">o</text><text class="sub" x="75" y="44">mix of values</text></g>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 2</span>S is a tiny associative memory: writing stores a value at the address φ(k), reading blends values by how well φ(q) matches each address.</figcaption>
+      </figure>
+      <p>Softmax attention keeps every key and value and does exact lookups. Linear attention compresses them into one d_k × d_v matrix. Everything good and bad about these models follows from that compression.</p>
+    </section>
+
+    <section class="sec" id="s02" aria-labelledby="s02-h">
+      <div class="sec-head"><p class="sec-num"><span class="n">02</span>The math</p><h2 id="s02-h">Causal linear attention is an RNN with a matrix state</h2></div>
+      <figure class="ve-steps">
+        <div class="frame">
+          <svg class="ve-svg" style="min-width:774px" viewBox="0 0 900 300" role="img" aria-label="One recurrence step. The previous state S(t-1) carries into S(t). Token t writes the outer product of its key features and value into S(t). The query features read S(t) and produce the output o(t).">
+            <path class="ve-e" data-s="3" pathLength="1" d="M170 145H420"/><text class="ve-el" data-s="3" x="295" y="136">carries</text>
+            <path class="ve-e is-hot" data-s="2" data-ref="w" pathLength="1" d="M380 38H495V110"/><text class="ve-el" data-s="2" x="440" y="29">writes k vᵀ</text>
+            <path class="ve-e is-hot" data-s="4" data-ref="r" pathLength="1" d="M380 260H495V180"/><text class="ve-el" data-s="4" x="440" y="251">reads</text>
+            <path class="ve-e" data-s="4" pathLength="1" d="M570 145H710"/><text class="ve-el" data-s="4" x="640" y="136">outputs</text>
+            <g class="ve-n" data-s="1" transform="translate(20 110)"><rect class="sh" width="150" height="70" rx="6"/><text x="75" y="26">S(t-1)</text><text class="sub" x="75" y="50">d_k × d_v</text></g>
+            <g class="ve-n" data-s="2" data-ref="w" transform="translate(230 10)"><rect class="sh" width="150" height="56" rx="6"/><text x="75" y="22">φ(k), v</text><text class="sub" x="75" y="42">token t</text></g>
+            <g class="ve-n is-key" data-s="3" transform="translate(420 110)"><rect class="sh" width="150" height="70" rx="6"/><text x="75" y="26">S(t)</text><text class="sub" x="75" y="50">S(t-1) + φ(k)vᵀ</text></g>
+            <g class="ve-n" data-s="4" data-ref="r" transform="translate(230 235)"><rect class="sh" width="150" height="50" rx="6"/><text x="75" y="19">φ(q)</text><text class="sub" x="75" y="38">token t</text></g>
+            <g class="ve-n" data-s="4" transform="translate(710 110)"><rect class="sh" width="150" height="70" rx="6"/><text x="75" y="26">o(t)</text><text class="sub" x="75" y="50">φ(q)ᵀ S(t)</text></g>
+          </svg>
+        </div>
+        <div class="ve-player">
+          <ol class="ve-cap">
+            <li data-n="1/4">The state S(t-1) is the whole memory so far. It has the same size at every t.</li>
+            <li data-n="2/4">Token t makes a rank-1 outer product of its key features and its value.</li>
+            <li data-n="3/4">The outer product is added to the carried state: S(t) = S(t-1) + φ(k)vᵀ.</li>
+            <li data-n="4/4">The query features read S(t) and give the output. Each step costs O(d_k d_v).</li>
+          </ol>
+          <button data-go="-1" aria-label="Previous step">←</button>
+          <button data-play>Play</button>
+          <input type="range" min="0" value="0" aria-label="Step">
+          <button data-go="1" aria-label="Next step">→</button>
+        </div>
+        <figcaption><span class="fig-n">Fig. 3</span>Katharopoulos et al. (2020) made the RNN link explicit. Generating token n + 1 costs the same as token 2.</figcaption>
+      </figure>
+      <p>Each step <span class="ve-ref" data-ref="w" tabindex="0">writes</span> one outer product, then the query <span class="ve-ref" data-ref="r" tabindex="0">reads</span> the state. With H heads, the whole "KV cache" of a layer is H matrices of size d_k × d_v, at 1k or 1M tokens.</p>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$S_i = S_{i-1} + \phi(k_i)\, v_i^\top, \quad z_i = z_{i-1} + \phi(k_i), \quad o_i = \frac{\phi(q_i)^\top S_i}{\phi(q_i)^\top z_i}$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(S_0, z_0\)</dt><dd>start at zero</dd></div>
+            <div><dt>\(S_i\)</dt><dd>\(d_k \times d_v\) matrix state</dd></div>
+            <div><dt>\(z_i\)</dt><dd>running sum of key features</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 3</span>Recurrent form: constant memory, constant cost per token.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="cases">
+          <div class="case" data-st="warn"><span class="chip warn">Quadratic cost</span><h3>Parallel</h3>
+            <svg class="ve-mini" viewBox="0 0 240 130" role="img" aria-label="Parallel form: a lower-triangular n by n masked score matrix, multiplied by V.">
+              <path class="ve-e is-st" d="M150 62H178"/><text class="ve-el" x="164" y="52">×V</text>
+              <g class="ve-n is-st"><path class="sh" d="M20 10V120H130Z"/><text x="52" y="92">n×n</text></g>
+              <g class="ve-n"><rect class="sh" x="180" y="44" width="50" height="36" rx="5"/><text x="205" y="62">O</text></g>
+            </svg>
+            <p class="meta">O(n²d). Large matmuls. For understanding.</p></div>
+          <div class="case" data-st="ok"><span class="chip ok">Constant state</span><h3>Recurrent</h3>
+            <svg class="ve-mini" viewBox="0 0 240 130" role="img" aria-label="Recurrent form: a chain of states, each step adds one outer product.">
+              <path class="ve-e is-st" d="M70 65H90"/><path class="ve-e is-st" d="M150 65H170"/>
+              <text class="ve-tick" x="120" y="30">adds k vᵀ</text>
+              <g class="ve-n"><rect class="sh" x="10" y="47" width="60" height="36" rx="5"/><text x="40" y="65">S(t-1)</text></g>
+              <g class="ve-n is-st"><rect class="sh" x="90" y="47" width="60" height="36" rx="5"/><text x="120" y="65">S(t)</text></g>
+              <g class="ve-n"><rect class="sh" x="170" y="47" width="60" height="36" rx="5"/><text x="200" y="65">S(t+1)</text></g>
+            </svg>
+            <p class="meta">O(d_k d_v) per token. For inference.</p></div>
+          <div class="case" data-st="ok"><span class="chip ok">Linear, matmul blocks</span><h3>Chunkwise</h3>
+            <svg class="ve-mini" viewBox="0 0 240 130" role="img" aria-label="Chunkwise form: three chunks, each uses the parallel form inside and passes the state to the next.">
+              <path class="ve-e is-st" d="M50 46V66H90"/><text class="ve-el l" x="44" y="62">state</text>
+              <path class="ve-e is-st" d="M120 84V104H160"/><text class="ve-el l" x="114" y="100">state</text>
+              <g class="ve-n"><rect class="sh" x="20" y="10" width="60" height="36" rx="5"/><text x="50" y="28">chunk</text></g>
+              <g class="ve-n"><rect class="sh" x="90" y="48" width="60" height="36" rx="5"/><text x="120" y="66">chunk</text></g>
+              <g class="ve-n"><rect class="sh" x="160" y="86" width="60" height="36" rx="5"/><text x="190" y="104">chunk</text></g>
+            </svg>
+            <p class="meta">O(nCd + nd²), C = 64 to 256. For training.</p></div>
+        </div>
+        <figcaption><span class="fig-n">Fig. 4</span>One function, three forms. Parallel to understand, recurrent to infer, chunkwise to train.</figcaption>
+      </figure>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$O = \frac{\left(\phi(Q)\phi(K)^\top \odot M_{\text{causal}}\right) V}{\left(\phi(Q)\phi(K)^\top \odot M_{\text{causal}}\right)\mathbf{1}}$$
+            $$O_c = \underbrace{\phi(Q_c)\, S_{c-1}}_{\text{earlier chunks}} + \underbrace{\left(\phi(Q_c)\phi(K_c)^\top \odot M\right) V_c}_{\text{within chunk}}, \quad S_c = S_{c-1} + \phi(K_c)^\top V_c$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(M_{\text{causal}}\)</dt><dd>lower-triangular ones; multiplicative, since no softmax absorbs \(-\infty\)</dd></div>
+            <div><dt>\(\odot\)</dt><dd>elementwise product</dd></div>
+            <div><dt>\(C\)</dt><dd>chunk size, 64 to 256</dd></div>
+            <div><dt>\(S_c\)</dt><dd>state carried across chunks (normalizer omitted)</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 4</span>Parallel form (still quadratic, but one big matmul) and chunkwise form (used by flash-linear-attention and Mamba-2's SSD kernels).</figcaption>
+      </figure>
+
+      <h3>Feature maps decide the similarity</h3>
+      <figure>
+        <div class="cases">
+          <div class="case" data-st="warn"><span class="chip warn">Weak at language</span><h3>elu + 1</h3>
+            <svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="The elu plus one map is applied per entry and keeps features positive.">
+              <path class="ve-e is-st" d="M80 55H130"/><text class="ve-el" x="105" y="45">maps</text>
+              <g class="ve-n"><rect class="sh" x="10" y="35" width="70" height="40" rx="5"/><text x="45" y="55">q, k</text></g>
+              <g class="ve-n is-st"><rect class="sh" x="130" y="20" width="100" height="70" rx="5"/><text x="180" y="42">elu+1</text><text class="sub" x="180" y="66">always > 0</text></g>
+            </svg>
+            <p class="meta">Cheap and positive. A poor match for softmax sharpness.</p></div>
+          <div class="case" data-st="warn"><span class="chip warn">High variance</span><h3>Performer</h3>
+            <svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="Performer maps q and k to m random features whose dot product estimates the softmax kernel.">
+              <path class="ve-e is-st" d="M80 55H130"/><text class="ve-el" x="105" y="45">samples</text>
+              <g class="ve-n"><rect class="sh" x="10" y="35" width="70" height="40" rx="5"/><text x="45" y="55">q, k</text></g>
+              <g class="ve-n is-st"><rect class="sh" x="130" y="20" width="100" height="70" rx="5"/><text x="180" y="42">m features</text><text class="sub" x="180" y="66">E = exp(qᵀk)</text></g>
+            </svg>
+            <p class="meta">Unbiased and positive, but needs large m.</p></div>
+          <div class="case" data-st="ok"><span class="chip ok">Used today</span><h3>Identity + norm</h3>
+            <svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="Modern models skip the denominator and normalize the output instead.">
+              <path class="ve-e is-st" d="M80 55H130"/><text class="ve-el" x="105" y="45">keeps</text>
+              <g class="ve-n"><rect class="sh" x="10" y="35" width="70" height="40" rx="5"/><text x="45" y="55">q, k</text></g>
+              <g class="ve-n is-st"><rect class="sh" x="130" y="20" width="100" height="70" rx="5"/><text x="180" y="42">identity</text><text class="sub" x="180" y="66">+ output norm</text></g>
+            </svg>
+            <p class="meta">RetNet, GLA, Mamba-2, DeltaNet drop the fragile denominator.</p></div>
+        </div>
+        <figcaption><span class="fig-n">Fig. 5</span>2020 to 2022 tried to approximate softmax with a kernel and underperformed. Progress since 2023 came from a smarter recurrence.</figcaption>
+      </figure>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$\phi(x) = \frac{\exp(-\|x\|^2/2)}{\sqrt{m}}\left[\exp(w_1^\top x), \dots, \exp(w_m^\top x)\right], \quad \mathbb{E}\left[\phi(q)^\top \phi(k)\right] = \exp(q^\top k)$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(m\)</dt><dd>number of random features</dd></div>
+            <div><dt>\(w_i\)</dt><dd>drawn from \(\mathcal{N}(0, I)\), orthogonalized in practice</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 5</span>Performer's FAVOR+ map: an unbiased, always-positive estimate of the softmax kernel.</figcaption>
+      </figure>
+    </section>
+
+    <section class="sec" id="s03" aria-labelledby="s03-h">
+      <div class="sec-head"><p class="sec-num"><span class="n">03</span>Code</p><h2 id="s03-h">Three forms of one function agree up to float rounding</h2></div>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" style="min-width:740px" viewBox="0 0 860 280" role="img" aria-label="A sequence of 50 tokens is cut into chunks of 16, 16, 16 and 2 tokens, with the state passed from chunk to chunk. The parallel, recurrent and chunked outputs equal each other and differ by about 1e-7.">
+            <text class="ve-tick l" x="40" y="20">Chunk size C = 16 over N = 50 tokens</text>
+            <path class="ve-e" d="M232 68H256"/><path class="ve-e" d="M448 68H472"/><path class="ve-e" d="M664 68H688"/>
+            <text class="ve-el" x="244" y="56">S</text><text class="ve-el" x="460" y="56">S</text><text class="ve-el" x="676" y="56">S</text>
+            <g class="ve-n" transform="translate(40 40)"><rect class="sh" width="192" height="56" rx="6"/><text x="96" y="20">chunk 1</text><text class="sub" x="96" y="40">16 tokens</text></g>
+            <g class="ve-n" transform="translate(256 40)"><rect class="sh" width="192" height="56" rx="6"/><text x="96" y="20">chunk 2</text><text class="sub" x="96" y="40">16 tokens</text></g>
+            <g class="ve-n" transform="translate(472 40)"><rect class="sh" width="192" height="56" rx="6"/><text x="96" y="20">chunk 3</text><text class="sub" x="96" y="40">16 tokens</text></g>
+            <g class="ve-n is-key" transform="translate(688 40)"><rect class="sh" width="24" height="56" rx="6"/><text x="12" y="28">2</text></g>
+            <path class="ann" d="M700 40V30"/><g class="ve-co" transform="translate(700 18)"><circle r="11"/><text>1</text></g>
+            <g class="ve-dim"><path class="ext" d="M40 102V132M712 102V132"/><path class="ln" d="M40 126H712"/><text x="376" y="120">N = 50 tokens</text></g>
+            <path class="ve-e" d="M190 218H260"/><text class="ve-el" x="225" y="209">equals</text>
+            <path class="ve-e" d="M410 218H480"/><text class="ve-el" x="445" y="209">equals</text>
+            <path class="ve-e" d="M630 218H700"/><text class="ve-el" x="665" y="209">differs</text>
+            <g class="ve-n" transform="translate(40 190)"><rect class="sh" width="150" height="56" rx="6"/><text x="75" y="20">parallel</text><text class="sub" x="75" y="40">n × n masked</text></g>
+            <g class="ve-n" transform="translate(260 190)"><rect class="sh" width="150" height="56" rx="6"/><text x="75" y="20">recurrent</text><text class="sub" x="75" y="40">loop over t</text></g>
+            <g class="ve-n" transform="translate(480 190)"><rect class="sh" width="150" height="56" rx="6"/><text x="75" y="20">chunked</text><text class="sub" x="75" y="40">C = 16</text></g>
+            <g class="ve-n is-key" transform="translate(700 190)"><rect class="sh" width="130" height="56" rx="6"/><text x="65" y="20">~1e-7</text><text class="sub" x="65" y="40">max diff</text></g>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 6</span>The script checks all three forms against each other. The differences come from summing in a different order.</figcaption>
+        <ol class="callouts">
+          <li><span class="co-n">1</span>N = 50 is not a multiple of 16 on purpose: the partial last chunk exercises the slicing logic.</li>
+        </ol>
+      </figure>
+      <div class="code">
+<div class="code-bar"><span class="ve-label">linear_attention.py</span><button class="copy" type="button">Copy</button></div>
+<pre tabindex="0"><code><span class="tk-k">import</span> torch
+<span class="tk-k">import</span> torch.nn.functional <span class="tk-k">as</span> F
+
+
+<span class="tk-k">def</span> <span class="tk-f">feature_map</span>(x):
+    <span class="tk-c"># elu+1 keeps features positive so the normalizer never hits zero or flips sign</span>
+    <span class="tk-k">return</span> F.<span class="tk-f">elu</span>(x) + <span class="tk-n">1</span>
+
+
+<span class="tk-k">def</span> <span class="tk-f">linear_attn_parallel</span>(q, k, v, eps=<span class="tk-n">1e-6</span>):
+    <span class="tk-c"># q, k: (B, H, N, d_k); v: (B, H, N, d_v)</span>
+    q, k = <span class="tk-f">feature_map</span>(q), <span class="tk-f">feature_map</span>(k)
+    N = q.shape[-<span class="tk-n">2</span>]
+    scores = q @ k.<span class="tk-f">transpose</span>(-<span class="tk-n">1</span>, -<span class="tk-n">2</span>)                       <span class="tk-c"># (B, H, N, N), quadratic like softmax attention</span>
+    mask = torch.<span class="tk-f">tril</span>(torch.<span class="tk-f">ones</span>(N, N, dtype=torch.bool, device=q.device))
+    scores = scores.<span class="tk-f">masked_fill</span>(~mask, <span class="tk-n">0.0</span>)                <span class="tk-c"># zero, not -inf: there is no softmax to absorb it</span>
+    <span class="tk-k">return</span> (scores @ v) / (scores.<span class="tk-f">sum</span>(-<span class="tk-n">1</span>, keepdim=<span class="tk-k">True</span>) + eps)
+
+
+<span class="tk-k">def</span> <span class="tk-f">linear_attn_recurrent</span>(q, k, v, eps=<span class="tk-n">1e-6</span>):
+    q, k = <span class="tk-f">feature_map</span>(q), <span class="tk-f">feature_map</span>(k)
+    B, H, N, d_k = q.shape
+    d_v = v.shape[-<span class="tk-n">1</span>]
+    S = q.<span class="tk-f">new_zeros</span>(B, H, d_k, d_v)   <span class="tk-c"># the whole "KV cache": size independent of N</span>
+    z = q.<span class="tk-f">new_zeros</span>(B, H, d_k)        <span class="tk-c"># running sum of keys, for the normalizer</span>
+    out = []
+    <span class="tk-k">for</span> t <span class="tk-k">in</span> <span class="tk-k">range</span>(N):
+        kt, vt, qt = k[:, :, t], v[:, :, t], q[:, :, t]
+        S = S + kt.<span class="tk-f">unsqueeze</span>(-<span class="tk-n">1</span>) * vt.<span class="tk-f">unsqueeze</span>(-<span class="tk-n">2</span>)        <span class="tk-c"># rank-1 outer-product write</span>
+        z = z + kt
+        num = (qt.<span class="tk-f">unsqueeze</span>(-<span class="tk-n">2</span>) @ S).<span class="tk-f">squeeze</span>(-<span class="tk-n">2</span>)            <span class="tk-c"># (B, H, d_v)</span>
+        den = (qt * z).<span class="tk-f">sum</span>(-<span class="tk-n">1</span>, keepdim=<span class="tk-k">True</span>)
+        out.<span class="tk-f">append</span>(num / (den + eps))
+    <span class="tk-k">return</span> torch.<span class="tk-f">stack</span>(out, dim=<span class="tk-n">2</span>)
+
+
+<span class="tk-k">def</span> <span class="tk-f">linear_attn_chunked</span>(q, k, v, chunk=<span class="tk-n">16</span>, eps=<span class="tk-n">1e-6</span>):
+    <span class="tk-c"># Training kernels use this form: matmuls inside a chunk, recurrence across chunks</span>
+    q, k = <span class="tk-f">feature_map</span>(q), <span class="tk-f">feature_map</span>(k)
+    B, H, N, d_k = q.shape
+    d_v = v.shape[-<span class="tk-n">1</span>]
+    S = q.<span class="tk-f">new_zeros</span>(B, H, d_k, d_v)
+    z = q.<span class="tk-f">new_zeros</span>(B, H, d_k)
+    mask = torch.<span class="tk-f">tril</span>(torch.<span class="tk-f">ones</span>(chunk, chunk, dtype=torch.bool, device=q.device))
+    out = []
+    <span class="tk-k">for</span> s <span class="tk-k">in</span> <span class="tk-k">range</span>(<span class="tk-n">0</span>, N, chunk):
+        qc, kc, vc = q[:, :, s:s+chunk], k[:, :, s:s+chunk], v[:, :, s:s+chunk]
+        C = qc.shape[-<span class="tk-n">2</span>]
+        intra = (qc @ kc.<span class="tk-f">transpose</span>(-<span class="tk-n">1</span>, -<span class="tk-n">2</span>)).<span class="tk-f">masked_fill</span>(~mask[:C, :C], <span class="tk-n">0.0</span>)
+        num = qc @ S + intra @ vc                            <span class="tk-c"># past chunks via state, current chunk via masked scores</span>
+        den = (qc @ z.<span class="tk-f">unsqueeze</span>(-<span class="tk-n">1</span>)).<span class="tk-f">squeeze</span>(-<span class="tk-n">1</span>) + intra.<span class="tk-f">sum</span>(-<span class="tk-n">1</span>)
+        out.<span class="tk-f">append</span>(num / (den.<span class="tk-f">unsqueeze</span>(-<span class="tk-n">1</span>) + eps))
+        S = S + kc.<span class="tk-f">transpose</span>(-<span class="tk-n">1</span>, -<span class="tk-n">2</span>) @ vc
+        z = z + kc.<span class="tk-f">sum</span>(-<span class="tk-n">2</span>)
+    <span class="tk-k">return</span> torch.<span class="tk-f">cat</span>(out, dim=<span class="tk-n">2</span>)
+
+
+<span class="tk-k">if</span> __name__ == <span class="tk-s">"__main__"</span>:
+    torch.<span class="tk-f">manual_seed</span>(<span class="tk-n">0</span>)
+    B, H, N, d_k, d_v = <span class="tk-n">2</span>, <span class="tk-n">3</span>, <span class="tk-n">50</span>, <span class="tk-n">8</span>, <span class="tk-n">16</span>
+    q, k, v = (torch.<span class="tk-f">randn</span>(B, H, N, d) <span class="tk-k">for</span> d <span class="tk-k">in</span> (d_k, d_k, d_v))
+    a = <span class="tk-f">linear_attn_parallel</span>(q, k, v)
+    b = <span class="tk-f">linear_attn_recurrent</span>(q, k, v)
+    c = <span class="tk-f">linear_attn_chunked</span>(q, k, v)
+    <span class="tk-f">print</span>(<span class="tk-s">"parallel vs recurrent max diff:"</span>, (a - b).<span class="tk-f">abs</span>().<span class="tk-f">max</span>().<span class="tk-f">item</span>())
+    <span class="tk-f">print</span>(<span class="tk-s">"parallel vs chunked   max diff:"</span>, (a - c).<span class="tk-f">abs</span>().<span class="tk-f">max</span>().<span class="tk-f">item</span>())
+    <span class="tk-k">assert</span> torch.<span class="tk-f">allclose</span>(a, b, atol=<span class="tk-n">1e-5</span>) <span class="tk-k">and</span> torch.<span class="tk-f">allclose</span>(a, c, atol=<span class="tk-n">1e-5</span>)</code></pre>
+</div>
+      <p>Zero, not minus infinity, fills the masked scores: there is no softmax to absorb it. Shapes are <code>(batch, heads, seq_len, head_dim)</code>.</p>
+
+      <h3>Add a data-dependent decay</h3>
+      <p>With a per-token scalar \(a_t \in (0,1)\) the state forgets a little before each write. This is the core of RetNet (fixed), Mamba-2 and Gated DeltaNet (learned). The parallel form multiplies the scores by a decay mask \(L\).</p>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" style="min-width:602px" viewBox="0 0 700 250" role="img" aria-label="The 4 by 4 decay mask L. The diagonal is 1. Below it, entry i, j is the product of the gates a from j plus 1 to i, so the farther apart two tokens are, the more factors. Above the diagonal every entry is 0.">
+            <text class="ve-tick" x="175" y="50">j = 1</text><text class="ve-tick" x="285" y="50">j = 2</text><text class="ve-tick" x="395" y="50">j = 3</text><text class="ve-tick" x="505" y="50">j = 4</text>
+            <text class="ve-tick" x="75" y="84">i = 1</text><text class="ve-tick" x="75" y="124">i = 2</text><text class="ve-tick" x="75" y="164">i = 3</text><text class="ve-tick" x="75" y="204">i = 4</text>
+            <g class="ve-n is-key" transform="translate(122 62)"><rect class="sh" width="106" height="36" rx="5"/><text x="53" y="18">1</text></g>
+            <text class="ve-tick" x="285" y="84">0</text><text class="ve-tick" x="395" y="84">0</text><text class="ve-tick" x="505" y="84">0</text>
+            <g class="ve-n" transform="translate(122 102)"><rect class="sh" width="106" height="36" rx="5"/><text x="53" y="18">a₂</text></g>
+            <g class="ve-n is-key" transform="translate(232 102)"><rect class="sh" width="106" height="36" rx="5"/><text x="53" y="18">1</text></g>
+            <text class="ve-tick" x="395" y="124">0</text><text class="ve-tick" x="505" y="124">0</text>
+            <g class="ve-n" transform="translate(122 142)"><rect class="sh" width="106" height="36" rx="5"/><text x="53" y="18">a₂a₃</text></g>
+            <g class="ve-n" transform="translate(232 142)"><rect class="sh" width="106" height="36" rx="5"/><text x="53" y="18">a₃</text></g>
+            <g class="ve-n is-key" transform="translate(342 142)"><rect class="sh" width="106" height="36" rx="5"/><text x="53" y="18">1</text></g>
+            <text class="ve-tick" x="505" y="164">0</text>
+            <g class="ve-n" transform="translate(122 182)"><rect class="sh" width="106" height="36" rx="5"/><text x="53" y="18">a₂a₃a₄</text></g>
+            <g class="ve-n" transform="translate(232 182)"><rect class="sh" width="106" height="36" rx="5"/><text x="53" y="18">a₃a₄</text></g>
+            <g class="ve-n" transform="translate(342 182)"><rect class="sh" width="106" height="36" rx="5"/><text x="53" y="18">a₄</text></g>
+            <g class="ve-n is-key" transform="translate(452 182)"><rect class="sh" width="106" height="36" rx="5"/><text x="53" y="18">1</text></g>
+            <path class="ann" d="M562 200H584"/><g class="ve-co" transform="translate(598 200)"><circle r="11"/><text>1</text></g>
+            <path class="ann" d="M562 80H584"/><g class="ve-co" transform="translate(598 80)"><circle r="11"/><text>2</text></g>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 7</span>The decay mask L: each entry multiplies the gates between token j and token i.</figcaption>
+        <ol class="callouts">
+          <li><span class="co-n">1</span>The farthest pair multiplies every gate between them, so old tokens fade.</li>
+          <li><span class="co-n">2</span>The diagonal is 1: a token is never decayed against itself.</li>
+        </ol>
+      </figure>
+      <div class="code">
+<div class="code-bar"><span class="ve-label">decay.py</span><button class="copy" type="button">Copy</button></div>
+<pre tabindex="0"><code><span class="tk-k">import</span> torch
+
+
+<span class="tk-k">def</span> <span class="tk-f">decay_parallel</span>(q, k, v, log_a):
+    <span class="tk-c"># log_a: (B, H, N), log of a per-token decay in (0, 1); working in log space avoids underflow of long products</span>
+    cum = log_a.<span class="tk-f">cumsum</span>(-<span class="tk-n">1</span>)                                  <span class="tk-c"># (B, H, N)</span>
+    N = q.shape[-<span class="tk-n">2</span>]
+    L = cum.<span class="tk-f">unsqueeze</span>(-<span class="tk-n">1</span>) - cum.<span class="tk-f">unsqueeze</span>(-<span class="tk-n">2</span>)               <span class="tk-c"># L[i, j] = sum_{j&lt;m&lt;=i} log a_m</span>
+    mask = torch.<span class="tk-f">tril</span>(torch.<span class="tk-f">ones</span>(N, N, dtype=torch.bool))
+    L = L.<span class="tk-f">masked_fill</span>(~mask, <span class="tk-f">float</span>(<span class="tk-s">"-inf"</span>)).<span class="tk-f">exp</span>()           <span class="tk-c"># 1-semiseparable decay mask</span>
+    <span class="tk-k">return</span> ((q @ k.<span class="tk-f">transpose</span>(-<span class="tk-n">1</span>, -<span class="tk-n">2</span>)) * L) @ v
+
+
+<span class="tk-k">def</span> <span class="tk-f">decay_recurrent</span>(q, k, v, log_a):
+    B, H, N, d_k = q.shape
+    S = q.<span class="tk-f">new_zeros</span>(B, H, d_k, v.shape[-<span class="tk-n">1</span>])
+    out = []
+    <span class="tk-k">for</span> t <span class="tk-k">in</span> <span class="tk-k">range</span>(N):
+        a = log_a[:, :, t].<span class="tk-f">exp</span>()[..., <span class="tk-k">None</span>, <span class="tk-k">None</span>]
+        S = a * S + k[:, :, t].<span class="tk-f">unsqueeze</span>(-<span class="tk-n">1</span>) * v[:, :, t].<span class="tk-f">unsqueeze</span>(-<span class="tk-n">2</span>)  <span class="tk-c"># forget a little, then write</span>
+        out.<span class="tk-f">append</span>((q[:, :, t].<span class="tk-f">unsqueeze</span>(-<span class="tk-n">2</span>) @ S).<span class="tk-f">squeeze</span>(-<span class="tk-n">2</span>))
+    <span class="tk-k">return</span> torch.<span class="tk-f">stack</span>(out, dim=<span class="tk-n">2</span>)
+
+
+<span class="tk-k">if</span> __name__ == <span class="tk-s">"__main__"</span>:
+    torch.<span class="tk-f">manual_seed</span>(<span class="tk-n">0</span>)
+    B, H, N, d_k, d_v = <span class="tk-n">2</span>, <span class="tk-n">2</span>, <span class="tk-n">40</span>, <span class="tk-n">8</span>, <span class="tk-n">8</span>
+    q, k, v = (torch.<span class="tk-f">randn</span>(B, H, N, d) <span class="tk-k">for</span> d <span class="tk-k">in</span> (d_k, d_k, d_v))
+    log_a = torch.nn.functional.<span class="tk-f">logsigmoid</span>(torch.<span class="tk-f">randn</span>(B, H, N) + <span class="tk-n">2</span>)  <span class="tk-c"># data-dependent gate, mostly near 1</span>
+    a, b = <span class="tk-f">decay_parallel</span>(q, k, v, log_a), <span class="tk-f">decay_recurrent</span>(q, k, v, log_a)
+    <span class="tk-f">print</span>(<span class="tk-s">"max diff:"</span>, (a - b).<span class="tk-f">abs</span>().<span class="tk-f">max</span>().<span class="tk-f">item</span>())
+    <span class="tk-k">assert</span> torch.<span class="tk-f">allclose</span>(a, b, atol=<span class="tk-n">1e-4</span>)</code></pre>
+</div>
+      <p>The mask is built from a <code>cumsum</code> of log gates: each product becomes one subtraction, with no underflow. There is no normalizer; decay models use output normalization instead. In section 04 this script is, almost line for line, Mamba-2.</p>
+    </section>
+
+    <section class="sec" id="s04" aria-labelledby="s04-h">
+      <div class="sec-head"><p class="sec-num"><span class="n">04</span>Modern family</p><h2 id="s04-h">Each successor changes how the state forgets and how it writes</h2></div>
+      <p>Plain linear attention only adds. After a few thousand tokens the state is a blurry sum and nothing can be removed. Every successful successor adds a way to <b>forget</b>; the best add a way to <b>overwrite</b>.</p>
+      <figure>
+<div class="cases">
+<div class="case" data-st="risk"><span class="chip risk">No forgetting</span><h3>Linear attention, 2020</h3>
+<svg class="ve-mini" viewBox="0 0 240 160" role="img" aria-label="Linear attention: every old slot keeps full height and the new write piles on top.">
+<text class="ve-tick l" x="12" y="12">S(t-1)</text>
+<rect class="ve-bar" x="12" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="48" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="84" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="120" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="156" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="192" y="20" width="24" height="30" rx="2"/>
+<path class="ve-e is-st" d="M120 56V74"/><text class="ve-el r" x="128" y="70">adds</text>
+<text class="ve-tick l" x="12" y="96">S(t)</text>
+<rect class="ve-bar" x="12" y="110" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="48" y="110" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="84" y="110" width="24" height="30" rx="2"/>
+<rect class="ve-bar hot" x="84" y="98" width="24" height="12" rx="2"/>
+<rect class="ve-bar" x="120" y="110" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="156" y="110" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="192" y="110" width="24" height="30" rx="2"/>
+<text class="ve-tick" x="96" y="156">new write</text>
+</svg>
+<p class="meta">Only adds. The state blurs.</p></div>
+<div class="case" data-st="warn"><span class="chip warn">Fixed decay</span><h3>RetNet, 2023</h3>
+<svg class="ve-mini" viewBox="0 0 240 160" role="img" aria-label="RetNet: every slot shrinks by the same constant, then the write is added.">
+<text class="ve-tick l" x="12" y="12">S(t-1)</text>
+<rect class="ve-bar" x="12" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="48" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="84" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="120" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="156" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="192" y="20" width="24" height="30" rx="2"/>
+<path class="ve-e is-st" d="M120 56V74"/><text class="ve-el r" x="128" y="70">× γ</text>
+<text class="ve-tick l" x="12" y="96">S(t)</text>
+<rect class="ve-bar" x="12" y="119" width="24" height="21" rx="2"/>
+<rect class="ve-bar" x="48" y="119" width="24" height="21" rx="2"/>
+<rect class="ve-bar" x="84" y="119" width="24" height="21" rx="2"/>
+<rect class="ve-bar hot" x="84" y="107" width="24" height="12" rx="2"/>
+<rect class="ve-bar" x="120" y="119" width="24" height="21" rx="2"/>
+<rect class="ve-bar" x="156" y="119" width="24" height="21" rx="2"/>
+<rect class="ve-bar" x="192" y="119" width="24" height="21" rx="2"/>
+<text class="ve-tick" x="96" y="156">new write</text>
+</svg>
+<p class="meta">One constant γ per head.</p></div>
+<div class="case" data-st="ok"><span class="chip ok">Per-dimension gate</span><h3>GLA, 2023</h3>
+<svg class="ve-mini" viewBox="0 0 240 160" role="img" aria-label="GLA: each slot shrinks by its own input-dependent amount, then the write is added.">
+<text class="ve-tick l" x="12" y="12">S(t-1)</text>
+<rect class="ve-bar" x="12" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="48" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="84" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="120" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="156" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="192" y="20" width="24" height="30" rx="2"/>
+<path class="ve-e is-st" d="M120 56V74"/><text class="ve-el r" x="128" y="70">× diag α</text>
+<text class="ve-tick l" x="12" y="96">S(t)</text>
+<rect class="ve-bar" x="12" y="128" width="24" height="12" rx="2"/>
+<rect class="ve-bar" x="48" y="112" width="24" height="28" rx="2"/>
+<rect class="ve-bar" x="84" y="122" width="24" height="18" rx="2"/>
+<rect class="ve-bar hot" x="84" y="110" width="24" height="12" rx="2"/>
+<rect class="ve-bar" x="120" y="110" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="156" y="132" width="24" height="8" rx="2"/>
+<rect class="ve-bar" x="192" y="118" width="24" height="22" rx="2"/>
+<text class="ve-tick" x="96" y="156">new write</text>
+</svg>
+<p class="meta">Gate from the input, one per key dimension.</p></div>
+<div class="case" data-st="ok"><span class="chip ok">Scalar gate</span><h3>Mamba-2, 2024</h3>
+<svg class="ve-mini" viewBox="0 0 240 160" role="img" aria-label="Mamba-2: all slots shrink by one input-dependent scalar, then the write is added.">
+<text class="ve-tick l" x="12" y="12">S(t-1)</text>
+<rect class="ve-bar" x="12" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="48" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="84" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="120" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="156" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="192" y="20" width="24" height="30" rx="2"/>
+<path class="ve-e is-st" d="M120 56V74"/><text class="ve-el r" x="128" y="70">× aₜ</text>
+<text class="ve-tick l" x="12" y="96">S(t)</text>
+<rect class="ve-bar" x="12" y="122" width="24" height="18" rx="2"/>
+<rect class="ve-bar" x="48" y="122" width="24" height="18" rx="2"/>
+<rect class="ve-bar" x="84" y="122" width="24" height="18" rx="2"/>
+<rect class="ve-bar hot" x="84" y="110" width="24" height="12" rx="2"/>
+<rect class="ve-bar" x="120" y="122" width="24" height="18" rx="2"/>
+<rect class="ve-bar" x="156" y="122" width="24" height="18" rx="2"/>
+<rect class="ve-bar" x="192" y="122" width="24" height="18" rx="2"/>
+<text class="ve-tick" x="96" y="156">new write</text>
+</svg>
+<p class="meta">One data-dependent scalar per head.</p></div>
+<div class="case" data-st="ok"><span class="chip ok">Overwrite</span><h3>DeltaNet, 2024</h3>
+<svg class="ve-mini" viewBox="0 0 240 160" role="img" aria-label="DeltaNet: the written slot is replaced, the others are unchanged.">
+<text class="ve-tick l" x="12" y="12">S(t-1)</text>
+<rect class="ve-bar" x="12" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="48" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="84" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="120" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="156" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="192" y="20" width="24" height="30" rx="2"/>
+<path class="ve-e is-st" d="M120 56V74"/><text class="ve-el r" x="128" y="70">overwrites</text>
+<text class="ve-tick l" x="12" y="96">S(t)</text>
+<rect class="ve-bar" x="12" y="110" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="48" y="110" width="24" height="30" rx="2"/>
+<rect class="ve-bar hot" x="84" y="110" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="120" y="110" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="156" y="110" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="192" y="110" width="24" height="30" rx="2"/>
+<text class="ve-tick" x="96" y="156">new write</text>
+</svg>
+<p class="meta">Reads the old value, writes the difference.</p></div>
+<div class="case" data-st="ok"><span class="chip ok">Gate and overwrite</span><h3>Gated DeltaNet, 2024</h3>
+<svg class="ve-mini" viewBox="0 0 240 160" role="img" aria-label="Gated DeltaNet: all slots shrink and the written slot is replaced.">
+<text class="ve-tick l" x="12" y="12">S(t-1)</text>
+<rect class="ve-bar" x="12" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="48" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="84" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="120" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="156" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="192" y="20" width="24" height="30" rx="2"/>
+<path class="ve-e is-st" d="M120 56V74"/><text class="ve-el r" x="128" y="70">gates, edits</text>
+<text class="ve-tick l" x="12" y="96">S(t)</text>
+<rect class="ve-bar" x="12" y="119" width="24" height="21" rx="2"/>
+<rect class="ve-bar" x="48" y="119" width="24" height="21" rx="2"/>
+<rect class="ve-bar hot" x="84" y="110" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="120" y="119" width="24" height="21" rx="2"/>
+<rect class="ve-bar" x="156" y="119" width="24" height="21" rx="2"/>
+<rect class="ve-bar" x="192" y="119" width="24" height="21" rx="2"/>
+<text class="ve-tick" x="96" y="156">new write</text>
+</svg>
+<p class="meta">Gate clears fast, delta edits one association.</p></div>
+</div>
+<figcaption><span class="fig-n">Fig. 8</span>The same six-slot memory under each update rule. The hot bar is the new write; shrinking bars are forgetting.</figcaption>
+</figure>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$\begin{aligned}
+            \text{Linear attn:}\ &amp; S_t = S_{t-1} + k_t v_t^\top \\
+            \text{RetNet:}\ &amp; S_t = \gamma S_{t-1} + k_t v_t^\top \\
+            \text{GLA:}\ &amp; S_t = \mathrm{Diag}(\alpha_t) S_{t-1} + k_t v_t^\top \\
+            \text{Mamba-2:}\ &amp; S_t = a_t S_{t-1} + k_t v_t^\top \\
+            \text{DeltaNet:}\ &amp; S_t = (I - \beta_t k_t k_t^\top) S_{t-1} + \beta_t k_t v_t^\top \\
+            \text{Gated DeltaNet:}\ &amp; S_t = a_t (I - \beta_t k_t k_t^\top) S_{t-1} + \beta_t k_t v_t^\top
+            \end{aligned}$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(S_t\)</dt><dd>state \(d_k \times d_v\); read out as \(o_t = S_t^\top q_t\)</dd></div>
+            <div><dt>\(\gamma\)</dt><dd>fixed scalar decay per head</dd></div>
+            <div><dt>\(\alpha_t, a_t\)</dt><dd>data-dependent gate: per key dimension, or one scalar</dd></div>
+            <div><dt>\(\beta_t\)</dt><dd>write strength in \((0,1)\)</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 6</span>The zoo as one table of update rules (RetNet 2023, GLA 2023, Mamba-2 2024, DeltaNet 2024, Gated DeltaNet 2024).</figcaption>
+      </figure>
+      <p><b>RetNet</b> (Sun et al., 2023) uses a different \(\gamma\) per head, so some heads remember long and others short. Its parallel form is \((QK^\top \odot D)V\) with \(D_{ij} = \gamma^{i-j}\): the decay script with constant \(a_t\). It treats parallel, recurrent and chunkwise as a design goal. Weakness: an important token decays as fast as filler.</p>
+      <p><b>GLA</b> (Yang et al., 2023) computes \(\alpha_t = \sigma(W_\alpha x_t)^{1/\tau} \in (0,1)^{d_k}\) from the current input, so the model decides token by token what to keep. Its FlashLinearAttention chunkwise kernel made these models fast in wall-clock time, not only asymptotically.</p>
+
+      <h3>State space models: S4 to Mamba</h3>
+      <figure>
+<div class="frame">
+<svg class="ve-svg" style="min-width:774px" viewBox="0 -20 900 290" role="img" aria-label="A state space model and gated linear attention are the same computation. The input x writes into the state h through B, the state forgets through A-bar, and C reads it out as y. In linear attention, v writes through k, the state S forgets through the gate, and q reads it out as o. Input x equals v, state h equals S, output y equals o.">
+<path class="ve-e" d="M130 68H270"/><text class="ve-el" x="200" y="59">writes via B</text>
+<path class="ve-e" d="M420 68H560"/><text class="ve-el" x="490" y="59">reads via C</text>
+<path class="ve-e" d="M290 40V12H340V40"/><text class="ve-el" x="315" y="2">Ā forgets</text>
+<path class="ve-e" d="M130 218H270"/><text class="ve-el" x="200" y="209">writes via k</text>
+<path class="ve-e" d="M420 218H560"/><text class="ve-el" x="490" y="209">reads via q</text>
+<path class="ve-e" d="M290 190V162H340V190"/><text class="ve-el" x="315" y="152">aₜ forgets</text>
+<path class="ve-e is-async no-ah" d="M75 96V190"/><text class="ve-el r" x="83" y="148">x = v</text>
+<path class="ve-e is-async no-ah" d="M400 96V190"/><text class="ve-el r" x="408" y="148">h = S</text>
+<path class="ve-e is-async no-ah" d="M615 96V190"/><text class="ve-el r" x="623" y="148">y = o</text>
+<g class="ve-n" transform="translate(20 40)"><rect class="sh" width="110" height="56" rx="6"/><text x="55" y="20">x_t</text><text class="sub" x="55" y="40">input</text></g>
+<g class="ve-n is-key" transform="translate(270 40)"><rect class="sh" width="150" height="56" rx="6"/><text x="75" y="20">h_t</text><text class="sub" x="75" y="40">state, N dims</text></g>
+<g class="ve-n" transform="translate(560 40)"><rect class="sh" width="110" height="56" rx="6"/><text x="55" y="20">y_t</text><text class="sub" x="55" y="40">output</text></g>
+<g class="ve-n" transform="translate(20 190)"><rect class="sh" width="110" height="56" rx="6"/><text x="55" y="20">v_t</text><text class="sub" x="55" y="40">value</text></g>
+<g class="ve-n is-key" transform="translate(270 190)"><rect class="sh" width="150" height="56" rx="6"/><text x="75" y="20">S_t</text><text class="sub" x="75" y="40">state matrix</text></g>
+<g class="ve-n" transform="translate(560 190)"><rect class="sh" width="110" height="56" rx="6"/><text x="55" y="20">o_t</text><text class="sub" x="55" y="40">output</text></g>
+<text class="ve-tick l" x="700" y="72">State space model</text>
+<text class="ve-tick l" x="700" y="222">Gated linear attention</text>
+</svg>
+</div>
+<figcaption><span class="fig-n">Fig. 9</span>Mamba's recurrence and gated linear attention have the same shape: B is k, x is v, C is q.</figcaption>
+</figure>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$h'(t) = A\, h(t) + B\, x(t), \quad y(t) = C\, h(t)$$
+            $$h_t = \bar{A} h_{t-1} + \bar{B} x_t, \quad y_t = C h_t, \quad \bar{A} = \exp(\Delta A), \ \bar{B} \approx \Delta B$$
+            $$y = \bar{K} * x, \quad \bar{K} = \left(C\bar{B},\ C\bar{A}\bar{B},\ C\bar{A}^2\bar{B},\ \dots\right)$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(h\)</dt><dd>hidden state, \(N\) dims</dd></div>
+            <div><dt>\(A, B, C\)</dt><dd>\(N \times N\), \(N \times 1\), \(1 \times N\)</dd></div>
+            <div><dt>\(\Delta\)</dt><dd>step size for zero-order-hold discretization</dd></div>
+            <div><dt>\(\bar{K}\)</dt><dd>long convolution kernel; train with FFT in \(O(n \log n)\)</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 7</span>A continuous SSM, its discretization, and the S4 convolution view (fixed \(\bar A, \bar B, C\)).</figcaption>
+      </figure>
+      <p><b>S4</b> (Gu et al., 2021) trains as an FFT convolution and infers as a recurrence. Two ingredients made it work: HiPPO initialization of \(A\), derived so that \(h\) optimally compresses the history onto a polynomial basis, and a structured \(A\) that makes \(\bar K\) cheap. It led long-range benchmarks but lagged on language.</p>
+      <p><b>Mamba</b> (Gu and Dao, 2023) diagnosed why: S4 is linear time-invariant, so it cannot ignore filler or latch onto a key fact. Mamba makes \(\Delta\), \(B\), \(C\) functions of the input. A large \(\Delta_t\) resets the state toward this token; a small one keeps it.</p>
+      <figure>
+<div class="cases">
+<div class="case" data-st="risk"><span class="chip risk">Same for every token</span><h3>S4, time-invariant</h3>
+<svg class="ve-mini" viewBox="0 0 240 160" role="img" aria-label="S4: every slot shrinks by the same fixed amount for every token.">
+<text class="ve-tick l" x="12" y="12">S(t-1)</text>
+<rect class="ve-bar" x="12" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="48" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="84" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="120" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="156" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="192" y="20" width="24" height="30" rx="2"/>
+<path class="ve-e is-st" d="M120 56V74"/><text class="ve-el r" x="128" y="70">× Ā</text>
+<text class="ve-tick l" x="12" y="96">S(t)</text>
+<rect class="ve-bar" x="12" y="119" width="24" height="21" rx="2"/>
+<rect class="ve-bar" x="48" y="119" width="24" height="21" rx="2"/>
+<rect class="ve-bar" x="84" y="119" width="24" height="21" rx="2"/>
+<rect class="ve-bar hot" x="84" y="107" width="24" height="12" rx="2"/>
+<rect class="ve-bar" x="120" y="119" width="24" height="21" rx="2"/>
+<rect class="ve-bar" x="156" y="119" width="24" height="21" rx="2"/>
+<rect class="ve-bar" x="192" y="119" width="24" height="21" rx="2"/>
+<text class="ve-tick" x="96" y="156">new write</text>
+</svg>
+<p class="meta">Filler and key facts get identical dynamics.</p></div>
+<div class="case" data-st="ok"><span class="chip ok">Focus on this token</span><h3>Mamba, large Δ</h3>
+<svg class="ve-mini" viewBox="0 0 240 160" role="img" aria-label="Mamba with large delta: old slots nearly vanish and the written slot is large.">
+<text class="ve-tick l" x="12" y="12">S(t-1)</text>
+<rect class="ve-bar" x="12" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="48" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="84" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="120" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="156" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="192" y="20" width="24" height="30" rx="2"/>
+<path class="ve-e is-st" d="M120 56V74"/><text class="ve-el r" x="128" y="70">resets</text>
+<text class="ve-tick l" x="12" y="96">S(t)</text>
+<rect class="ve-bar" x="12" y="135" width="24" height="5" rx="2"/>
+<rect class="ve-bar" x="48" y="135" width="24" height="5" rx="2"/>
+<rect class="ve-bar hot" x="84" y="110" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="120" y="135" width="24" height="5" rx="2"/>
+<rect class="ve-bar" x="156" y="135" width="24" height="5" rx="2"/>
+<rect class="ve-bar" x="192" y="135" width="24" height="5" rx="2"/>
+<text class="ve-tick" x="96" y="156">new write</text>
+</svg>
+<p class="meta">State moves toward the current input.</p></div>
+<div class="case" data-st="ok"><span class="chip ok">Ignore this token</span><h3>Mamba, small Δ</h3>
+<svg class="ve-mini" viewBox="0 0 240 160" role="img" aria-label="Mamba with small delta: all slots stay and the write is tiny.">
+<text class="ve-tick l" x="12" y="12">S(t-1)</text>
+<rect class="ve-bar" x="12" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="48" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="84" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="120" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="156" y="20" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="192" y="20" width="24" height="30" rx="2"/>
+<path class="ve-e is-st" d="M120 56V74"/><text class="ve-el r" x="128" y="70">keeps</text>
+<text class="ve-tick l" x="12" y="96">S(t)</text>
+<rect class="ve-bar" x="12" y="110" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="48" y="110" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="84" y="110" width="24" height="30" rx="2"/>
+<rect class="ve-bar hot" x="84" y="107" width="24" height="3" rx="2"/>
+<rect class="ve-bar" x="120" y="110" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="156" y="110" width="24" height="30" rx="2"/>
+<rect class="ve-bar" x="192" y="110" width="24" height="30" rx="2"/>
+<text class="ve-tick" x="96" y="156">new write</text>
+</svg>
+<p class="meta">State stays nearly unchanged.</p></div>
+</div>
+<figcaption><span class="fig-n">Fig. 10</span>Selection: Δ decides, per token, how much of the state to keep. Without it the dynamics cannot depend on content.</figcaption>
+</figure>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$\Delta_t = \mathrm{softplus}(W_\Delta x_t), \ B_t = W_B x_t, \ C_t = W_C x_t$$
+            $$h_t = \exp(\Delta_t A)\, h_{t-1} + \Delta_t B_t x_t, \quad y_t = C_t h_t$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(W_\Delta, W_B, W_C\)</dt><dd>learned projections of the input</dd></div>
+            <div><dt>\(N\)</dt><dd>state size, 16 per channel in Mamba-1; diagonal \(A\)</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 8</span>The selection mechanism.</figcaption>
+      </figure>
+      <p>Losing time-invariance loses the convolution trick, so Mamba computes the recurrence with a hardware-aware <b>parallel scan</b> that keeps the expanded state in SRAM, the FlashAttention lesson again. Mamba-1 was the first attention-free model to match same-size transformers on perplexity at small scale.</p>
+      <p>Compare Mamba's recurrence with gated linear attention and map \(B_t \leftrightarrow k_t\), \(x_t \leftrightarrow v_t\), \(C_t \leftrightarrow q_t\): the same computation (Fig. 9).</p>
+
+      <h3>Mamba-2 and state space duality</h3>
+      <p>Restrict \(A\) to a scalar times identity per head, \(\bar A_t = a_t I\). Unrolling gives masked linear attention with \(Q = C\), \(K = B\), \(V = x\) and a decay mask \(L\).</p>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$y = \left(L \odot C B^\top\right) x, \qquad L_{ij} = \begin{cases} \prod_{m=j+1}^{i} a_m &amp; i \ge j \\ 0 &amp; i &lt; j \end{cases}$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(C, B\)</dt><dd>\(n \times N\), stacked per-token \(C_t, B_t\)</dd></div>
+            <div><dt>\(x\)</dt><dd>head input, \(n \times P\) with head dimension \(P\)</dd></div>
+            <div><dt>\(L\)</dt><dd>1-semiseparable decay mask (Fig. 7)</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 9</span>State space duality (SSD): the recurrent SSM and this masked-attention form compute the same thing, so pick the efficient one. It is <code>decay_parallel</code> versus <code>decay_recurrent</code>.</figcaption>
+      </figure>
+      <p>A scalar instead of per-dimension decay lets SSD use matmul chunking (tensor cores) instead of a scan: training 2 to 8 times faster than Mamba-1, with much larger states (\(N = 64\) to \(256\)). Mamba-2 also adds multi-head structure.</p>
+
+      <h3>RWKV</h3>
+      <p><strong>RWKV</strong> (Peng et al., 2023) grew from the attention-free transformer line, with "time mixing" (the token mixer) and "channel mixing" (the MLP). RWKV-4 is a decayed weighted average computable as an RNN. RWKV-5/6 (Eagle, Finch) added matrix states and data-dependent decay; RWKV-7 adopts a generalized delta rule. It scaled to 14B parameters early as a community-trained family.</p>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$wkv_t = \frac{\sum_{i&lt;t} e^{-(t-1-i)w + k_i}\, v_i + e^{u + k_t}\, v_t}{\sum_{i&lt;t} e^{-(t-1-i)w + k_i} + e^{u + k_t}}$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(w \ge 0\)</dt><dd>learned per-channel decay rate</dd></div>
+            <div><dt>\(u\)</dt><dd>learned bonus for the current token</dd></div>
+            <div><dt>\(k_i, v_i\)</dt><dd>per-channel scalars</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 10</span>RWKV-4 time mixing, per channel.</figcaption>
+      </figure>
+
+      <h3>DeltaNet: overwrite, do not accumulate</h3>
+      <p>Return to the memory view. If the state already holds \(v_{\text{old}}\) under key \(k\), additive writes make a read return roughly \(v_{\text{old}} + v_{\text{new}}\), a corrupted mix. Decay only blurs everything evenly.</p>
+      <figure>
+<div class="cases">
+<div class="case" data-st="risk"><span class="chip risk">Corrupted read</span><h3>Additive write</h3>
+<svg class="ve-mini" viewBox="0 0 240 160" role="img" aria-label="Additive: the state holds v_old under key k, a new value v_new is added on top, and reading with k returns the sum of old and new.">
+<text class="ve-tick l" x="12" y="14">stored under k</text><rect class="ve-bar" x="12" y="22" width="80" height="16" rx="2"/><text class="ve-bar-v" x="100" y="30">v_old</text>
+<text class="ve-tick l" x="12" y="62">new write</text><rect class="ve-bar hot" x="12" y="70" width="80" height="16" rx="2"/><text class="ve-bar-v" x="100" y="78">v_new</text>
+<text class="ve-tick l" x="12" y="110">read with k</text><rect class="ve-bar" x="12" y="118" width="80" height="16" rx="2"/><rect class="ve-bar hot" x="92" y="118" width="80" height="16" rx="2"/>
+<text class="ve-tick l" x="12" y="154">old + new: a mix</text>
+</svg></div>
+<div class="case" data-st="ok"><span class="chip ok">Exact read</span><h3>Delta rule</h3>
+<svg class="ve-mini" viewBox="0 0 240 160" role="img" aria-label="Delta rule: the state first reads v_old under key k, then writes the difference, so reading with k returns exactly v_new.">
+<text class="ve-tick l" x="12" y="14">stored under k</text><rect class="ve-bar" x="12" y="22" width="80" height="16" rx="2"/><text class="ve-bar-v" x="100" y="30">v_old</text>
+<text class="ve-tick l" x="12" y="62">writes v_new − v_old</text><rect class="ve-bar hot" x="12" y="70" width="80" height="16" rx="2"/><text class="ve-bar-v" x="100" y="78">β = 1</text>
+<text class="ve-tick l" x="12" y="110">read with k</text><rect class="ve-bar hot" x="12" y="118" width="80" height="16" rx="2"/><text class="ve-bar-v" x="100" y="126">v_new</text>
+<text class="ve-tick l" x="12" y="154">old erased, new stored</text>
+</svg></div>
+</div>
+<figcaption><span class="fig-n">Fig. 11</span>Reading under the same key: additive linear attention returns a mix, the delta rule returns the new value.</figcaption>
+</figure>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$v_t^{\text{old}} = S_{t-1}^\top k_t, \quad S_t = S_{t-1} + \beta_t\, k_t \left(v_t - v_t^{\text{old}}\right)^\top = \left(I - \beta_t k_t k_t^\top\right) S_{t-1} + \beta_t k_t v_t^\top$$
+            $$\text{Gated DeltaNet:}\quad S_t = a_t \left(I - \beta_t k_t k_t^\top\right) S_{t-1} + \beta_t k_t v_t^\top$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(k_t\)</dt><dd>L2-normalized key</dd></div>
+            <div><dt>\(\beta_t\)</dt><dd>\(\sigma(w_\beta^\top x_t)\), write strength; 1 fully replaces</dd></div>
+            <div><dt>\(a_t\)</dt><dd>gate that clears memory fast</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 11</span>The delta rule reads what is stored under \(k_t\), then writes the difference.</figcaption>
+      </figure>
+      <p>The step is one online gradient descent step on \(\tfrac{1}{2}\|S^\top k_t - v_t\|^2\) with learning rate \(\beta_t\). That links the line to test-time training and Titans: the state is a tiny model trained on the context as it streams by. Products of \((I - \beta kk^\top)\) have a compact WY representation, which gives a chunkwise matmul algorithm (Songlin Yang's DeltaNet work).</p>
+      <p><b>Gated DeltaNet</b> (Yang, Kautz, Hatamizadeh, 2024) combines both: the gate clears memory at document or topic boundaries, the delta rule edits specific associations. It beats Mamba-2 and DeltaNet on language modeling and retrieval at equal size, and is the linear layer in Qwen3-Next.</p>
+    </section>
+
+    <section class="sec" id="s05" aria-labelledby="s05-h">
+      <div class="sec-head"><p class="sec-num"><span class="n">05</span>Tradeoffs</p><h2 id="s05-h">A fixed state cannot store everything, so production models are hybrids</h2></div>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" style="min-width:774px" viewBox="0 0 900 200" role="img" aria-label="One linear head with d_k and d_v of 128 holds 16,384 numbers. One softmax attention head at 32k tokens holds about 8.4 million, which is 512 times more.">
+            <text class="ve-tick l" x="20" y="26">Linear head, d_k = d_v = 128</text>
+            <rect class="ve-bar hot" x="20" y="40" width="3" height="24" rx="1"/><text class="ve-bar-v" x="34" y="52">16,384 numbers</text>
+            <text class="ve-tick l" x="20" y="106">Softmax head, 32k tokens, K and V</text>
+            <rect class="ve-bar" x="20" y="120" width="640" height="24" rx="2"/><text class="ve-bar-v" x="668" y="132">8.4 million</text>
+            <g class="ve-dim is-key"><path class="ext" d="M20 148V182M660 148V182"/><path class="ln" d="M20 176H660"/><text x="340" y="170">512 × the linear state</text></g>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 12</span>The state is a lossy compression: 2 × 32,768 × 128 is about 8.4 million numbers for softmax, 128 × 128 = 16,384 for linear. No update rule can store arbitrary exact information in the small one.</figcaption>
+      </figure>
+      <p>This shows up in <b>associative recall</b>: many key-value pairs, then a query key. Zoology (Arora et al., 2023) showed that perplexity gaps between attention-free models and transformers are dominated by tokens that need recall, and grow once the pairs exceed what the state holds. "Repeat After Me" (Jelassi et al., 2024) showed that transformers copy long strings that fixed-state models cannot.</p>
+      <figure>
+        <div class="cases">
+          <div class="case" data-st="ok"><span class="chip ok">Strong</span><h3>Where linear wins</h3><p>Perplexity on ordinary text, smooth long-range dependencies, throughput, memory, very long streams.</p></div>
+          <div class="case" data-st="risk"><span class="chip risk">Weak</span><h3>Where linear loses</h3><p>Needle-in-a-haystack, copying, many-example in-context learning, multi-hop lookups, exact string search.</p></div>
+          <div class="case" data-st="warn"><span class="chip warn">Partly fixed</span><h3>Mitigations</h3><p>Larger states (Mamba-2's N), better update rules (delta), more heads. Never eliminated.</p></div>
+        </div>
+        <figcaption><span class="fig-n">Fig. 13</span>Strengths and weaknesses follow from the compressed state.</figcaption>
+      </figure>
+
+      <h3>Hybrids: a few attention layers go a long way</h3>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" style="min-width:774px" viewBox="0 0 900 340" role="img" aria-label="Layer stacks of three hybrids. Jamba has one attention layer to seven Mamba layers. MiniMax-01 has one softmax layer after seven lightning layers. Qwen3-Next has one attention layer to three Gated DeltaNet layers. Nemotron-H is mostly Mamba-2 with a small fraction of attention layers. Only attention layers keep a KV cache.">
+            <g class="ve-dim"><text x="120" y="40">Jamba</text></g><text class="ve-tick" x="120" y="62">1 attention : 7 Mamba</text>
+            <g class="ve-n is-key" transform="translate(260 20)"><rect class="sh" width="60" height="56" rx="6"/><text x="30" y="28">A</text></g>
+            <g class="ve-n" transform="translate(330 20)"><rect class="sh" width="60" height="56" rx="6"/><text x="30" y="28">M</text></g><g class="ve-n" transform="translate(400 20)"><rect class="sh" width="60" height="56" rx="6"/><text x="30" y="28">M</text></g><g class="ve-n" transform="translate(470 20)"><rect class="sh" width="60" height="56" rx="6"/><text x="30" y="28">M</text></g><g class="ve-n" transform="translate(540 20)"><rect class="sh" width="60" height="56" rx="6"/><text x="30" y="28">M</text></g><g class="ve-n" transform="translate(610 20)"><rect class="sh" width="60" height="56" rx="6"/><text x="30" y="28">M</text></g><g class="ve-n" transform="translate(680 20)"><rect class="sh" width="60" height="56" rx="6"/><text x="30" y="28">M</text></g><g class="ve-n" transform="translate(750 20)"><rect class="sh" width="60" height="56" rx="6"/><text x="30" y="28">M</text></g>
+
+            <g class="ve-dim"><text x="120" y="120">MiniMax-01</text></g><text class="ve-tick" x="120" y="142">7 lightning : 1 softmax</text>
+            <g class="ve-n" transform="translate(260 100)"><rect class="sh" width="60" height="56" rx="6"/><text x="30" y="28">L</text></g><g class="ve-n" transform="translate(330 100)"><rect class="sh" width="60" height="56" rx="6"/><text x="30" y="28">L</text></g><g class="ve-n" transform="translate(400 100)"><rect class="sh" width="60" height="56" rx="6"/><text x="30" y="28">L</text></g><g class="ve-n" transform="translate(470 100)"><rect class="sh" width="60" height="56" rx="6"/><text x="30" y="28">L</text></g><g class="ve-n" transform="translate(540 100)"><rect class="sh" width="60" height="56" rx="6"/><text x="30" y="28">L</text></g><g class="ve-n" transform="translate(610 100)"><rect class="sh" width="60" height="56" rx="6"/><text x="30" y="28">L</text></g><g class="ve-n" transform="translate(680 100)"><rect class="sh" width="60" height="56" rx="6"/><text x="30" y="28">L</text></g>
+            <g class="ve-n is-key" transform="translate(750 100)"><rect class="sh" width="60" height="56" rx="6"/><text x="30" y="28">A</text></g>
+
+            <g class="ve-dim"><text x="120" y="200">Qwen3-Next</text></g><text class="ve-tick" x="120" y="222">3 linear : 1 attention</text>
+            <g class="ve-n" transform="translate(260 180)"><rect class="sh" width="60" height="56" rx="6"/><text x="30" y="28">G</text></g><g class="ve-n" transform="translate(330 180)"><rect class="sh" width="60" height="56" rx="6"/><text x="30" y="28">G</text></g><g class="ve-n" transform="translate(400 180)"><rect class="sh" width="60" height="56" rx="6"/><text x="30" y="28">G</text></g>
+            <g class="ve-n is-key" transform="translate(470 180)"><rect class="sh" width="60" height="56" rx="6"/><text x="30" y="28">A</text></g>
+            <g class="ve-n" transform="translate(540 180)"><rect class="sh" width="60" height="56" rx="6"/><text x="30" y="28">G</text></g><g class="ve-n" transform="translate(610 180)"><rect class="sh" width="60" height="56" rx="6"/><text x="30" y="28">G</text></g><g class="ve-n" transform="translate(680 180)"><rect class="sh" width="60" height="56" rx="6"/><text x="30" y="28">G</text></g>
+            <g class="ve-n is-key" transform="translate(750 180)"><rect class="sh" width="60" height="56" rx="6"/><text x="30" y="28">A</text></g>
+
+            <text class="ve-tick l" x="20" y="282">Nemotron-H: mostly Mamba-2 layers, a small fraction attention</text>
+            <text class="ve-tick l" x="20" y="316">A attention (KV cache) · M Mamba · L lightning attention · G Gated DeltaNet</text>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 14</span>Only the A layers keep a KV cache, so the cache shrinks by about the fraction of layers that are linear. Layer order here is illustrative.</figcaption>
+      </figure>
+      <ul>
+        <li><b>Jamba</b> (AI21, 2024): 1:7 attention to Mamba, plus mixture-of-experts MLPs. 52B total (12B active), 256k context, about 140k tokens on one 80GB GPU.</li>
+        <li><b>MiniMax-01</b> (2025): lightning attention with a softmax layer after every seven. 456B total, multi-million-token contexts.</li>
+        <li><b>Qwen3-Next</b> (2025): Gated DeltaNet with gated full attention at 3:1.</li>
+        <li><b>NVIDIA Nemotron-H</b> (2025): mostly Mamba-2 with few attention layers.</li>
+      </ul>
+      <p>Hybrids match or beat pure transformers on standard benchmarks and recover most retrieval. Pure linear models remain mostly a research and edge-device story.</p>
+
+      <figure>
+        <div class="cases">
+          <div class="case" data-st="warn"><span class="chip warn">Cache grows with n</span><h3>Softmax attention</h3>
+            <svg class="ve-mini" viewBox="0 0 240 130" role="img" aria-label="Memory against length: softmax rises steeply, linear stays flat, hybrid rises gently. Softmax is highlighted.">
+              <path class="ve-e no-ah" d="M30 10V110H230"/><text class="ve-tick l" x="38" y="22">memory</text><text class="ve-tick" x="210" y="126">n</text>
+              <path class="ve-e no-ah" d="M30 80H225"/><path class="ve-e no-ah" d="M30 100L225 70"/>
+              <path class="ve-e no-ah is-st" d="M30 105L225 25"/>
+            </svg>
+            <p class="meta">Train O(n²d). Decode cost grows with n. Recall: excellent. Ecosystem: FlashAttention, paged KV.</p></div>
+          <div class="case" data-st="risk"><span class="chip risk">Recall limited</span><h3>Linear / SSM</h3>
+            <svg class="ve-mini" viewBox="0 0 240 130" role="img" aria-label="Memory against length: linear stays flat and is highlighted.">
+              <path class="ve-e no-ah" d="M30 10V110H230"/><text class="ve-tick l" x="38" y="22">memory</text><text class="ve-tick" x="210" y="126">n</text>
+              <path class="ve-e no-ah" d="M30 105L225 25"/><path class="ve-e no-ah" d="M30 100L225 70"/>
+              <path class="ve-e no-ah is-st" d="M30 80H225"/>
+            </svg>
+            <p class="meta">Train O(n d²). Constant state and decode. Recall: limited by state size. Ecosystem: flash-linear-attention, mamba-ssm.</p></div>
+          <div class="case" data-st="ok"><span class="chip ok">Small cache, good recall</span><h3>Hybrid</h3>
+            <svg class="ve-mini" viewBox="0 0 240 130" role="img" aria-label="Memory against length: hybrid rises gently and is highlighted.">
+              <path class="ve-e no-ah" d="M30 10V110H230"/><text class="ve-tick l" x="38" y="22">memory</text><text class="ve-tick" x="210" y="126">n</text>
+              <path class="ve-e no-ah" d="M30 105L225 25"/><path class="ve-e no-ah" d="M30 80H225"/>
+              <path class="ve-e no-ah is-st" d="M30 100L225 70"/>
+            </svg>
+            <p class="meta">Training between the two. Cache only on few layers, decode mostly constant. Recall: good. Ecosystem: improving.</p></div>
+        </div>
+        <figcaption><span class="fig-n">Fig. 15</span>Memory against context length, the three designs side by side (sketch, not measured).</figcaption>
+      </figure>
+      <p>One subtlety: at a few thousand tokens, \(n &lt; d\) for typical models and FlashAttention is extremely optimized, so linear attention may be <i>slower</i>. The win appears at long contexts and, above all, at decode time with large batches, where KV-cache memory is the bottleneck.</p>
+    </section>
+
+    <section class="sec" id="s06" aria-labelledby="s06-h">
+      <div class="sec-head"><p class="sec-num"><span class="n">06</span>Wrap-up</p><h2 id="s06-h">Check the ideas before the project</h2></div>
+
+      <div class="callout confusions">
+        <span class="chip warn">Common confusions</span>
+        <ul>
+          <li><p class="myth">Linear attention approximates softmax attention.</p><p class="fact">Performer tried to. RetNet, Mamba-2 and DeltaNet are different mixers with different inductive biases.</p></li>
+          <li><p class="myth">Linear means the model is linear.</p><p class="fact">Only the recurrence is linear in the state. Projections, input-dependent gates, MLPs and normalization stay nonlinear.</p></li>
+          <li><p class="myth">The parallel form of linear attention is O(n).</p><p class="fact">It is O(n²), same as softmax. Linear cost comes from the recurrent or chunkwise forms.</p></li>
+          <li><p class="myth">Mamba is not attention.</p><p class="fact">Mamba-2's SSD shows it is masked linear attention with a structured decay mask. Mamba-1 differs mainly in per-channel rather than per-head decay.</p></li>
+          <li><p class="myth">Constant memory means infinite context.</p><p class="fact">The state cannot grow, so it cannot hold more. You can process infinite input but not recall arbitrary details from it.</p></li>
+          <li><p class="myth">Linear models need RoPE.</p><p class="fact">Most do not: the decay mask already encodes relative position and recency. Hybrids often use RoPE (or none) in their attention layers only.</p></li>
+        </ul>
+      </div>
+
+      <div class="callout quiz">
+        <span class="chip info">Check yourself</span>
+        <ol>
+          <li><p>Explain with associativity why \(\phi(Q)(\phi(K)^\top V)\) is cheaper than \((\phi(Q)\phi(K)^\top)V\) for long sequences, and why the causal mask blocks the first form in parallel.</p>
+            <details><summary>Show answer</summary><p>\(\phi(K)^\top V\) is \(d_k \times d_v\) and costs \(O(n d_k d_v)\); multiplying by \(\phi(Q)\) costs the same again, so \(O(n d^2)\) total. The other order builds an \(n \times n\) matrix, \(O(n^2 d)\). With a causal mask, row \(i\) needs a different prefix sum \(\sum_{j \le i} \phi(k_j) v_j^\top\), so one \(\phi(K)^\top V\) is not enough. You need the recurrence (a running sum) or the chunkwise mix.</p></details></li>
+          <li><p>32 layers, 32 heads, \(d_k = d_v = 128\), bf16. Compare a pure linear state with a softmax KV cache (no GQA) at 128k tokens.</p>
+            <details><summary>Show answer</summary><p>Linear: \(32 \times 32 \times 128 \times 128 \times 2\) bytes = 32 MiB, whatever the length. Softmax: \(2 \times 32 \times 32 \times 128 \times 131{,}072 \times 2\) bytes = 64 GiB. A factor of 2048.</p></details></li>
+          <li><p>Why did input-dependent \(\Delta\), \(B\), \(C\) force Mamba to abandon S4's convolution training?</p>
+            <details><summary>Show answer</summary><p>The convolution trick needs time invariance: the same \(\bar A, \bar B, C\) at every step give one fixed kernel. With input-dependent parameters each step has different dynamics and there is no single kernel, so Mamba uses a parallel scan of the recurrence.</p></details></li>
+          <li><p>Write the DeltaNet update for \(\beta_t = 1\) and unit-norm \(k_t\). What does reading the new state with \(k_t\) return, and why can additive attention not do this?</p>
+            <details><summary>Show answer</summary><p>\(S_t = (I - k_t k_t^\top) S_{t-1} + k_t v_t^\top\). Reading: \(S_t^\top k_t = S_{t-1}^\top (k_t - k_t) + v_t = v_t\). The old association is erased and replaced exactly. Additive attention returns \(S_{t-1}^\top k_t + v_t\): the old value plus the new one.</p></details></li>
+          <li><p>In <code>decay_parallel</code>, why build the mask from a <code>cumsum</code> of <code>log_a</code> instead of multiplying decays directly?</p>
+            <details><summary>Show answer</summary><p>Entries are products of up to \(n\) numbers in \((0,1)\), which underflow to zero and are costly to compute pairwise. Prefix sums of logs turn each product into one subtraction, \(\text{cum}_i - \text{cum}_j\). The final <code>exp</code> is stable because masked entries are set to \(-\infty\) first.</p></details></li>
+          <li><p>A hybrid with one attention layer per eight misses facts in a 200k-token document that a pure transformer finds. Name two architecture-level changes.</p>
+            <details><summary>Show answer</summary><p>Raise the attention fraction (for example 1:3 instead of 1:7). Enlarge the linear state (more heads, larger \(d_k\), or Mamba-2's larger \(N\)). Switch the linear layers to a delta-rule variant for recall. Make sure the attention layers are full, not sliding-window. Also check that training included long-context retrieval data.</p></details></li>
+        </ol>
+      </div>
+
+      <h3>Resources</h3>
+      <div class="resources">
+        <div class="res-col">
+          <h3>Read</h3>
+          <ul class="res-list">
+            <li class="res-item is-start">
+              <div class="res-top"><a href="https://arxiv.org/abs/2006.16236">Transformers are RNNs: Fast Autoregressive Transformers with Linear Attention</a><span class="start-here">Start here</span></div>
+              <div class="res-meta">Katharopoulos et al., 2020 <span class="chip plain">paper</span></div>
+              <p>Short, clear derivation of the kernel trick and the recurrent form.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://arxiv.org/abs/2009.14794">Performer</a><a href="https://arxiv.org/abs/2307.08621">RetNet</a><a href="https://arxiv.org/abs/2312.06635">Gated Linear Attention</a></div>
+              <div class="res-meta">Choromanski 2020 · Sun 2023 · Yang 2023 <span class="chip plain">papers</span></div>
+              <p>The lineage from approximating softmax, to fixed decay with the parallel/recurrent/chunkwise trio, to data-dependent gating with hardware-efficient kernels.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://srush.github.io/annotated-s4/">The Annotated S4</a></div>
+              <div class="res-meta">Sasha Rush and Sidd Karamcheti <span class="chip plain">blog</span></div>
+              <p>S4 implemented step by step in JAX with the math alongside.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://arxiv.org/abs/2312.00752">Mamba: Linear-Time Sequence Modeling with Selective State Spaces</a><a href="https://arxiv.org/abs/2405.21060">Mamba-2 / Transformers are SSMs</a></div>
+              <div class="res-meta">Gu and Dao 2023 · Dao and Gu 2024 <span class="chip plain">papers</span></div>
+              <p>Selection, then state space duality.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://tridao.me/blog/2024/mamba2-part1-model/">State Space Duality (Mamba-2) blog series</a></div>
+              <div class="res-meta">Tri Dao <span class="chip plain">blog</span></div>
+              <p>The authors' own walkthrough of SSD, more readable than the paper.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://newsletter.maartengrootendorst.com/p/a-visual-guide-to-mamba-and-state">A Visual Guide to Mamba and State Space Models</a></div>
+              <div class="res-meta">Maarten Grootendorst <span class="chip plain">blog</span></div>
+              <p>Diagram-heavy intuition for SSMs and selectivity.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://sustcsonglin.github.io/blog/2024/deltanet-1/">DeltaNet Explained</a><a href="https://arxiv.org/abs/2406.06484">DeltaNet</a><a href="https://arxiv.org/abs/2412.06464">Gated DeltaNet</a></div>
+              <div class="res-meta">Songlin Yang <span class="chip plain">blog + papers</span></div>
+              <p>The delta rule as online regression and how to parallelize it.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://arxiv.org/abs/2305.13048">RWKV</a><a href="https://arxiv.org/abs/2403.19887">Jamba</a><a href="https://arxiv.org/abs/2312.04927">Zoology</a></div>
+              <div class="res-meta">Peng 2023 · Lieber 2024 · Arora 2023 <span class="chip plain">papers</span></div>
+              <p>The RNN-style lineage, the first large hybrid, and the recall analysis.</p>
+            </li>
+          </ul>
+        </div>
+        <div class="res-col">
+          <h3>Watch</h3>
+          <ul class="res-list">
+            <li class="res-item">
+              <div class="res-top"><a href="https://www.youtube.com/watch?v=8Q_tqwpTpVU">Mamba and S4 Explained</a></div>
+              <div class="res-meta">Umar Jamil <span class="chip plain">video</span></div>
+              <p>Long-form derivation covering discretization, convolution and parallel scan.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://www.youtube.com/watch?v=EvQ3ncuriCM">Efficiently Modeling Long Sequences with Structured State Spaces</a></div>
+              <div class="res-meta">Albert Gu, Stanford MLSys <span class="chip plain">video</span></div>
+              <p>The S4 author on HiPPO and why SSMs work.</p>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="project">
+        <span class="chip info">Chapter project</span>
+        <h3>Build an associative-recall benchmark and watch fixed-size states fail</h3>
+        <p>Train four tiny mixers on multi-query associative recall and explain the curves with state-size arithmetic.</p>
+        <ol>
+          <li>Generate an MQAR task: \(P\) random key-value token pairs, then queries of some keys whose target is the matching value. Vary \(P \in \{8, 32, 128, 512\}\).</li>
+          <li>Implement four 2-layer models that differ only in the token mixer: softmax attention, elu+1 linear attention (section 03), decayed linear attention (<code>decay_parallel</code> with a learned gate), and DeltaNet (recurrent first, chunked optionally).</li>
+          <li>Train each at head dimensions \(d = 32\) and \(d = 128\), and plot recall accuracy against \(P\).</li>
+          <li>Explain the curves: at what \(P\) should each model start failing, and does the delta rule beat additive updates at equal state size?</li>
+          <li>Bonus: add a hybrid (one softmax layer plus one DeltaNet layer) and check if it recovers softmax-level recall. Compare decode speed at 8k tokens between a softmax KV cache and your recurrent DeltaNet.</li>
+        </ol>
+        <ul class="done">
+          <li>Recall accuracy against \(P\) plotted for all four mixers at both head dimensions.</li>
+          <li>Written explanation of each failure point from state-size arithmetic.</li>
+          <li>Delta rule versus additive updates compared at equal state size.</li>
+        </ul>
+        <p class="meta">uses sections 01 to 05</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Linked highlighting: hovering any [data-ref], or focusing a prose term, lights every element that shares a ref.
+  const linked = [...document.querySelectorAll('[data-ref]')], refs = (el) => el.dataset.ref.split(' ');
+  let hovered = null, focused = null;
+  const paint = () => {
+    const keys = (hovered || focused)?.dataset.ref.split(' ') ?? [];
+    for (const t of linked) t.classList.toggle('is-lit', refs(t).some((k) => keys.includes(k)));
+    for (const svg of document.querySelectorAll('svg')) svg.classList.toggle('has-lit', !!svg.querySelector('.is-lit'));
+  };
+  for (const el of linked) {
+    el.addEventListener('pointerenter', () => { hovered = el; paint(); });
+    el.addEventListener('pointerleave', () => { hovered = null; paint(); });
+    el.addEventListener('focus', () => { focused = el; paint(); });
+    el.addEventListener('blur', () => { focused = null; paint(); });
+  }
+
+  // Stepper / scene player. Opens on the full picture, because the first view must show the answer.
+  for (const root of document.querySelectorAll('.ve-steps')) {
+    const parts = [...root.querySelectorAll('[data-s]')], caps = [...root.querySelectorAll('.ve-cap li')];
+    const range = root.querySelector('input[type=range]'), play = root.querySelector('[data-play]');
+    const n = caps.length; let i = 0, timer = null;
+    if (range) range.max = n - 1;
+    const show = (k) => {
+      i = Math.max(0, Math.min(n - 1, k));
+      for (const el of parts) { const s = el.dataset.s.trim().split(' ').map(Number); el.classList.toggle('on', s[0] <= i + 1); el.classList.toggle('now', s.includes(i + 1)); }
+      caps.forEach((c, j) => c.hidden = j !== i);
+      root.classList.toggle('is-full', i === n - 1);
+      if (range) range.value = i;
+    };
+    const stop = () => { clearInterval(timer); timer = null; if (play) play.textContent = 'Play'; };
+    root.addEventListener('click', (e) => { const b = e.target.closest('[data-go]'); if (b) { stop(); show(i + +b.dataset.go); } });
+    range?.addEventListener('input', () => { stop(); show(+range.value); });
+    play?.addEventListener('click', () => {
+      if (timer) return stop();
+      if (i === n - 1) show(0);
+      play.textContent = 'Pause';
+      timer = setInterval(() => (i < n - 1 ? show(i + 1) : stop()), 3500);
+    });
+    show(n - 1);
+    addEventListener('beforeprint', () => show(n - 1));
+  }
+
+  // Copy buttons: clipboard API, with a selection fallback for browsers that block it on file:// pages.
+  for (const btn of document.querySelectorAll('.code .copy')) {
+    btn.addEventListener('click', async () => {
+      const code = btn.closest('.code').querySelector('pre code');
+      try { await navigator.clipboard.writeText(code.innerText); }
+      catch { const r = document.createRange(); r.selectNodeContents(code); const s = getSelection(); s.removeAllRanges(); s.addRange(r); document.execCommand('copy'); s.removeAllRanges(); }
+      btn.textContent = 'Copied'; setTimeout(() => (btn.textContent = 'Copy'), 1500);
+    });
+  }
+
+  // TOC scroll-spy: the section crossing the top tenth of the viewport is the current one.
+  const tocLinks = new Map([...document.querySelectorAll('.toc a[href^="#"]')].map((a) => [a.getAttribute('href').slice(1), a]));
+  const spy = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      for (const a of tocLinks.values()) a.removeAttribute('aria-current');
+      tocLinks.get(e.target.id)?.setAttribute('aria-current', 'true');
+    }
+  }, { rootMargin: '-10% 0px -80% 0px' });
+  for (const id of tocLinks.keys()) { const s = document.getElementById(id); if (s) spy.observe(s); }
+
+  // Entrance: each block rises in once. Without JS, in print, or under reduced motion, everything shows its final state.
+  if (!still) {
+    document.documentElement.classList.add('js-motion');
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) if (e.isIntersecting) { io.unobserve(e.target); e.target.classList.add('in'); }
+    }, { rootMargin: '0px 0px -10% 0px' });
+    for (const el of document.querySelectorAll('.ch-head, .sec > *')) io.observe(el);
+  }
+
+  // Sidebar visibility is a per-reader preference; storage can be blocked, so it only seeds the initial state.
+  (() => {
+    const root = document.documentElement, b = document.getElementById('toc-toggle');
+    const apply = (hidden) => { root.classList.toggle('toc-hidden', hidden); b.setAttribute('aria-expanded', !hidden); b.setAttribute('aria-label', hidden ? 'Show sidebar' : 'Hide sidebar'); };
+    let hidden = false; try { hidden = localStorage.getItem('toc-hidden') === '1'; } catch (e) {}
+    apply(hidden);
+    b.addEventListener('click', () => { hidden = !hidden; apply(hidden); try { localStorage.setItem('toc-hidden', hidden ? '1' : '0'); } catch (e) {} });
+  })();
+  // Theme: explicit choice wins; with none saved the page follows the OS scheme.
+  (() => {
+    const root = document.documentElement, b = document.getElementById('theme-toggle'), mq = matchMedia('(prefers-color-scheme: light)');
+    const mode = () => root.dataset.theme || (mq.matches ? 'light' : 'dark');
+    const sync = () => { const m = mode(); b.dataset.mode = m; b.setAttribute('aria-label', m === 'light' ? 'Switch to dark mode' : 'Switch to light mode'); };
+    sync(); mq.addEventListener('change', sync);
+    b.addEventListener('click', () => { const next = mode() === 'light' ? 'dark' : 'light'; root.dataset.theme = next; try { localStorage.setItem('theme', next); } catch (e) {} sync(); });
+  })();
+</script>
+</body>
+</html>

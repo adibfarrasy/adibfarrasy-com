@@ -1,0 +1,24 @@
+<figure>
+<div class="frame">
+<svg class="ve-svg" style="min-width:774px" viewBox="0 -20 900 290" role="img" aria-label="A state space model and gated linear attention are the same computation. The input x writes into the state h through B, the state forgets through A-bar, and C reads it out as y. In linear attention, v writes through k, the state S forgets through the gate, and q reads it out as o. Input x equals v, state h equals S, output y equals o.">
+<path class="ve-e" d="M130 68H270"/><text class="ve-el" x="200" y="59">writes via B</text>
+<path class="ve-e" d="M420 68H560"/><text class="ve-el" x="490" y="59">reads via C</text>
+<path class="ve-e" d="M290 40V12H340V40"/><text class="ve-el" x="315" y="2">Ā forgets</text>
+<path class="ve-e" d="M130 218H270"/><text class="ve-el" x="200" y="209">writes via k</text>
+<path class="ve-e" d="M420 218H560"/><text class="ve-el" x="490" y="209">reads via q</text>
+<path class="ve-e" d="M290 190V162H340V190"/><text class="ve-el" x="315" y="152">aₜ forgets</text>
+<path class="ve-e is-async no-ah" d="M75 96V190"/><text class="ve-el r" x="83" y="148">x = v</text>
+<path class="ve-e is-async no-ah" d="M400 96V190"/><text class="ve-el r" x="408" y="148">h = S</text>
+<path class="ve-e is-async no-ah" d="M615 96V190"/><text class="ve-el r" x="623" y="148">y = o</text>
+<g class="ve-n" transform="translate(20 40)"><rect class="sh" width="110" height="56" rx="6"/><text x="55" y="20">x_t</text><text class="sub" x="55" y="40">input</text></g>
+<g class="ve-n is-key" transform="translate(270 40)"><rect class="sh" width="150" height="56" rx="6"/><text x="75" y="20">h_t</text><text class="sub" x="75" y="40">state, N dims</text></g>
+<g class="ve-n" transform="translate(560 40)"><rect class="sh" width="110" height="56" rx="6"/><text x="55" y="20">y_t</text><text class="sub" x="55" y="40">output</text></g>
+<g class="ve-n" transform="translate(20 190)"><rect class="sh" width="110" height="56" rx="6"/><text x="55" y="20">v_t</text><text class="sub" x="55" y="40">value</text></g>
+<g class="ve-n is-key" transform="translate(270 190)"><rect class="sh" width="150" height="56" rx="6"/><text x="75" y="20">S_t</text><text class="sub" x="75" y="40">state matrix</text></g>
+<g class="ve-n" transform="translate(560 190)"><rect class="sh" width="110" height="56" rx="6"/><text x="55" y="20">o_t</text><text class="sub" x="55" y="40">output</text></g>
+<text class="ve-tick l" x="700" y="72">State space model</text>
+<text class="ve-tick l" x="700" y="222">Gated linear attention</text>
+</svg>
+</div>
+<figcaption><span class="fig-n">Fig. 9</span>Mamba's recurrence and gated linear attention have the same shape: B is k, x is v, C is q.</figcaption>
+</figure>

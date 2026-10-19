@@ -1,0 +1,26 @@
+<figure>
+<div class="cases">
+<div class="case" data-st="warn"><span class="chip warn">Weak at language</span><h3>elu + 1</h3>
+<svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="The elu plus one map is applied per entry and keeps features positive.">
+<path class="ve-e is-st" d="M80 55H130"/><text class="ve-el" x="105" y="45">maps</text>
+<g class="ve-n"><rect class="sh" x="10" y="35" width="70" height="40" rx="5"/><text x="45" y="55">q, k</text></g>
+<g class="ve-n is-st"><rect class="sh" x="130" y="20" width="100" height="70" rx="5"/><text x="180" y="42">elu+1</text><text class="sub" x="180" y="66">always > 0</text></g>
+</svg>
+<p class="meta">Cheap and positive. A poor match for softmax sharpness.</p></div>
+<div class="case" data-st="warn"><span class="chip warn">High variance</span><h3>Performer</h3>
+<svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="Performer maps q and k to m random features whose dot product estimates the softmax kernel.">
+<path class="ve-e is-st" d="M80 55H130"/><text class="ve-el" x="105" y="45">samples</text>
+<g class="ve-n"><rect class="sh" x="10" y="35" width="70" height="40" rx="5"/><text x="45" y="55">q, k</text></g>
+<g class="ve-n is-st"><rect class="sh" x="130" y="20" width="100" height="70" rx="5"/><text x="180" y="42">m features</text><text class="sub" x="180" y="66">E = exp(qᵀk)</text></g>
+</svg>
+<p class="meta">Unbiased and positive, but needs large m.</p></div>
+<div class="case" data-st="ok"><span class="chip ok">Used today</span><h3>Identity + norm</h3>
+<svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="Modern models skip the denominator and normalize the output instead.">
+<path class="ve-e is-st" d="M80 55H130"/><text class="ve-el" x="105" y="45">keeps</text>
+<g class="ve-n"><rect class="sh" x="10" y="35" width="70" height="40" rx="5"/><text x="45" y="55">q, k</text></g>
+<g class="ve-n is-st"><rect class="sh" x="130" y="20" width="100" height="70" rx="5"/><text x="180" y="42">identity</text><text class="sub" x="180" y="66">+ output norm</text></g>
+</svg>
+<p class="meta">RetNet, GLA, Mamba-2, DeltaNet drop the fragile denominator.</p></div>
+</div>
+<figcaption><span class="fig-n">Fig. 5</span>2020 to 2022 tried to approximate softmax with a kernel and underperformed. Progress since 2023 came from a smarter recurrence.</figcaption>
+</figure>

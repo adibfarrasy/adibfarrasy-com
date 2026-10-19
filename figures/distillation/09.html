@@ -1,0 +1,16 @@
+<figure>
+<div class="frame">
+<svg class="ve-svg" viewBox="0 0 800 220" role="img" aria-label="A logits tensor of shape batch 8 by length 4096 by vocab 128,256 in fp32 takes about 16 GB. Compute the loss in chunks along the sequence.">
+<text class="ve-tick" x="170" y="28">B = 8 rows × L = 4,096 positions</text>
+<path class="ve-e" d="M320 95H400"/><text class="ve-el" x="360" y="85">× 4 B</text>
+<path class="ve-e is-hot" d="M550 95H620"/><text class="ve-el" x="585" y="85">chunk</text>
+<g class="ve-n" transform="translate(20 40)"><rect class="sh" width="300" height="110" rx="6"/><text x="150" y="42">logits</text><text class="sub" x="150" y="68">(B, L, V) in fp32</text></g>
+<g class="ve-n is-key" transform="translate(400 60)"><rect class="sh" width="150" height="70" rx="6"/><text x="75" y="26">≈ 16 GB</text><text class="sub" x="75" y="48">one tensor</text></g>
+<g class="ve-n" transform="translate(620 30)"><rect class="sh" width="160" height="34" rx="5"/><text x="80" y="17">chunk 1</text></g>
+<g class="ve-n" transform="translate(620 78)"><rect class="sh" width="160" height="34" rx="5"/><text x="80" y="17">chunk 2</text></g>
+<g class="ve-n" transform="translate(620 126)"><rect class="sh" width="160" height="34" rx="5"/><text x="80" y="17">chunk n</text></g>
+<g class="ve-dim is-key"><path class="ext" d="M20 158V192M320 158V192"/><path class="ln" d="M20 186H320"/><text x="170" y="178">V = 128,256</text></g>
+</svg>
+</div>
+<figcaption><span class="fig-n">Fig. 9</span>At the Llama 3 vocabulary, one fp32 logits tensor needs about 16 GB, and the loss needs several. Production code chunks along the sequence or uses a fused kernel (Liger Kernel ships one).</figcaption>
+</figure>

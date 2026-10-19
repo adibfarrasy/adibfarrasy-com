@@ -1,0 +1,32 @@
+<figure class="ve-steps">
+<div class="frame">
+<svg class="ve-svg" viewBox="0 0 800 270" role="img" aria-label="The PEFT QLoRA workflow in six steps: load the base in 4-bit NF4, prepare it for k-bit training, wrap it with get_peft_model, train, save only the adapter, then reload a bf16 base and merge_and_unload.">
+<path class="ve-e" data-s="2" pathLength="1" d="M220 70H300"/><text class="ve-el" data-s="2" x="260" y="61">casts</text>
+<path class="ve-e" data-s="3" pathLength="1" d="M500 70H580"/><text class="ve-el" data-s="3" x="540" y="61">wraps</text>
+<path class="ve-e" data-s="4" pathLength="1" d="M680 100V145H120V190"/><text class="ve-el" data-s="4" x="400" y="136">trains</text>
+<path class="ve-e" data-s="5" pathLength="1" d="M220 220H300"/><text class="ve-el" data-s="5" x="260" y="211">saves</text>
+<path class="ve-e is-hot" data-s="6" pathLength="1" d="M500 220H580"/><text class="ve-el" data-s="6" x="540" y="211">merges</text>
+<g class="ve-n" data-s="1" transform="translate(20 40)"><rect class="sh" width="200" height="60" rx="6"/><text x="100" y="22">4-bit base</text><text class="sub" x="100" y="44">NF4, bf16 matmul</text></g>
+<g class="ve-n" data-s="2" transform="translate(300 40)"><rect class="sh" width="200" height="60" rx="6"/><text x="100" y="22">prepare</text><text class="sub" x="100" y="44">norms fp32, ckpt</text></g>
+<g class="ve-n is-key" data-s="3" transform="translate(580 40)"><rect class="sh" width="200" height="60" rx="6"/><text x="100" y="22">get_peft_model</text><text class="sub" x="100" y="44">all-linear, r = 16</text></g>
+<g class="ve-n" data-s="4" transform="translate(20 190)"><rect class="sh" width="200" height="60" rx="6"/><text x="100" y="22">train</text><text class="sub" x="100" y="44">SFT or DPO</text></g>
+<g class="ve-n" data-s="5" transform="translate(300 190)"><rect class="sh" width="200" height="60" rx="6"/><text x="100" y="22">save_pretrained</text><text class="sub" x="100" y="44">adapter only, MB</text></g>
+<g class="ve-n is-key" data-s="6" transform="translate(580 190)"><rect class="sh" width="200" height="60" rx="6"/><text x="100" y="22">merge_and_unload</text><text class="sub" x="100" y="44">into a bf16 base</text></g>
+</svg>
+</div>
+<div class="ve-player">
+<ol class="ve-cap">
+<li data-n="1/6">Load the frozen base in 4-bit NF4. Matmuls run in bf16.</li>
+<li data-n="2/6"><code>prepare_model_for_kbit_training</code> casts norms to fp32 and turns on gradient checkpointing, which 4-bit training needs for stability and memory.</li>
+<li data-n="3/6"><code>get_peft_model</code> adds A and B to every linear layer. Only those are trainable.</li>
+<li data-n="4/6">Train with Trainer, SFTTrainer or DPOTrainer. DPO's reference model is the base with the adapter disabled, so no second model is held.</li>
+<li data-n="5/6"><code>save_pretrained</code> writes only the adapter: tens of MB.</li>
+<li data-n="6/6">To merge, reload the base in bf16, not 4-bit, so nothing is requantized, then <code>merge_and_unload</code>.</li>
+</ol>
+<button data-go="-1" aria-label="Previous step">←</button>
+<button data-play>Play</button>
+<input type="range" min="0" value="0" aria-label="Step">
+<button data-go="1" aria-label="Next step">→</button>
+</div>
+<figcaption><span class="fig-n">Fig. 11</span>The QLoRA workflow with HuggingFace PEFT, in the order the code below runs it.</figcaption>
+</figure>

@@ -1,0 +1,23 @@
+<figure>
+<div class="cases">
+<div class="case" data-st="ok"><span class="chip info">N answers, vote or verify</span><h3>Parallel sampling</h3>
+<svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="One prompt fans out to three sampled answers.">
+<path class="ve-e" d="M120 32V50H45V70"/><path class="ve-e" d="M120 32V70"/><path class="ve-e" d="M120 32V50H195V70"/>
+<g class="ve-n"><rect class="sh" x="80" y="4" width="80" height="28" rx="5"/><text x="120" y="18">prompt</text><rect class="sh" x="15" y="70" width="60" height="30" rx="5"/><text x="45" y="85">ans</text><rect class="sh" x="90" y="70" width="60" height="30" rx="5"/><text x="120" y="85">ans</text><rect class="sh" x="165" y="70" width="60" height="30" rx="5"/><text x="195" y="85">ans</text></g>
+</svg></div>
+<div class="case" data-st="ok"><span class="chip info">PRM-guided</span><h3>Search</h3>
+<svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="A tree of partial solutions; a process reward model picks the best branch.">
+<path class="ve-e no-ah" d="M120 30V42H60V54M60 80V86H30V94M60 80V86H90V94"/><path class="ve-e is-hot no-ah" d="M120 30V42H180V54M180 80V86H150V94"/><path class="ve-e no-ah" d="M180 80V86H210V94"/>
+<g class="ve-n"><rect class="sh" x="104" y="4" width="32" height="26" rx="4"/><rect class="sh" x="44" y="54" width="32" height="26" rx="4"/><rect class="sh" x="14" y="94" width="32" height="14" rx="3"/><rect class="sh" x="74" y="94" width="32" height="14" rx="3"/><rect class="sh" x="194" y="94" width="32" height="14" rx="3"/></g>
+<g class="ve-n is-key"><rect class="sh" x="164" y="54" width="32" height="26" rx="4"/><rect class="sh" x="134" y="94" width="32" height="14" rx="3"/></g>
+</svg></div>
+<div class="case" data-st="ok"><span class="chip info">RL-trained thinking</span><h3>Sequential</h3>
+<svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="One long chain: think, check, then answer.">
+<path class="ve-e" d="M70 52H88M152 52H170"/>
+<g class="ve-n"><rect class="sh" x="6" y="34" width="64" height="36" rx="5"/><text x="38" y="52">think</text><rect class="sh" x="88" y="34" width="64" height="36" rx="5"/><text x="120" y="52">check</text></g>
+<g class="ve-n is-key"><rect class="sh" x="170" y="34" width="64" height="36" rx="5"/><text x="202" y="52">answer</text></g>
+<text class="ve-tick l" x="6" y="98">longer chain, more compute</text>
+</svg></div>
+</div>
+<figcaption><span class="fig-n">Fig. 23</span>Parallel accuracy rises roughly log-linearly with N until verifier errors dominate. Learned sequential thinking (o1, R1) scales with the thinking budget.</figcaption>
+</figure>

@@ -1,0 +1,27 @@
+<figure>
+<div class="frame">
+<svg class="ve-svg" style="min-width:826px" viewBox="0 -20 960 350" role="img" aria-label="Two orders of the same product. Softmax: Q and K multiply into an n by n score matrix, then softmax and multiplying by V give O, costing order n squared d. Linear: K and V sum outer products into a d_k by d_v state S, then Q reads S to give O, costing order n d squared.">
+<text class="ve-tick l" x="20" y="14">Softmax: (Q Kᵀ) V</text>
+<path class="ve-e" d="M170 75H270"/><text class="ve-el" x="220" y="66">multiplies</text>
+<path class="ve-e" d="M440 75H560"/><text class="ve-el" x="500" y="66">softmax, ×V</text>
+<g class="ve-n" transform="translate(20 45)"><rect class="sh" width="150" height="60" rx="6"/><text x="75" y="22">Q, K</text><text class="sub" x="75" y="44">n × d_k</text></g>
+<g class="ve-n" transform="translate(270 20)"><rect class="sh" width="170" height="110" rx="6"/><text x="85" y="42">Q Kᵀ</text><text class="sub" x="85" y="68">n × n scores</text></g>
+<g class="ve-n" transform="translate(560 45)"><rect class="sh" width="130" height="60" rx="6"/><text x="65" y="22">O</text><text class="sub" x="65" y="44">n × d_v</text></g>
+<rect class="ve-bar" x="740" y="67" width="150" height="16" rx="2"/><text class="ve-bar-v" x="898" y="75">O(n²d)</text>
+<path class="ann" d="M355 20V4"/><g class="ve-co" transform="translate(355 -8)"><circle r="11"/><text>2</text></g>
+<text class="ve-tick l" x="20" y="184">Linear: Q (Kᵀ V)</text>
+<path class="ve-e" d="M170 245H270"/><text class="ve-el" x="220" y="236">sums k vᵀ</text>
+<path class="ve-e is-hot" d="M440 245H560"/><text class="ve-el" x="500" y="236">Q reads S</text>
+<g class="ve-n" transform="translate(20 215)"><rect class="sh" width="150" height="60" rx="6"/><text x="75" y="22">K, V</text><text class="sub" x="75" y="44">n × d</text></g>
+<g class="ve-n is-key" transform="translate(270 215)"><rect class="sh" width="170" height="60" rx="6"/><text x="85" y="22">S = Kᵀ V</text><text class="sub" x="85" y="44">d_k × d_v</text></g>
+<g class="ve-n" transform="translate(560 215)"><rect class="sh" width="130" height="60" rx="6"/><text x="65" y="22">O</text><text class="sub" x="65" y="44">n × d_v</text></g>
+<rect class="ve-bar hot" x="740" y="237" width="14" height="16" rx="2"/><text class="ve-bar-v" x="762" y="245">O(n d²)</text>
+<path class="ann" d="M355 215V200"/><g class="ve-co" transform="translate(355 188)"><circle r="11"/><text>1</text></g>
+</svg>
+</div>
+<figcaption><span class="fig-n">Fig. 1</span>The same product in two orders. Moving Q to the end replaces an n × n matrix with a d_k × d_v state.</figcaption>
+<ol class="callouts">
+<li><span class="co-n">1</span>S has the same size at n = 2 and n = 1,000,000.</li>
+<li><span class="co-n">2</span>The softmax sits between Q Kᵀ and V, so Kᵀ V cannot be formed first.</li>
+</ol>
+</figure>

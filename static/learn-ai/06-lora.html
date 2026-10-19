@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<!--
+  CHAPTER PAGE KIT (reference page, placeholder content).
+
+  How to build a chapter page from this file:
+  1. Copy everything from <!DOCTYPE html> through </head> verbatim (change only <title> and the meta description).
+  2. Copy the <svg class="ve-defs"> block at the top of <body> and the final <script> block verbatim.
+  3. Write only the body content: .topbar, .page > nav.toc + main (header + one section.sec per course section).
+  Do not add CSS. If a page needs something the kit lacks, add it to this kit first so every page stays identical.
+
+  Component class names:
+    chrome     .topbar .crumbs .pager  .page  nav.toc (scroll-spy: links point at section ids)
+    header     .ch-head .eyebrow h1 .lead .meta
+    section    section.sec#sNN > .sec-head > p.sec-num(span.n) + h2   (12-col grid; text spans 8, figures 12)
+    figure     figure > .frame > svg.ve-svg[role=img][aria-label] + figcaption > span.fig-n
+               svg parts: g.ve-n[.is-key] > rect.sh + text + text.sub   path.ve-e[.is-hot|.is-async|.no-ah]
+                          text.ve-el[.l|.r] (edge verb)  g.ve-dim[.is-key] (dimension)  g.ve-co + path.ann (callout)
+                          g.ve-zone (dashed boundary)  .ve-tick (axis text)  .ve-bar[.hot] + .ve-bar-v (inline bars)
+               ol.callouts > li > span.co-n   (one-line notes under a figure with callouts)
+               svg.ve-svg min-width: viewBox width x 0.86 (inline style) so 14-unit labels stay >= 12px.
+    stepper    figure.ve-steps: parts carry data-s="N"; .ve-player > ol.ve-cap > li[data-n="1/4"] + button[data-go] + input[type=range]
+    linked     .ve-ref[data-ref][tabindex=0] in prose + [data-ref] on svg parts
+    multiples  .cases > .case[data-st=ok|warn|risk] > .chip + h3 + svg.ve-mini (.is-st marks the changed part)
+    chips      .chip.ok (circle) .chip.warn (triangle) .chip.risk (square) .chip.info (diamond) .chip.plain (no shape)
+    equation   figure > .eq > .eq-math ($$ ... $$) + dl.symbols > div > dt + dd   (write < as &lt; inside math)
+    code       .code > .code-bar(span.ve-label + button.copy) + pre[tabindex=0] > code; tokens .tk-k .tk-s .tk-n .tk-f .tk-c
+    callouts   .callout.confusions > .chip.warn + ul > li > p.myth + p.fact
+               .callout.quiz > .chip.info + ol > li > p + details > summary + p
+    resources  .resources > .res-col > h3 + ul.res-list > li.res-item[.is-start] > .res-top(a + .start-here) + .res-meta(.chip.plain) + p
+    project    .project > .chip.info + h3 + p + ol + ul.done + p.meta
+    index only .ch-cards > a.ch-card (.pips > i)   ol.howto
+  Motion: JS adds .js-motion to <html> only when motion is allowed; without it every block shows its final state.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LoRA</title>
+<meta name="description" content="LoRA and parameter-efficient fine-tuning: low-rank updates, QLoRA, DoRA, multi-adapter serving, and when LoRA matches full fine-tuning.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23282828'/%3E%3Cpath d='M14 20h14M36 20h14M14 44h14M36 44h14M28 20l8 24' stroke='%23fe8019' stroke-width='5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body, { delimiters: [{ left: '$$', right: '$$', display: true }, { left: '\\(', right: '\\)', display: false }], throwOnError: false })"></script>
+<script>
+  // Runs before first paint so a saved theme choice never flashes the other scheme.
+  try { const t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+<style>
+  /* tokens: gruvbox-dark by default, gruvbox-light when the reader's system asks for light */
+  :root {
+    color-scheme: dark;
+    --bg: #282828; --surface: #3c3836; --border: rgba(255,255,255,.08); --border-bright: #afa18e;
+    --text: #ebdbb2; --text-dim: #afa18e; --accent: #fe8019; --accent-dim: #fe80191f;
+    --ok: #b8bb26; --warn: #fabd2f; --risk: #fc7c6d; --info: #88a99c;
+    --syn-k: #fc7c6d; --syn-s: #b8bb26; --syn-n: #d3869b; --syn-f: #fabd2f; --syn-c: #afa18e;
+    --node-top: color-mix(in srgb, var(--text) 7%, var(--surface)); --lift: rgb(0 0 0 / .45); --halo: 32%;
+    --font-body: 'JetBrains Mono', ui-monospace, monospace;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    --t-label: .75rem; --t-small: .875rem; --t-body: 1rem; --t-lead: 1.25rem; --t-h2: 1.625rem; --t-h1: clamp(2.25rem, 5.5vw, 4rem);
+    --s-1: .25rem; --s-2: .5rem; --s-3: .75rem; --s-4: 1rem; --s-5: 1.5rem; --s-6: 2rem; --s-7: 3rem; --s-8: 4.5rem;
+    --r-1: 4px; --r-2: 10px;
+    --ease: cubic-bezier(.16,1,.3,1); --fast: 150ms; --med: 300ms; --slow: 500ms;
+  }
+  :root[data-theme="light"] {
+      color-scheme: light;
+      --bg: #fbf1c7; --surface: #ebdbb2; --border: rgba(0,0,0,.08); --border-bright: #6b5f56;
+      --text: #3c3836; --text-dim: #6b5f56; --accent: #ad3903; --accent-dim: #ad39031f;
+      --ok: #67630c; --warn: #7a5200; --risk: #9d0006; --info: #076678;
+      --syn-k: #9d0006; --syn-s: #67630c; --syn-n: #8f3f71; --syn-f: #076678; --syn-c: #6b5f56;
+      --node-top: var(--surface); --lift: rgb(60 56 54 / .14); --halo: 22%;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      color-scheme: light;
+      --bg: #fbf1c7; --surface: #ebdbb2; --border: rgba(0,0,0,.08); --border-bright: #6b5f56;
+      --text: #3c3836; --text-dim: #6b5f56; --accent: #ad3903; --accent-dim: #ad39031f;
+      --ok: #67630c; --warn: #7a5200; --risk: #9d0006; --info: #076678;
+      --syn-k: #9d0006; --syn-s: #67630c; --syn-n: #8f3f71; --syn-f: #076678; --syn-c: #6b5f56;
+      --node-top: var(--surface); --lift: rgb(60 56 54 / .14); --halo: 22%;
+    }
+  }
+
+  /* base */
+  html { font-size: 17px; }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--text); font: 400 var(--t-body)/1.6 var(--font-body); text-wrap: pretty; font-kerning: normal; font-synthesis: none; -webkit-font-smoothing: antialiased; }
+  ::selection { background: var(--accent-dim); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  a { color: var(--text); text-decoration: underline 1px var(--accent); text-underline-offset: .22em; transition: color var(--fast) var(--ease); }
+  a:hover { color: var(--accent); }
+  code { font: .875em var(--font-mono); font-variant-ligatures: none; }
+  h1, h2 { text-box: trim-both cap alphabetic; }
+  h1 { font-size: var(--t-h1); line-height: 1.08; font-weight: 600; letter-spacing: -.035em; text-wrap: balance; max-width: 20ch; }
+  h1 .num { color: var(--accent); font-variant-numeric: tabular-nums; }
+  h2 { font-size: var(--t-h2); line-height: 1.2; font-weight: 600; letter-spacing: -.015em; text-wrap: balance; }
+  h3 { font-size: var(--t-body); line-height: 1.3; font-weight: 600; }
+  p, li { max-width: 66ch; }
+  ul, ol { padding-left: 1.25em; }
+  .eyebrow { display: flex; align-items: center; gap: var(--s-2); font: 600 var(--t-label) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+  .eyebrow::before { content: ''; width: 1.25rem; height: 2px; background: currentColor; }
+  .ve-label { font: 600 var(--t-label) var(--font-mono); color: var(--text-dim); }
+  .caps { text-transform: uppercase; letter-spacing: .08em; }
+  .lead { font-size: var(--t-lead); line-height: 1.5; color: var(--text-dim); max-width: 48ch; }
+  .lead b { color: var(--text); font-weight: 600; }
+  .meta { font: 400 var(--t-label) var(--font-mono); color: var(--text-dim); font-variant-numeric: tabular-nums; }
+
+  /* top bar: course breadcrumb left, chapter pager right */
+  .topbar { border-bottom: 1px solid var(--border); }
+  .topbar-in { max-width: 82rem; margin: 0 auto; padding: var(--s-3) var(--s-5); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-2) var(--s-5); font: 400 var(--t-small) var(--font-mono); }
+  .topbar a { text-decoration: none; }
+  .topbar a:hover { color: var(--accent); }
+  .crumbs { display: flex; flex-wrap: wrap; list-style: none; padding: 0; gap: var(--s-2); color: var(--text-dim); }
+  .crumbs li + li::before { content: '/'; margin-right: var(--s-2); color: var(--text-dim); }
+  .crumbs [aria-current] { color: var(--text); font-weight: 600; }
+  .pager { display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-5); }
+  .pager a { color: var(--text-dim); }
+
+  /* page: sticky TOC column + main; below 1000px the TOC becomes a sticky bar */
+  .page { max-width: 82rem; margin: 0 auto; padding: 0 var(--s-5); }
+  main { min-width: 0; max-width: 64rem; padding: var(--s-7) 0 var(--s-8); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-8); }
+  .toc { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--border); margin: 0 calc(-1 * var(--s-5)); padding: var(--s-2) var(--s-5); }
+  .toc > .ve-label { display: none; }
+  .toc ol { list-style: none; padding: 0; display: flex; gap: var(--s-4); overflow-x: auto; scrollbar-width: none; mask-image: linear-gradient(90deg, #000 85%, transparent); }
+  .toc ol::-webkit-scrollbar { display: none; }
+  .toc li { max-width: none; }
+  .toc a { display: block; white-space: nowrap; font: 400 var(--t-small) var(--font-mono); color: var(--text-dim); text-decoration: none; padding: var(--s-1) 0; border-bottom: 2px solid transparent; }
+  .toc a .n { color: var(--text-dim); margin-right: var(--s-1); }
+  .toc a:hover { color: var(--text); }
+  .toc a[aria-current] { color: var(--text); border-color: var(--accent); }
+  .toc a[aria-current] .n { color: var(--accent); }
+  @media (min-width: 1000px) {
+    .page { display: grid; grid-template-columns: 12rem minmax(0, 1fr); column-gap: var(--s-7); }
+    .toc { align-self: start; margin: 0; padding: var(--s-7) 0 var(--s-5); border: 0; background: none; max-height: 100vh; overflow-y: auto; }
+    .toc > .ve-label { display: block; margin-bottom: var(--s-3); }
+    .toc ol { flex-direction: column; gap: 0; overflow: visible; mask-image: none; }
+    .toc a { white-space: normal; border-bottom: 0; border-left: 2px solid var(--border); padding: var(--s-1) 0 var(--s-1) var(--s-3); }
+    .toc a[aria-current] { border-left-color: var(--accent); }
+  }
+
+  /* chapter header */
+  .ch-head { display: grid; gap: var(--s-4); }
+  .ch-head h1 { margin-bottom: var(--s-2); }
+  .ch-head + figure { margin-top: calc(var(--s-6) - var(--s-8)); }
+
+  /* sections: a 12-column grid on one flush-left axis; prose spans 8 columns, figures all 12 */
+  .sec { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--s-5); row-gap: var(--s-5); scroll-margin-top: 4rem; }
+  .sec > * { grid-column: 1 / -1; min-width: 0; }
+  @media (min-width: 52rem) { .sec > :is(p, ul, ol, h3) { grid-column: 1 / span 8; } }
+  .sec > h3 { margin-top: var(--s-5); }
+  /* section opener (kicker head): section number + name above the takeaway h2 */
+  .sec-head { display: grid; gap: var(--s-3); border-top: 1px solid var(--border); padding-top: var(--s-5); margin-bottom: var(--s-2); }
+  .sec-num { font: 600 var(--t-label) var(--font-mono); color: var(--text-dim); letter-spacing: .04em; }
+  .sec-num .n { color: var(--accent); margin-right: var(--s-2); font-variant-numeric: tabular-nums; }
+
+  /* figure: the stage is a faint dot grid, so nodes read as objects placed on it */
+  figure { min-width: 0; }
+  .frame { background: radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--text) 13%, transparent) 1px, transparent 1.5px) 0 0 / 20px 20px, var(--bg); border: 1px solid var(--border); border-radius: var(--r-2); padding: var(--s-5); overflow-x: auto; }
+  .ve-svg { overflow: visible; }
+  figcaption { font-size: var(--t-small); color: var(--text-dim); margin-top: var(--s-3); }
+  .fig-n { font: 600 var(--t-label) var(--font-mono); color: var(--text); margin-right: var(--s-2); }
+  .callouts { list-style: none; padding: 0; margin-top: var(--s-3); display: grid; gap: var(--s-2); color: var(--text-dim); }
+  .co-n { display: inline-grid; place-items: center; width: 1.4rem; height: 1.4rem; margin-right: var(--s-2); border: 1.5px solid var(--accent); border-radius: 50%; font: 600 var(--t-label) var(--font-mono); color: var(--accent); }
+
+  /* diagram kit */
+  /* min-width keeps 14-unit labels >= 12px as rendered; narrow screens scroll the frame instead. Wider viewBoxes set min-width inline (viewBox width x 0.86). */
+  .ve-svg { width: 100%; min-width: 700px; height: auto; display: block; font: 600 15px var(--font-mono); }
+  .ve-n .sh { fill: url(#ve-node); stroke: var(--border-bright); stroke-width: 1.5; filter: drop-shadow(0 6px 14px var(--lift)); transition: stroke var(--fast) var(--ease), opacity var(--med) var(--ease); }
+  .ve-n .lid { fill: var(--node-top); }
+  .ve-n.is-key .sh { fill: color-mix(in srgb, var(--accent) 11%, var(--surface)); stroke: var(--accent); stroke-width: 2; filter: drop-shadow(0 0 16px color-mix(in srgb, var(--accent) var(--halo), transparent)); }
+  .ve-n text { fill: var(--text); text-anchor: middle; dominant-baseline: central; font-weight: 600; }
+  .ve-n .sub { fill: var(--text-dim); font: 400 14px var(--font-mono); }
+  .ve-n .is-off { stroke-dasharray: 5 4; fill: none; filter: none; }
+  .ve-e { fill: none; stroke: var(--text-dim); stroke-width: 1.75; marker-end: url(#ve-ah); }
+  .ve-e.no-ah { marker-end: none; }
+  .ve-e.is-hot { stroke: var(--accent); stroke-width: 2.75; filter: drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 55%, transparent)); }
+  .ve-e.is-async { stroke-dasharray: 6 5; }
+  .ve-el { fill: var(--text-dim); font: 400 14px var(--font-mono); text-anchor: middle; paint-order: stroke; stroke: var(--bg); stroke-width: 5px; stroke-linejoin: round; }
+  .ve-el.l { text-anchor: end; } .ve-el.r { text-anchor: start; }
+  .ve-tick { fill: var(--text-dim); font: 400 14px var(--font-mono); text-anchor: middle; }
+  .ve-tick.l { text-anchor: start; }
+  .ve-grid { stroke: var(--border); stroke-width: 1; }
+  .ve-zone rect { fill: none; stroke: var(--border-bright); stroke-width: 1; stroke-dasharray: 4 4; }
+  .ve-zone text { fill: var(--text-dim); font: 600 14px var(--font-mono); letter-spacing: .08em; }
+  .ve-bar { fill: var(--border-bright); }
+  .ve-bar.hot { fill: var(--accent); }
+  .ve-bar-v { fill: var(--text-dim); font: 400 14px var(--font-mono); dominant-baseline: central; }
+  .ve-dim path { fill: none; stroke-width: 1; } .ve-dim .ext { stroke: var(--border-bright); } .ve-dim .ln { stroke: var(--text-dim); }
+  .ve-dim text { fill: var(--text); font: 600 14px var(--font-mono); text-anchor: middle; }
+  .ve-dim .ln { marker-start: url(#ve-ah2); marker-end: url(#ve-ah2); } .ve-dim .ln.ticks { marker-start: none; marker-end: none; }
+  .ve-dim.is-key .ln { stroke: var(--accent); } .ve-dim.is-key text { fill: var(--accent); }
+  .ann { fill: none; stroke: var(--text-dim); stroke-width: 1; }
+  .ve-co circle { fill: var(--surface); stroke: var(--accent); stroke-width: 1.75; }
+  .ve-co text { fill: var(--accent); font: 600 14px var(--font-mono); text-anchor: middle; dominant-baseline: central; }
+  .ve-co.now circle { fill: var(--accent); } .ve-co.now text { fill: var(--surface); }
+
+  /* linked highlighting: same data-ref lights up together; unlit labels drop to --text-dim instead of fading */
+  .ve-ref { text-decoration: underline dotted var(--text-dim) 1px; text-underline-offset: .22em; border-radius: var(--r-1); transition: background var(--fast) var(--ease); }
+  .ve-ref.is-lit { background: var(--accent-dim); text-decoration-color: var(--accent); }
+  svg [data-ref] { transition: opacity var(--med) var(--ease); }
+  svg.has-lit path[data-ref]:not(.is-lit), svg.has-lit g[data-ref]:not(.is-lit) .sh, svg.has-lit rect[data-ref]:not(.is-lit) { opacity: .25; }
+  svg.has-lit g[data-ref]:not(.is-lit) text, svg.has-lit text[data-ref]:not(.is-lit) { fill: var(--text-dim); }
+  .ve-n.is-lit .sh { stroke: var(--accent); }
+  .ve-e.is-lit { stroke: var(--accent); }
+  .ve-el.is-lit { fill: var(--text); }
+  .case.is-lit, .ch-card.is-lit { border-color: var(--accent); }
+
+  /* stepper / scene player: future parts stay a faint outline, their labels hidden */
+  .ve-steps [data-s] { transition: opacity var(--slow) var(--ease), stroke-dashoffset var(--slow) var(--ease); }
+  .ve-steps [data-s]:not(.on) { opacity: .15; }
+  .ve-steps g[data-s]:not(.on) text, .ve-steps text[data-s]:not(.on) { opacity: 0; }
+  .ve-steps path[pathLength][data-s] { stroke-dasharray: 1; stroke-dashoffset: 1; }
+  .ve-steps path[pathLength][data-s].on { stroke-dashoffset: 0; }
+  .ve-steps .ve-n.now > .sh { stroke: var(--accent); }
+  .ve-steps:not(.is-full) .ve-e.now { stroke: var(--accent); stroke-width: 2.75; }
+  .ve-player { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: center; gap: var(--s-2) var(--s-3); margin-top: var(--s-4); }
+  .ve-cap { grid-column: 1 / -1; list-style: none; padding: 0; min-height: 3.2em; }
+  .ve-cap li::before { content: attr(data-n); font: 600 var(--t-label) var(--font-mono); color: var(--accent); margin-right: var(--s-3); font-variant-numeric: tabular-nums; }
+  .ve-player input { accent-color: var(--accent); min-width: 0; }
+  button { font: 400 var(--t-small) var(--font-mono); color: var(--text); background: var(--surface); border: 1px solid var(--border-bright); border-radius: var(--r-1); padding: var(--s-2) var(--s-3); cursor: pointer; transition: border-color var(--fast) var(--ease); }
+  button:hover, button:focus-visible { border-color: var(--accent); }
+
+  /* small multiples: one mini diagram per case; the changed part takes the case's status color */
+  .cases { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14.5rem), 1fr)); gap: var(--s-4); }
+  .case { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-2); padding: var(--s-4); display: grid; gap: var(--s-3); align-content: start; min-width: 0; transition: border-color var(--fast) var(--ease); }
+  .case[data-st=ok] { --st: var(--ok); } .case[data-st=warn] { --st: var(--warn); } .case[data-st=risk] { --st: var(--risk); }
+  .ve-mini { width: 100%; height: auto; font: 600 15px var(--font-mono); }
+  .ve-mini .ve-n .sh { filter: none; }
+  .ve-mini .is-st.ve-e { stroke: var(--st); stroke-width: 2.75; }
+  .ve-mini .is-st .sh { stroke: var(--st); stroke-width: 2; }
+  .ve-mini .ve-el { stroke: var(--surface); }
+
+  /* chips: shape and word, never color alone */
+  .chip { display: inline-flex; align-items: center; gap: var(--s-2); font: 600 var(--t-label) var(--font-mono); padding: 2px var(--s-2); border: 1px solid currentColor; border-radius: var(--r-1); white-space: nowrap; justify-self: start; }
+  .chip::before { content: ''; width: .5rem; height: .5rem; background: currentColor; }
+  .chip.ok { color: var(--ok); } .chip.ok::before { border-radius: 50%; }
+  .chip.warn { color: var(--warn); } .chip.warn::before { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+  .chip.risk { color: var(--risk); }
+  .chip.info { color: var(--info); } .chip.info::before { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+  .chip.plain { color: var(--text-dim); font-weight: 400; } .chip.plain::before { display: none; }
+
+  /* equation + symbols legend */
+  .eq { display: grid; gap: var(--s-4) var(--s-6); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-2); padding: var(--s-5); }
+  @media (min-width: 52rem) { .eq { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); align-items: center; } }
+  .eq-math { min-width: 0; overflow-x: auto; overflow-y: hidden; }
+  .eq-math .katex-display { margin: var(--s-2) 0; }
+  .symbols { display: grid; gap: var(--s-2); }
+  .symbols > div { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr); gap: var(--s-3); align-items: baseline; }
+  .symbols dd { margin: 0; color: var(--text-dim); }
+
+  /* code: scroll container, copy button, gruvbox syntax tokens; code sits on --bg so every token reaches 4.5:1 */
+  .code { border: 1px solid var(--border); border-radius: var(--r-2); background: var(--bg); min-width: 0; }
+  .code-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); padding: var(--s-2) var(--s-2) var(--s-2) var(--s-4); background: var(--surface); border-bottom: 1px solid var(--border); border-radius: var(--r-2) var(--r-2) 0 0; }
+  .code pre { margin: 0; padding: var(--s-4); overflow-x: auto; font: 400 var(--t-small)/1.6 var(--font-mono); font-variant-ligatures: none; tab-size: 4; }
+  .code pre code { font: inherit; }
+  .tk-k { color: var(--syn-k); } .tk-s { color: var(--syn-s); } .tk-n { color: var(--syn-n); } .tk-f { color: var(--syn-f); } .tk-c { color: var(--syn-c); }
+
+  /* callouts: common confusions and check yourself */
+  .callout { background: var(--surface); border-radius: var(--r-2); padding: var(--s-5); display: grid; gap: var(--s-4); }
+  .confusions ul { list-style: none; padding: 0; display: grid; gap: var(--s-4); }
+  .confusions p { padding-left: 1.5em; text-indent: -1.5em; }
+  .confusions .myth { color: var(--text-dim); }
+  .confusions .myth::before { content: '✕'; display: inline-block; width: 1.5em; text-indent: 0; color: var(--risk); font-weight: 600; }
+  .confusions .fact::before { content: '✓'; display: inline-block; width: 1.5em; text-indent: 0; color: var(--ok); font-weight: 600; }
+  .quiz ol { display: grid; gap: var(--s-4); padding-left: 1.75em; }
+  .quiz li::marker { font: 600 var(--t-label) var(--font-mono); color: var(--accent); }
+  .quiz details { margin-top: var(--s-2); }
+  .quiz summary { cursor: pointer; font: 600 var(--t-small) var(--font-mono); color: var(--accent); width: fit-content; }
+  .quiz details p { margin-top: var(--s-2); padding-left: var(--s-3); border-left: 1px solid var(--border-bright); }
+
+  /* resources: Read and Watch columns; "start here" = star shape + word + accent frame */
+  .resources { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: var(--s-5) var(--s-6); }
+  .res-col { min-width: 0; }
+  .res-col > h3 { font: 600 var(--t-label) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--text-dim); padding-bottom: var(--s-2); border-bottom: 1px solid var(--border-bright); }
+  .res-list { list-style: none; padding: 0; }
+  .res-item { padding: var(--s-3) 0; border-bottom: 1px solid var(--border); display: grid; gap: var(--s-1); }
+  .res-item.is-start { border: 1px solid var(--accent); border-radius: var(--r-2); padding: var(--s-3) var(--s-4); margin: var(--s-2) 0; }
+  .res-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-1) var(--s-3); }
+  .res-top a { font-weight: 600; overflow-wrap: anywhere; }
+  .res-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); font: 400 var(--t-label) var(--font-mono); color: var(--text-dim); }
+  .res-item p { color: var(--text-dim); }
+  .start-here { display: inline-flex; align-items: center; gap: var(--s-1); font: 600 var(--t-label) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); white-space: nowrap; }
+  .start-here::before { content: ''; width: .8rem; height: .8rem; background: currentColor; clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+
+  /* chapter project */
+  .project { border: 1px solid var(--border-bright); border-radius: var(--r-2); padding: var(--s-5); display: grid; gap: var(--s-4); }
+  .project h3 { font-size: var(--t-lead); }
+  .project ol, .project ul { display: grid; gap: var(--s-2); }
+  .project .done { list-style: none; padding: 0; }
+  .project .done li::before { content: '□'; color: var(--accent); margin-right: var(--s-2); }
+
+  /* index only: chapter cards and how-to steps */
+  .ch-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14.5rem), 1fr)); gap: var(--s-4); }
+  .ch-card { display: grid; gap: var(--s-3); align-content: start; min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-2); padding: var(--s-4); color: var(--text); text-decoration: none; transition: border-color var(--fast) var(--ease); }
+  .ch-card:hover, .ch-card:focus-visible { border-color: var(--accent); color: var(--text); }
+  .ch-card h3 { font-size: var(--t-lead); }
+  .ch-card p, .ch-card ol { color: var(--text-dim); }
+  .ch-card .go { font: 600 var(--t-label) var(--font-mono); color: var(--accent); }
+  .pips { display: flex; flex-wrap: wrap; gap: var(--s-1); }
+  .pips i { width: .55rem; height: .55rem; background: var(--text-dim); }
+  .howto { list-style: none; padding: 0; counter-reset: step; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); gap: var(--s-5) var(--s-4); }
+  .howto li { counter-increment: step; border-top: 1px solid var(--border-bright); padding-top: var(--s-3); }
+  .howto li::before { content: counter(step, decimal-leading-zero); display: block; font: 600 var(--t-label) var(--font-mono); color: var(--accent); margin-bottom: var(--s-2); }
+
+  /* entrance: blocks rise in once (JS adds .js-motion only when motion is allowed) */
+  .js-motion :is(.ch-head, .sec > *) { transition: opacity var(--slow) var(--ease), transform var(--slow) var(--ease); }
+  .js-motion :is(.ch-head, .sec > *):not(.in) { opacity: 0; transform: translateY(1rem); }
+  .topbar-in .pager { margin-left: auto; }
+  .icon-btn { background: none; border: 0; padding: var(--s-1); color: var(--text-dim); display: inline-flex; line-height: 0; }
+  .icon-btn:hover { color: var(--text); }
+  .icon-btn svg { width: 1.1rem; height: 1.1rem; }
+  .icon-btn .i-moon, .icon-btn[data-mode="light"] .i-sun { display: none; }
+  .icon-btn[data-mode="light"] .i-moon { display: block; }
+  .toc-head { display: none; }
+  .toc-btn { background: none; border: 0; padding: var(--s-1); color: var(--text-dim); display: inline-flex; line-height: 0; }
+  .toc-btn:hover { color: var(--text); }
+  .toc-btn svg { width: 1rem; height: 1rem; transition: transform var(--fast) var(--ease); }
+  @media (min-width: 1000px) {
+    .toc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--s-3); }
+    .toc-head .ve-label { margin: 0; }
+    html.toc-hidden .page { grid-template-columns: 2rem minmax(0, 1fr); }
+    html.toc-hidden .toc-head .ve-label, html.toc-hidden .toc ol { display: none; }
+    html.toc-hidden .toc-btn svg { transform: rotate(180deg); }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  @media print {
+    :root { --bg: #fff; --surface: #fff; --border: #ebdbb2; --border-bright: #6b5f56; --text: #3c3836; --text-dim: #6b5f56; --accent: #ad3903; --ok: #67630c; --warn: #7a5200; --risk: #9d0006; --info: #076678;
+      --syn-k: #9d0006; --syn-s: #67630c; --syn-n: #8f3f71; --syn-f: #076678; --syn-c: #6b5f56; --node-top: #fff; }
+    .toc, .toc-btn, .icon-btn, .pager, .copy, .ve-player button, .ve-player input { display: none; }
+    .page { display: block; }
+    .frame { overflow: visible; background: #fff; } .ve-svg { min-width: 0 !important; }
+    .frame, .case, .ch-card, .callout, .project, .eq, .code { break-inside: avoid; } h2 { break-after: avoid; }
+    svg * { filter: none !important; }
+    .js-motion :is(.ch-head, .sec > *) { opacity: 1 !important; transform: none !important; }
+    .ve-steps [data-s]:not(.on), .ve-steps g[data-s]:not(.on) text, .ve-steps text[data-s]:not(.on) { opacity: 1; }
+    .ve-steps path[pathLength][data-s] { stroke-dashoffset: 0; }
+  }
+</style>
+</head>
+<body>
+<!-- Shared defs: one arrowhead (context-stroke follows each edge's color), the node fill, and the section pip. -->
+<svg class="ve-defs" width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <marker id="ve-ah" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker>
+    <marker id="ve-ah2" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker>
+    <linearGradient id="ve-node" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--node-top)"/><stop offset="1" style="stop-color:var(--surface)"/></linearGradient>
+    <pattern id="ve-pip" width="13" height="9" patternUnits="userSpaceOnUse"><rect width="9" height="9" style="fill:var(--text-dim)"/></pattern>
+  </defs>
+</svg>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <nav aria-label="Breadcrumb">
+      <ol class="crumbs">
+        <li><a href="index.html">Learn AI Fundamentals</a></li>
+        <li>LLM Advanced</li>
+        <li aria-current="page">LoRA</li>
+      </ol>
+    </nav>
+    <nav class="pager" aria-label="Chapters">
+      <a href="05-linear-attention.html" rel="prev">← Linear Attention</a>
+      <a href="07-mixture-of-experts.html" rel="next">Next: Mixture of Experts →</a>
+    </nav>
+    <button type="button" class="icon-btn" id="theme-toggle" aria-label="Switch to light mode"><svg class="i-sun" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1"/></svg><svg class="i-moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 9.6A5.8 5.8 0 0 1 6.4 2.5a5.8 5.8 0 1 0 7.1 7.1z"/></svg></button>
+  </div>
+</header>
+
+<div class="page">
+  <nav class="toc" aria-label="Sections">
+    <div class="toc-head"><p class="ve-label caps">On this page</p><button type="button" class="toc-btn" id="toc-toggle" aria-controls="toc-list" aria-expanded="true" aria-label="Hide sidebar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg></button></div>
+    <ol id="toc-list">
+      <li><a href="#s01"><span class="n">01</span>Intuition</a></li>
+      <li><a href="#s02"><span class="n">02</span>The math</a></li>
+      <li><a href="#s03"><span class="n">03</span>Code</a></li>
+      <li><a href="#s04"><span class="n">04</span>Variants</a></li>
+      <li><a href="#s05"><span class="n">05</span>Modern practice</a></li>
+      <li><a href="#s06"><span class="n">06</span>Wrap-up</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header class="ch-head">
+      <p class="eyebrow">Chapter 6 · LLM Advanced</p>
+      <h1>Freeze the model, learn a small <span class="num">low-rank</span> correction</h1>
+      <p class="lead">Full fine-tuning copies and re-optimizes every weight. LoRA keeps the base <b>frozen</b> and trains two thin matrices per layer: less memory, tiny checkpoints, many adapters on one base.</p>
+      <p class="meta">5 sections · needs: AdamW state, ZeRO/FSDP accounting, q/k/v/o and MLP projections, SFT and DPO</p>
+    </header>
+
+    <figure>
+      <div class="frame">
+        <svg class="ve-svg" viewBox="0 0 800 240" role="img" aria-label="A LoRA layer. The input x, width d_in, goes two ways. Through the frozen weight W0 it gives W0 x. Through the down projection A (r by d_in) and then the up projection B (d_out by r) it gives a correction that is scaled by alpha over r and added. Together A and B hold r times d_in plus d_out trainable parameters.">
+          <path class="ve-e" d="M130 115H160V50H270"/><text class="ve-el" x="215" y="41">multiplies</text>
+          <path class="ve-e" d="M130 160H240"/><text class="ve-el" x="185" y="151">down to r</text>
+          <path class="ve-e" d="M360 160H440"/><text class="ve-el" x="400" y="151">expands</text>
+          <path class="ve-e" d="M450 50H590V125H630"/><text class="ve-el" x="520" y="41">carries W0x</text>
+          <path class="ve-e is-hot" d="M560 160H630"/><text class="ve-el" x="595" y="151">× α/r</text>
+          <g class="ve-n" transform="translate(20 95)"><rect class="sh" width="110" height="90" rx="6"/><text x="55" y="34">x</text><text class="sub" x="55" y="58">d_in</text></g>
+          <g class="ve-n" transform="translate(270 20)"><rect class="sh is-off" width="180" height="60" rx="6"/><text x="90" y="22">W0</text><text class="sub" x="90" y="44">frozen</text></g>
+          <g class="ve-n is-key" data-ref="a" transform="translate(240 130)"><rect class="sh" width="120" height="60" rx="6"/><text x="60" y="22">A</text><text class="sub" x="60" y="44">r × d_in</text></g>
+          <g class="ve-n is-key" data-ref="b" transform="translate(440 130)"><rect class="sh" width="120" height="60" rx="6"/><text x="60" y="22">B</text><text class="sub" x="60" y="44">d_out × r</text></g>
+          <g class="ve-n" transform="translate(630 110)"><rect class="sh" width="150" height="60" rx="6"/><text x="75" y="22">h</text><text class="sub" x="75" y="44">output</text></g>
+          <g class="ve-dim is-key"><path class="ext" d="M240 190V226M560 190V226"/><path class="ln" d="M240 220H560"/><text x="400" y="212">r(d_in + d_out) trainable</text></g>
+        </svg>
+      </div>
+      <figcaption><span class="fig-n">Fig. 1</span>The whole idea: one frozen path, plus a bottleneck of width r that is trained and added back.</figcaption>
+    </figure>
+
+    <section class="sec" id="s01" aria-labelledby="s01-h">
+      <div class="sec-head"><p class="sec-num"><span class="n">01</span>Intuition</p><h2 id="s01-h">Full fine-tuning pays 16 bytes per weight, and a small update does not need to</h2></div>
+      <p>Mixed-precision AdamW stores 16 bytes per parameter before activations. For an 8B model that is about 128 GB; for 70B, about 1.1 TB. ZeRO-3 and FSDP spread it over GPUs but do not shrink the total.</p>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 250" role="img" aria-label="Bytes per parameter. Full fine-tuning: weight 2, gradient 2, fp32 master weight 4, Adam moments 8, total 16. LoRA: frozen weight 2 plus a sliver of adapter state, because only 0.1 to 1 percent of parameters are trained. For an 8B model that is about 128 gigabytes against about 16 gigabytes plus under 1 gigabyte.">
+            <text class="ve-tick l" x="20" y="22">Full fine-tuning</text>
+            <rect class="ve-bar" x="20" y="34" width="80" height="36" rx="2"/>
+            <rect class="ve-bar hot" x="104" y="34" width="80" height="36" rx="2"/>
+            <rect class="ve-bar hot" x="188" y="34" width="160" height="36" rx="2"/>
+            <rect class="ve-bar hot" x="352" y="34" width="320" height="36" rx="2"/>
+            <text class="ve-tick" x="60" y="92">weight 2</text><text class="ve-tick" x="144" y="92">grad 2</text><text class="ve-tick" x="268" y="92">master 4</text><text class="ve-tick" x="512" y="92">Adam moments 8</text>
+            <text class="ve-bar-v" x="684" y="52">16 B/param</text>
+            <text class="ve-tick l" x="20" y="132">LoRA</text>
+            <rect class="ve-bar" x="20" y="144" width="80" height="36" rx="2"/>
+            <rect class="ve-bar hot" x="104" y="144" width="6" height="36" rx="2"/>
+            <text class="ve-tick" x="60" y="202">weight 2</text>
+            <text class="ve-bar-v" x="122" y="162">+ adapter state on 0.1% to 1% of params</text>
+            <text class="ve-tick l" x="20" y="236">8B model: ~128 GB of state, versus ~16 GB frozen + under 1 GB adapter</text>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 2</span>Gradients, master weights and Adam moments (orange) exist only for trained parameters. Freeze the base and they shrink to the adapter.</figcaption>
+      </figure>
+      <p>A LoRA checkpoint is tens to hundreds of MB, not another 16 GB copy, so serving ten customer variants no longer means ten models in GPU memory.</p>
+
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 210" role="img" aria-label="Intrinsic dimension. A small trainable vector omega of about 200 numbers is projected by a fixed random matrix P into the full weight space, added to the pretrained weights, and recovers 90 percent of full fine-tuning performance on MRPC with RoBERTa.">
+            <path class="ve-e" d="M170 85H300"/><text class="ve-el" x="235" y="76">fixed random P</text>
+            <path class="ve-e is-hot" d="M490 85H610"/><text class="ve-el" x="550" y="76">recovers</text>
+            <g class="ve-n is-key" transform="translate(20 50)"><rect class="sh" width="150" height="70" rx="6"/><text x="75" y="26">ω</text><text class="sub" x="75" y="48">d ≈ 200 params</text></g>
+            <g class="ve-n" transform="translate(300 50)"><rect class="sh" width="190" height="70" rx="6"/><text x="95" y="26">θ0 + Pω</text><text class="sub" x="95" y="48">all D weights</text></g>
+            <g class="ve-n" transform="translate(610 50)"><rect class="sh" width="170" height="70" rx="6"/><text x="85" y="26">90%</text><text class="sub" x="85" y="48">of full tuning</text></g>
+            <g class="ve-dim is-key"><path class="ext" d="M20 128V166M490 128V166"/><path class="ln" d="M20 160H490"/><text x="255" y="152">d ≪ D</text></g>
+            <text class="ve-tick l" x="20" y="196">MRPC, RoBERTa. Larger, better-pretrained models need an even smaller d.</text>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 3</span>Aghajanyan et al. (2020): training only a tiny vector inside a random subspace already gets most of the way.</figcaption>
+      </figure>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$\theta = \theta_0 + P\,\omega,\qquad P \in \mathbb{R}^{D \times d},\ \ \omega \in \mathbb{R}^{d},\ \ d \ll D$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(\theta_0\)</dt><dd>pretrained weights, fixed</dd></div>
+            <div><dt>\(P\)</dt><dd>fixed random projection</dd></div>
+            <div><dt>\(\omega\)</dt><dd>the only trained vector</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 1</span>Intrinsic dimension (Li et al., 2018): the smallest d that reaches 90% of full performance.</figcaption>
+      </figure>
+      <p>Pretraining already learned the features; fine-tuning mostly steers them. LoRA's bet (Hu et al., 2021) is that this move is <b>low-rank</b> in each weight matrix.</p>
+    </section>
+
+    <section class="sec" id="s02" aria-labelledby="s02-h">
+      <div class="sec-head"><p class="sec-num"><span class="n">02</span>The math</p><h2 id="s02-h">LoRA learns two thin matrices, <span class="ve-ref" data-ref="a" tabindex="0">A</span> down and <span class="ve-ref" data-ref="b" tabindex="0">B</span> up, instead of one full update</h2></div>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$h = W_0 x + \tfrac{\alpha}{r}\, B A x,\qquad B \in \mathbb{R}^{d_{\text{out}} \times r},\ \ A \in \mathbb{R}^{r \times d_{\text{in}}}$$
+            $$H = X W_0^{\top} + \tfrac{\alpha}{r}\,(X A^{\top})\,B^{\top}$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(W_0\)</dt><dd>frozen pretrained weight, \(d_{\text{out}} \times d_{\text{in}}\)</dd></div>
+            <div><dt>\(A\)</dt><dd>down projection into an r-wide bottleneck</dd></div>
+            <div><dt>\(B\)</dt><dd>up projection back to \(d_{\text{out}}\)</dd></div>
+            <div><dt>\(r\)</dt><dd>rank, \(r \ll \min(d_{\text{in}}, d_{\text{out}})\), typically 8 to 64</dd></div>
+            <div><dt>\(\alpha\)</dt><dd>constant scale; \(\alpha/r\) multiplies the update</dd></div>
+            <div><dt>\(X\)</dt><dd>N tokens as rows</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 2</span>The update is rank at most r. Only A and B get gradients. The second line is the batched form: compute \(XA^\top\) first.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 215" role="img" aria-label="Parameter count for a 4096 by 4096 projection at rank 16. The full matrix has 16,777,216 entries. B (4096 by 16) and A (16 by 4096) together have 131,072, which is 0.78 percent. The drawing of A and B is not to scale; the bars are.">
+            <g class="ve-n" transform="translate(20 30)"><rect class="sh is-off" width="140" height="140" rx="6"/><text x="70" y="70">W0</text></g>
+            <text class="ve-tick" x="90" y="196">d_out × d_in</text>
+            <g class="ve-n is-key" transform="translate(220 30)"><rect class="sh" width="40" height="140" rx="6"/><text x="20" y="70">B</text></g>
+            <text class="ve-tick" x="240" y="196">d_out × r</text>
+            <text class="ve-tick" x="285" y="104">×</text>
+            <g class="ve-n is-key" transform="translate(310 85)"><rect class="sh" width="140" height="40" rx="6"/><text x="70" y="20">A</text></g>
+            <text class="ve-tick" x="380" y="150">r × d_in</text>
+            <text class="ve-tick l" x="500" y="32">full update: 16,777,216</text>
+            <rect class="ve-bar" x="500" y="42" width="280" height="24" rx="2"/>
+            <text class="ve-tick l" x="500" y="100">r = 16: 131,072</text>
+            <rect class="ve-bar hot" x="500" y="110" width="2.2" height="24"/>
+            <text class="ve-bar-v" x="512" y="122">0.78%</text>
+            <text class="ve-tick l" x="500" y="176">Trained pieces are 128x smaller.</text>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 4</span>For a 4096 × 4096 projection, B and A hold 0.78% of the entries. The thin matrices are drawn wider than scale; the bars are exact.</figcaption>
+      </figure>
+
+      <h3>Initialization: why B = 0</h3>
+      <figure class="ve-steps">
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 280" role="img" aria-label="Step one: at initialization A is random and B is zero, so the correction adds zero and the output equals W0 x. Step two: the gradient reaches B and is nonzero because A is random; the gradient for A is zero because B is zero. Step three: after one update B is nonzero, so the gradient also reaches A.">
+            <path class="ve-e" data-s="1" pathLength="1" d="M120 140H230"/><text class="ve-el" data-s="1" x="175" y="131">projects</text>
+            <path class="ve-e" data-s="1" pathLength="1" d="M360 140H440"/><text class="ve-el" data-s="1" x="400" y="131">Ax</text>
+            <path class="ve-e" data-s="1" pathLength="1" d="M570 140H650"/><text class="ve-el" data-s="1" x="610" y="131">adds 0</text>
+            <path class="ve-e is-hot" data-s="2" pathLength="1" d="M715 170V215H505V170"/><text class="ve-el" data-s="2" x="610" y="207">∂L/∂B ≠ 0</text>
+            <text class="ve-tick" data-s="2" x="295" y="94">∂L/∂A = 0</text>
+            <text class="ve-tick" data-s="3" x="505" y="94">B ≠ 0 now</text>
+            <path class="ve-e is-hot" data-s="3" pathLength="1" d="M715 170V250H295V170"/><text class="ve-el" data-s="3" x="400" y="241">∂L/∂A ≠ 0</text>
+            <g class="ve-n" data-s="1" transform="translate(20 110)"><rect class="sh" width="100" height="60" rx="6"/><text x="50" y="22">x</text><text class="sub" x="50" y="44">input</text></g>
+            <g class="ve-n is-key" data-s="1" transform="translate(230 110)"><rect class="sh" width="130" height="60" rx="6"/><text x="65" y="22">A</text><text class="sub" x="65" y="44">random</text></g>
+            <g class="ve-n is-key" data-s="1" transform="translate(440 110)"><rect class="sh" width="130" height="60" rx="6"/><text x="65" y="22">B</text><text class="sub" x="65" y="44">zero</text></g>
+            <g class="ve-n" data-s="1" transform="translate(650 110)"><rect class="sh" width="130" height="60" rx="6"/><text x="65" y="22">h</text><text class="sub" x="65" y="44">= W0 x</text></g>
+          </svg>
+        </div>
+        <div class="ve-player">
+          <ol class="ve-cap">
+            <li data-n="1/3">B = 0, so BA = 0: at step zero the layer outputs exactly W0 x, the pretrained behavior.</li>
+            <li data-n="2/3">Backward at step zero: B's gradient depends on Ax and A is random, so it is nonzero. A's gradient depends on B, so it is zero.</li>
+            <li data-n="3/3">After one step B is nonzero, so A gets gradients too. Initializing both to zero would leave both gradients zero forever.</li>
+          </ol>
+          <button data-go="-1" aria-label="Previous step">←</button>
+          <button data-play>Play</button>
+          <input type="range" min="0" value="0" aria-label="Step">
+          <button data-go="1" aria-label="Next step">→</button>
+        </div>
+        <figcaption><span class="fig-n">Fig. 5</span>One zero and one random matrix is the only start that is both safe and trainable.</figcaption>
+      </figure>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$\frac{\partial L}{\partial A} = \tfrac{\alpha}{r}\, B^{\top}\,\frac{\partial L}{\partial h}\, x^{\top},\qquad \frac{\partial L}{\partial B} = \tfrac{\alpha}{r}\,\frac{\partial L}{\partial h}\,(Ax)^{\top}$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(L\)</dt><dd>training loss</dd></div>
+            <div><dt>\(B^\top\)</dt><dd>zero at step 0, so A's gradient is zero</dd></div>
+            <div><dt>\(Ax\)</dt><dd>nonzero while A is random, so B's gradient is nonzero</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 3</span>A is Kaiming-uniform in PEFT, Gaussian in the paper.</figcaption>
+      </figure>
+
+      <h3>The scaling factor</h3>
+      <p>With Adam the update size is about the learning rate whatever the gradient, so dividing by r was meant to keep ΔW steady across ranks. In practice set α once (α = r, 2r, or a fixed 16 or 32) and treat it as part of the learning rate.</p>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 270" role="img" aria-label="Update multiplier with alpha fixed at 16. Standard alpha over r: 1 at rank 16, 0.25 at rank 64, 0.0625 at rank 256. rsLoRA alpha over square root of r: 4, 2, 1. The standard multiplier collapses as rank grows.">
+            <path class="ve-grid" d="M120 16V252"/>
+            <text class="ve-tick l" x="20" y="54">r = 16</text>
+            <rect class="ve-bar" x="120" y="30" width="100" height="22" rx="2"/><text class="ve-bar-v" x="228" y="41">α/r = 1</text>
+            <rect class="ve-bar hot" x="120" y="58" width="400" height="22" rx="2"/><text class="ve-bar-v" x="528" y="69">α/√r = 4</text>
+            <text class="ve-tick l" x="20" y="134">r = 64</text>
+            <rect class="ve-bar" x="120" y="110" width="25" height="22" rx="2"/><text class="ve-bar-v" x="153" y="121">α/r = 0.25</text>
+            <rect class="ve-bar hot" x="120" y="138" width="200" height="22" rx="2"/><text class="ve-bar-v" x="328" y="149">α/√r = 2</text>
+            <text class="ve-tick l" x="20" y="214">r = 256</text>
+            <rect class="ve-bar" x="120" y="190" width="6.25" height="22" rx="1"/><text class="ve-bar-v" x="134" y="201">α/r = 0.0625</text>
+            <rect class="ve-bar hot" x="120" y="218" width="100" height="22" rx="2"/><text class="ve-bar-v" x="228" y="229">α/√r = 1</text>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 6</span>With α = 16, the standard multiplier falls 16x from r = 16 to r = 256. rsLoRA's falls only 4x, so higher ranks keep learning.</figcaption>
+      </figure>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$\text{standard: } \tfrac{\alpha}{r}\qquad\qquad \text{rsLoRA: } \tfrac{\alpha}{\sqrt{r}}$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(\alpha/r\)</dt><dd>over-corrects: the update shrinks as r grows and gradients collapse</dd></div>
+            <div><dt>\(\alpha/\sqrt{r}\)</dt><dd>rank-stabilized (Kalajdzievski, 2023); use above r of about 64</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 4</span>In PEFT: <code>use_rslora=True</code>.</figcaption>
+      </figure>
+
+      <h3>Which modules to target</h3>
+      <p>The 2021 paper adapted only the query and value projections. That advice is outdated. QLoRA found all linear layers necessary to match full fine-tuning, and MLP-only LoRA beat attention-only at equal parameter count. Embeddings and the LM head stay frozen unless you add new tokens; then train them via <code>modules_to_save</code>.</p>
+      <figure>
+        <div class="cases">
+          <div class="case" data-st="risk"><span class="chip risk">Outdated</span><h3>Query and value only</h3>
+            <svg class="ve-mini" viewBox="0 0 240 112" role="img" aria-label="Only the q and v projections are adapted.">
+              <g class="ve-n is-st"><rect class="sh" x="6" y="4" width="48" height="30" rx="5"/><text x="30" y="19">q</text></g>
+              <g class="ve-n"><rect class="sh is-off" x="66" y="4" width="48" height="30" rx="5"/><text x="90" y="19">k</text></g>
+              <g class="ve-n is-st"><rect class="sh" x="126" y="4" width="48" height="30" rx="5"/><text x="150" y="19">v</text></g>
+              <g class="ve-n"><rect class="sh is-off" x="186" y="4" width="48" height="30" rx="5"/><text x="210" y="19">o</text></g>
+              <g class="ve-n"><rect class="sh is-off" x="6" y="42" width="70" height="30" rx="5"/><text x="41" y="57">gate</text></g>
+              <g class="ve-n"><rect class="sh is-off" x="85" y="42" width="70" height="30" rx="5"/><text x="120" y="57">up</text></g>
+              <g class="ve-n"><rect class="sh is-off" x="164" y="42" width="70" height="30" rx="5"/><text x="199" y="57">down</text></g>
+              <text class="ve-tick" x="120" y="100">embed, head: frozen</text>
+            </svg></div>
+          <div class="case" data-st="warn"><span class="chip warn">Underperforms</span><h3>Attention only</h3>
+            <svg class="ve-mini" viewBox="0 0 240 112" role="img" aria-label="All four attention projections are adapted, the MLP is not.">
+              <g class="ve-n is-st"><rect class="sh" x="6" y="4" width="48" height="30" rx="5"/><text x="30" y="19">q</text></g>
+              <g class="ve-n is-st"><rect class="sh" x="66" y="4" width="48" height="30" rx="5"/><text x="90" y="19">k</text></g>
+              <g class="ve-n is-st"><rect class="sh" x="126" y="4" width="48" height="30" rx="5"/><text x="150" y="19">v</text></g>
+              <g class="ve-n is-st"><rect class="sh" x="186" y="4" width="48" height="30" rx="5"/><text x="210" y="19">o</text></g>
+              <g class="ve-n"><rect class="sh is-off" x="6" y="42" width="70" height="30" rx="5"/><text x="41" y="57">gate</text></g>
+              <g class="ve-n"><rect class="sh is-off" x="85" y="42" width="70" height="30" rx="5"/><text x="120" y="57">up</text></g>
+              <g class="ve-n"><rect class="sh is-off" x="164" y="42" width="70" height="30" rx="5"/><text x="199" y="57">down</text></g>
+              <text class="ve-tick" x="120" y="100">embed, head: frozen</text>
+            </svg></div>
+          <div class="case" data-st="ok"><span class="chip ok">Beats attention</span><h3>MLP only</h3>
+            <svg class="ve-mini" viewBox="0 0 240 112" role="img" aria-label="Only the gate, up and down MLP projections are adapted.">
+              <g class="ve-n"><rect class="sh is-off" x="6" y="4" width="48" height="30" rx="5"/><text x="30" y="19">q</text></g>
+              <g class="ve-n"><rect class="sh is-off" x="66" y="4" width="48" height="30" rx="5"/><text x="90" y="19">k</text></g>
+              <g class="ve-n"><rect class="sh is-off" x="126" y="4" width="48" height="30" rx="5"/><text x="150" y="19">v</text></g>
+              <g class="ve-n"><rect class="sh is-off" x="186" y="4" width="48" height="30" rx="5"/><text x="210" y="19">o</text></g>
+              <g class="ve-n is-st"><rect class="sh" x="6" y="42" width="70" height="30" rx="5"/><text x="41" y="57">gate</text></g>
+              <g class="ve-n is-st"><rect class="sh" x="85" y="42" width="70" height="30" rx="5"/><text x="120" y="57">up</text></g>
+              <g class="ve-n is-st"><rect class="sh" x="164" y="42" width="70" height="30" rx="5"/><text x="199" y="57">down</text></g>
+              <text class="ve-tick" x="120" y="100">embed, head: frozen</text>
+            </svg></div>
+          <div class="case" data-st="ok"><span class="chip ok">Default</span><h3>All linear</h3>
+            <svg class="ve-mini" viewBox="0 0 240 112" role="img" aria-label="Every attention and MLP projection is adapted.">
+              <g class="ve-n is-st"><rect class="sh" x="6" y="4" width="48" height="30" rx="5"/><text x="30" y="19">q</text></g>
+              <g class="ve-n is-st"><rect class="sh" x="66" y="4" width="48" height="30" rx="5"/><text x="90" y="19">k</text></g>
+              <g class="ve-n is-st"><rect class="sh" x="126" y="4" width="48" height="30" rx="5"/><text x="150" y="19">v</text></g>
+              <g class="ve-n is-st"><rect class="sh" x="186" y="4" width="48" height="30" rx="5"/><text x="210" y="19">o</text></g>
+              <g class="ve-n is-st"><rect class="sh" x="6" y="42" width="70" height="30" rx="5"/><text x="41" y="57">gate</text></g>
+              <g class="ve-n is-st"><rect class="sh" x="85" y="42" width="70" height="30" rx="5"/><text x="120" y="57">up</text></g>
+              <g class="ve-n is-st"><rect class="sh" x="164" y="42" width="70" height="30" rx="5"/><text x="199" y="57">down</text></g>
+              <text class="ve-tick" x="120" y="100">embed, head: frozen</text>
+            </svg></div>
+        </div>
+        <figcaption><span class="fig-n">Fig. 7</span>Solid boxes are adapted, dashed boxes are frozen. Coverage matters more than rank: use <code>target_modules="all-linear"</code>.</figcaption>
+      </figure>
+
+      <h3>Merging</h3>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 245" role="img" aria-label="Merging. The frozen W0 is copied and the scaled product BA is added, giving W merged with the same shape as W0, which runs inference with zero extra latency. Subtracting BA back out unmerges it.">
+            <path class="ve-e" d="M150 60H240V100H330"/><text class="ve-el" x="195" y="51">copies</text>
+            <path class="ve-e is-hot" d="M150 160H240V120H330"/><text class="ve-el" x="195" y="151">adds</text>
+            <path class="ve-e" d="M520 110H610"/><text class="ve-el" x="565" y="101">runs</text>
+            <path class="ve-e is-async" d="M425 145V230H85V190"/><text class="ve-el" x="255" y="221">subtracts to unmerge</text>
+            <g class="ve-n" transform="translate(20 30)"><rect class="sh" width="130" height="60" rx="6"/><text x="65" y="22">W0</text><text class="sub" x="65" y="44">d_out × d_in</text></g>
+            <g class="ve-n is-key" transform="translate(20 130)"><rect class="sh" width="130" height="60" rx="6"/><text x="65" y="22">(α/r) BA</text><text class="sub" x="65" y="44">d_out × d_in</text></g>
+            <g class="ve-n is-key" transform="translate(330 75)"><rect class="sh" width="190" height="70" rx="6"/><text x="95" y="26">W merged</text><text class="sub" x="95" y="48">same shape as W0</text></g>
+            <g class="ve-n" transform="translate(610 75)"><rect class="sh" width="170" height="70" rx="6"/><text x="85" y="26">inference</text><text class="sub" x="85" y="48">+0 latency</text></g>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 8</span>ΔW has the same shape as W0, so it folds in. Earlier adapter methods added sequential layers; LoRA does not.</figcaption>
+      </figure>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$W_{\text{merged}} = W_0 + \tfrac{\alpha}{r}\,BA$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(W_{\text{merged}}\)</dt><dd>a plain weight; subtract the same term to unmerge</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 5</span>Merge for one adapter; keep adapters separate when you need several.</figcaption>
+      </figure>
+      <figure>
+        <div class="cases">
+          <div class="case" data-st="risk"><span class="chip risk">Do not merge</span><h3>Many adapters, one base</h3>
+            <svg class="ve-mini" viewBox="0 0 240 130" role="img" aria-label="Merging each adapter into the base needs one full model copy per adapter.">
+              <path class="ve-e is-st" d="M120 38V80"/><text class="ve-el r" x="128" y="62">merges each</text>
+              <g class="ve-n"><rect class="sh" x="20" y="4" width="200" height="34" rx="5"/><text x="120" y="21">shared base</text></g>
+              <g class="ve-n is-st"><rect class="sh" x="6" y="84" width="70" height="34" rx="5"/><text x="41" y="101">copy 1</text><rect class="sh" x="85" y="84" width="70" height="34" rx="5"/><text x="120" y="101">copy 2</text><rect class="sh" x="164" y="84" width="70" height="34" rx="5"/><text x="199" y="101">copy 3</text></g>
+            </svg></div>
+          <div class="case" data-st="risk"><span class="chip risk">Do not merge</span><h3>Quantized base</h3>
+            <svg class="ve-mini" viewBox="0 0 240 130" role="img" aria-label="Merging into a 4-bit base means dequantize, add, then requantize, and the rounding changes the model's outputs.">
+              <path class="ve-e" d="M120 30V52"/><text class="ve-el r" x="128" y="46">dequant, add</text>
+              <g class="ve-n"><rect class="sh" x="20" y="2" width="200" height="28" rx="5"/><text x="120" y="16">4-bit base</text></g>
+              <g class="ve-n"><rect class="sh" x="20" y="52" width="200" height="28" rx="5"/><text x="120" y="66">bf16 + BA</text></g>
+              <path class="ve-e is-st" d="M120 80V100"/><text class="ve-el r" x="128" y="94">requantize</text>
+              <g class="ve-n is-st"><rect class="sh" x="20" y="100" width="200" height="28" rx="5"/><text x="120" y="114">outputs shift</text></g>
+            </svg></div>
+        </div>
+        <figcaption><span class="fig-n">Fig. 9</span>Two cases for staying unmerged. For a quantized base, load a bf16 copy, merge there, and quantize the merged model afterwards if needed.</figcaption>
+      </figure>
+    </section>
+
+    <section class="sec" id="s03" aria-labelledby="s03-h">
+      <div class="sec-head"><p class="sec-num"><span class="n">03</span>Code</p><h2 id="s03-h">A LoRA layer is about thirty lines, and PEFT wraps every layer for you</h2></div>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 240" role="img" aria-label="The forward pass of the from-scratch layer. The input x, N by d_in, is multiplied by A transposed to give an N by r intermediate, then by B transposed to give N by d_out, and added to the frozen base output. The full d_out by d_in update is never built.">
+            <path class="ve-e" d="M130 110H220"/><text class="ve-el" x="175" y="101">@ Aᵀ</text>
+            <path class="ve-e" d="M350 110H440"/><text class="ve-el" x="395" y="101">@ Bᵀ</text>
+            <path class="ve-e is-hot" d="M580 110H670"/><text class="ve-el" x="625" y="101">adds</text>
+            <path class="ve-e" d="M75 75V30H730V75"/><text class="ve-el" x="400" y="21">base(x): the frozen W0 path</text>
+            <g class="ve-n" transform="translate(20 75)"><rect class="sh" width="110" height="70" rx="6"/><text x="55" y="26">x</text><text class="sub" x="55" y="48">N × d_in</text></g>
+            <g class="ve-n is-key" transform="translate(220 75)"><rect class="sh" width="130" height="70" rx="6"/><text x="65" y="26">x Aᵀ</text><text class="sub" x="65" y="48">N × r</text></g>
+            <g class="ve-n" transform="translate(440 75)"><rect class="sh" width="140" height="70" rx="6"/><text x="70" y="26">x Aᵀ Bᵀ</text><text class="sub" x="70" y="48">N × d_out</text></g>
+            <g class="ve-n" transform="translate(670 75)"><rect class="sh" width="120" height="70" rx="6"/><text x="60" y="26">out</text><text class="sub" x="60" y="48">× scaling</text></g>
+            <g class="ve-dim is-key"><path class="ext" d="M220 152V196M350 152V196"/><path class="ln" d="M220 190H350"/><text x="285" y="220">N × r, ΔW never built</text></g>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 10</span>Multiplying by A first keeps the intermediate at width r, so training never materializes the d_out × d_in update.</figcaption>
+      </figure>
+      <div class="code">
+        <div class="code-bar"><span class="ve-label">lora_linear.py</span><button class="copy" type="button">Copy</button></div>
+<pre tabindex="0"><code><span class="tk-k">import</span> math
+<span class="tk-k">import</span> torch
+<span class="tk-k">import</span> torch.nn <span class="tk-k">as</span> nn
+
+
+<span class="tk-k">class</span> <span class="tk-f">LoRALinear</span>(nn.Module):
+    <span class="tk-k">def</span> <span class="tk-f">__init__</span>(<span class="tk-k">self</span>, base: nn.Linear, r: int = <span class="tk-n">8</span>, alpha: float = <span class="tk-n">16</span>,
+                 dropout: float = <span class="tk-n">0.0</span>, rslora: bool = <span class="tk-k">False</span>):
+        <span class="tk-f">super</span>().<span class="tk-f">__init__</span>()
+        <span class="tk-k">self</span>.base = base
+        <span class="tk-k">self</span>.base.weight.<span class="tk-f">requires_grad_</span>(<span class="tk-k">False</span>)   <span class="tk-c"># the pretrained weight is never updated</span>
+        <span class="tk-k">if</span> <span class="tk-k">self</span>.base.bias <span class="tk-k">is</span> <span class="tk-k">not</span> <span class="tk-k">None</span>:
+            <span class="tk-k">self</span>.base.bias.<span class="tk-f">requires_grad_</span>(<span class="tk-k">False</span>)
+        d_out, d_in = base.weight.shape
+        <span class="tk-c"># rsLoRA divides by sqrt(r) so the update does not shrink as rank grows</span>
+        <span class="tk-k">self</span>.scaling = alpha / math.<span class="tk-f">sqrt</span>(r) <span class="tk-k">if</span> rslora <span class="tk-k">else</span> alpha / r
+        <span class="tk-k">self</span>.A = nn.<span class="tk-f">Parameter</span>(torch.<span class="tk-f">empty</span>(r, d_in))
+        <span class="tk-k">self</span>.B = nn.<span class="tk-f">Parameter</span>(torch.<span class="tk-f">zeros</span>(d_out, r))   <span class="tk-c"># B = 0 makes the adapted model start identical to the base</span>
+        nn.init.<span class="tk-f">kaiming_uniform_</span>(<span class="tk-k">self</span>.A, a=math.<span class="tk-f">sqrt</span>(<span class="tk-n">5</span>))  <span class="tk-c"># A must be random or B's gradient would be zero forever</span>
+        <span class="tk-k">self</span>.dropout = nn.<span class="tk-f">Dropout</span>(dropout)
+        <span class="tk-k">self</span>.merged = <span class="tk-k">False</span>
+
+    <span class="tk-k">def</span> <span class="tk-f">forward</span>(<span class="tk-k">self</span>, x):
+        out = <span class="tk-k">self</span>.<span class="tk-f">base</span>(x)
+        <span class="tk-k">if</span> <span class="tk-k">self</span>.merged:
+            <span class="tk-k">return</span> out
+        <span class="tk-c"># x @ A^T @ B^T keeps the intermediate at width r instead of materializing a d_out x d_in matrix</span>
+        <span class="tk-k">return</span> out + (<span class="tk-k">self</span>.<span class="tk-f">dropout</span>(x) @ <span class="tk-k">self</span>.A.T @ <span class="tk-k">self</span>.B.T) * <span class="tk-k">self</span>.scaling
+
+    @torch.<span class="tk-f">no_grad</span>()
+    <span class="tk-k">def</span> <span class="tk-f">merge</span>(<span class="tk-k">self</span>):
+        <span class="tk-k">if</span> <span class="tk-k">not</span> <span class="tk-k">self</span>.merged:
+            <span class="tk-k">self</span>.base.weight += (<span class="tk-k">self</span>.B @ <span class="tk-k">self</span>.A) * <span class="tk-k">self</span>.scaling
+            <span class="tk-k">self</span>.merged = <span class="tk-k">True</span>
+
+    @torch.<span class="tk-f">no_grad</span>()
+    <span class="tk-k">def</span> <span class="tk-f">unmerge</span>(<span class="tk-k">self</span>):
+        <span class="tk-k">if</span> <span class="tk-k">self</span>.merged:
+            <span class="tk-k">self</span>.base.weight -= (<span class="tk-k">self</span>.B @ <span class="tk-k">self</span>.A) * <span class="tk-k">self</span>.scaling
+            <span class="tk-k">self</span>.merged = <span class="tk-k">False</span></code></pre>
+      </div>
+      <p>The test below checks the three properties that matter: identical output at init, fitting a hidden low-rank change, and exact merge and unmerge.</p>
+      <div class="code">
+        <div class="code-bar"><span class="ve-label">check.py</span><button class="copy" type="button">Copy</button></div>
+<pre tabindex="0"><code>torch.<span class="tk-f">manual_seed</span>(<span class="tk-n">0</span>)
+d_in, d_out, r = <span class="tk-n">64</span>, <span class="tk-n">32</span>, <span class="tk-n">4</span>
+base = nn.<span class="tk-f">Linear</span>(d_in, d_out)
+layer = <span class="tk-f">LoRALinear</span>(base, r=r, alpha=<span class="tk-n">8</span>)
+x = torch.<span class="tk-f">randn</span>(<span class="tk-n">256</span>, d_in)
+
+<span class="tk-c"># B = 0 at init, so the wrapped layer is exactly the base layer</span>
+<span class="tk-k">assert</span> torch.<span class="tk-f">allclose</span>(<span class="tk-f">layer</span>(x), <span class="tk-f">base</span>(x))
+
+trainable = <span class="tk-f">sum</span>(p.<span class="tk-f">numel</span>() <span class="tk-k">for</span> p <span class="tk-k">in</span> layer.<span class="tk-f">parameters</span>() <span class="tk-k">if</span> p.requires_grad)
+total = <span class="tk-f">sum</span>(p.<span class="tk-f">numel</span>() <span class="tk-k">for</span> p <span class="tk-k">in</span> layer.<span class="tk-f">parameters</span>())
+<span class="tk-k">print</span>(<span class="tk-s">f"trainable {trainable} / {total} ({100 * trainable / total:.1f}%)"</span>)
+
+<span class="tk-c"># Target: the base layer plus a hidden rank-2 change; LoRA with r=4 should fit it</span>
+<span class="tk-k">with</span> torch.<span class="tk-f">no_grad</span>():
+    delta = torch.<span class="tk-f">randn</span>(d_out, <span class="tk-n">2</span>) @ torch.<span class="tk-f">randn</span>(<span class="tk-n">2</span>, d_in) * <span class="tk-n">0.1</span>
+    y = x @ (base.weight + delta).T + base.bias
+opt = torch.optim.<span class="tk-f">AdamW</span>([p <span class="tk-k">for</span> p <span class="tk-k">in</span> layer.<span class="tk-f">parameters</span>() <span class="tk-k">if</span> p.requires_grad], lr=<span class="tk-n">1e-2</span>)
+<span class="tk-k">for</span> step <span class="tk-k">in</span> <span class="tk-f">range</span>(<span class="tk-n">2000</span>):
+    loss = ((<span class="tk-f">layer</span>(x) - y) ** <span class="tk-n">2</span>).<span class="tk-f">mean</span>()
+    opt.<span class="tk-f">zero_grad</span>()
+    loss.<span class="tk-f">backward</span>()
+    opt.<span class="tk-f">step</span>()
+<span class="tk-k">assert</span> loss.<span class="tk-f">item</span>() &lt; <span class="tk-n">1e-4</span>
+
+before = <span class="tk-f">layer</span>(x)
+layer.<span class="tk-f">merge</span>()
+<span class="tk-k">assert</span> torch.<span class="tk-f">allclose</span>(<span class="tk-f">layer</span>(x), before, atol=<span class="tk-n">1e-5</span>)  <span class="tk-c"># merging must not change outputs</span>
+layer.<span class="tk-f">unmerge</span>()
+<span class="tk-k">assert</span> torch.<span class="tk-f">allclose</span>(<span class="tk-f">layer</span>(x), before, atol=<span class="tk-n">1e-5</span>)</code></pre>
+      </div>
+      <p>Change the hidden delta to rank 8 while keeping <code>r=4</code>: the loss plateaus well above zero. That is the capacity limit from section 05. To wrap a whole model, walk <code>model.named_modules()</code>, find <code>nn.Linear</code> modules whose names end in your target list, and replace them with <code>LoRALinear(module)</code> via <code>setattr</code> on the parent. PEFT does that plus a lot of bookkeeping.</p>
+
+      <figure class="ve-steps">
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 270" role="img" aria-label="The PEFT QLoRA workflow in six steps: load the base in 4-bit NF4, prepare it for k-bit training, wrap it with get_peft_model, train, save only the adapter, then reload a bf16 base and merge_and_unload.">
+            <path class="ve-e" data-s="2" pathLength="1" d="M220 70H300"/><text class="ve-el" data-s="2" x="260" y="61">casts</text>
+            <path class="ve-e" data-s="3" pathLength="1" d="M500 70H580"/><text class="ve-el" data-s="3" x="540" y="61">wraps</text>
+            <path class="ve-e" data-s="4" pathLength="1" d="M680 100V145H120V190"/><text class="ve-el" data-s="4" x="400" y="136">trains</text>
+            <path class="ve-e" data-s="5" pathLength="1" d="M220 220H300"/><text class="ve-el" data-s="5" x="260" y="211">saves</text>
+            <path class="ve-e is-hot" data-s="6" pathLength="1" d="M500 220H580"/><text class="ve-el" data-s="6" x="540" y="211">merges</text>
+            <g class="ve-n" data-s="1" transform="translate(20 40)"><rect class="sh" width="200" height="60" rx="6"/><text x="100" y="22">4-bit base</text><text class="sub" x="100" y="44">NF4, bf16 matmul</text></g>
+            <g class="ve-n" data-s="2" transform="translate(300 40)"><rect class="sh" width="200" height="60" rx="6"/><text x="100" y="22">prepare</text><text class="sub" x="100" y="44">norms fp32, ckpt</text></g>
+            <g class="ve-n is-key" data-s="3" transform="translate(580 40)"><rect class="sh" width="200" height="60" rx="6"/><text x="100" y="22">get_peft_model</text><text class="sub" x="100" y="44">all-linear, r = 16</text></g>
+            <g class="ve-n" data-s="4" transform="translate(20 190)"><rect class="sh" width="200" height="60" rx="6"/><text x="100" y="22">train</text><text class="sub" x="100" y="44">SFT or DPO</text></g>
+            <g class="ve-n" data-s="5" transform="translate(300 190)"><rect class="sh" width="200" height="60" rx="6"/><text x="100" y="22">save_pretrained</text><text class="sub" x="100" y="44">adapter only, MB</text></g>
+            <g class="ve-n is-key" data-s="6" transform="translate(580 190)"><rect class="sh" width="200" height="60" rx="6"/><text x="100" y="22">merge_and_unload</text><text class="sub" x="100" y="44">into a bf16 base</text></g>
+          </svg>
+        </div>
+        <div class="ve-player">
+          <ol class="ve-cap">
+            <li data-n="1/6">Load the frozen base in 4-bit NF4. Matmuls run in bf16.</li>
+            <li data-n="2/6"><code>prepare_model_for_kbit_training</code> casts norms to fp32 and turns on gradient checkpointing, which 4-bit training needs for stability and memory.</li>
+            <li data-n="3/6"><code>get_peft_model</code> adds A and B to every linear layer. Only those are trainable.</li>
+            <li data-n="4/6">Train with Trainer, SFTTrainer or DPOTrainer. DPO's reference model is the base with the adapter disabled, so no second model is held.</li>
+            <li data-n="5/6"><code>save_pretrained</code> writes only the adapter: tens of MB.</li>
+            <li data-n="6/6">To merge, reload the base in bf16, not 4-bit, so nothing is requantized, then <code>merge_and_unload</code>.</li>
+          </ol>
+          <button data-go="-1" aria-label="Previous step">←</button>
+          <button data-play>Play</button>
+          <input type="range" min="0" value="0" aria-label="Step">
+          <button data-go="1" aria-label="Next step">→</button>
+        </div>
+        <figcaption><span class="fig-n">Fig. 11</span>The QLoRA workflow with HuggingFace PEFT, in the order the code below runs it.</figcaption>
+      </figure>
+      <div class="code">
+        <div class="code-bar"><span class="ve-label">peft_qlora.py</span><button class="copy" type="button">Copy</button></div>
+<pre tabindex="0"><code><span class="tk-k">import</span> torch
+<span class="tk-k">from</span> transformers <span class="tk-k">import</span> AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+<span class="tk-k">from</span> peft <span class="tk-k">import</span> LoraConfig, get_peft_model, prepare_model_for_kbit_training
+
+model_id = <span class="tk-s">"meta-llama/Llama-3.2-1B"</span>  <span class="tk-c"># any causal LM works; this one is small enough for a single consumer GPU</span>
+
+<span class="tk-c"># QLoRA: frozen base stored in 4-bit NF4, matmuls computed in bf16</span>
+bnb = <span class="tk-f">BitsAndBytesConfig</span>(
+    load_in_4bit=<span class="tk-k">True</span>,
+    bnb_4bit_quant_type=<span class="tk-s">"nf4"</span>,
+    bnb_4bit_use_double_quant=<span class="tk-k">True</span>,
+    bnb_4bit_compute_dtype=torch.bfloat16,
+)
+model = AutoModelForCausalLM.<span class="tk-f">from_pretrained</span>(model_id, quantization_config=bnb, device_map=<span class="tk-s">"auto"</span>)
+<span class="tk-c"># Casts norms to fp32 and enables gradient checkpointing, which 4-bit training needs for stability and memory</span>
+model = <span class="tk-f">prepare_model_for_kbit_training</span>(model)
+
+config = <span class="tk-f">LoraConfig</span>(
+    r=<span class="tk-n">16</span>,
+    lora_alpha=<span class="tk-n">32</span>,
+    lora_dropout=<span class="tk-n">0.05</span>,
+    target_modules=<span class="tk-s">"all-linear"</span>,   <span class="tk-c"># attention and MLP projections; MLPs matter most</span>
+    task_type=<span class="tk-s">"CAUSAL_LM"</span>,
+    <span class="tk-c"># use_rslora=True,             # switch on when going to high ranks</span>
+    <span class="tk-c"># use_dora=True,               # magnitude/direction decomposition, slower per step</span>
+)
+model = <span class="tk-f">get_peft_model</span>(model, config)
+model.<span class="tk-f">print_trainable_parameters</span>()
+
+<span class="tk-c"># ... train with transformers.Trainer or TRL's SFTTrainer / DPOTrainer as in the fundamentals course ...</span>
+
+model.<span class="tk-f">save_pretrained</span>(<span class="tk-s">"my-adapter"</span>)   <span class="tk-c"># writes only the adapter, tens of MB</span>
+
+<span class="tk-c"># Merging: reload the base in bf16, not 4-bit, so the merged weights are not requantized</span>
+<span class="tk-k">from</span> peft <span class="tk-k">import</span> PeftModel
+base = AutoModelForCausalLM.<span class="tk-f">from_pretrained</span>(model_id, torch_dtype=torch.bfloat16)
+merged = PeftModel.<span class="tk-f">from_pretrained</span>(base, <span class="tk-s">"my-adapter"</span>).<span class="tk-f">merge_and_unload</span>()
+merged.<span class="tk-f">save_pretrained</span>(<span class="tk-s">"my-merged-model"</span>)</code></pre>
+      </div>
+      <p>TRL's <code>SFTTrainer</code> and <code>DPOTrainer</code> accept a <code>peft_config</code> directly. For LoRA+, PEFT provides <code style="overflow-wrap:anywhere">peft.optimizers.create_loraplus_optimizer</code>.</p>
+    </section>
+
+    <section class="sec" id="s04" aria-labelledby="s04-h">
+      <div class="sec-head"><p class="sec-num"><span class="n">04</span>Variants</p><h2 id="s04-h">Each variant fixes one edge of plain LoRA</h2></div>
+
+      <h3>QLoRA: store the frozen base in 4 bits</h3>
+      <p>If the base never changes, why keep it in 16 bits? QLoRA (Dettmers et al., 2023) quantizes it to 4 bits and trains bf16 adapters on top, backpropagating through the dequantized weights. It fine-tuned a 65B model on one 48 GB GPU with no measurable loss versus 16-bit LoRA on their benchmarks.</p>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 280" role="img" aria-label="QLoRA forward and backward. The 4-bit frozen base is dequantized to bf16 and multiplied with the input. The bf16 trained adapter adds its correction. Gradients flow back through the dequantized weights into the adapter only.">
+            <path class="ve-e" d="M190 75H320"/><text class="ve-el" x="255" y="66">dequantizes</text>
+            <path class="ve-e" d="M470 75H600"/><text class="ve-el" x="535" y="66">x W0</text>
+            <path class="ve-e is-hot" d="M470 195H540V115H600"/><text class="ve-el r" x="550" y="160">adds BA·x</text>
+            <path class="ve-e is-hot is-async" d="M690 130V255H395V230"/><text class="ve-el" x="545" y="246">gradients: base stays frozen</text>
+            <g class="ve-n" transform="translate(20 40)"><rect class="sh is-off" width="170" height="70" rx="6"/><text x="85" y="26">base</text><text class="sub" x="85" y="48">4-bit NF4</text></g>
+            <g class="ve-n" transform="translate(320 40)"><rect class="sh" width="150" height="70" rx="6"/><text x="75" y="26">W0 in bf16</text><text class="sub" x="75" y="48">c · NF4[idx]</text></g>
+            <g class="ve-n is-key" transform="translate(320 160)"><rect class="sh" width="150" height="70" rx="6"/><text x="75" y="26">adapter</text><text class="sub" x="75" y="48">bf16, trained</text></g>
+            <g class="ve-n" transform="translate(600 60)"><rect class="sh" width="180" height="70" rx="6"/><text x="90" y="26">output</text><text class="sub" x="90" y="48">bf16</text></g>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 12</span>Only the base is 4-bit. The adapter and all arithmetic stay in bf16, and trainable weights are never quantized.</figcaption>
+      </figure>
+
+      <p><b>NF4.</b> Pretrained weights are roughly zero-mean normal, so a uniform 4-bit grid wastes levels in the tails. NF4 puts its 16 levels at quantiles of a normal distribution, with an exact zero, so each level is used about equally often.</p>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 340" role="img" aria-label="Sixteen 4-bit levels on the range minus 1 to 1. Weights follow a bell curve centered on zero. A uniform grid spaces the levels evenly, so few land where most weights are. NF4 packs its levels densely near zero and sparsely in the tails, with an exact level at zero.">
+            <text class="ve-tick l" x="20" y="20">weights: mostly near zero</text>
+            <path class="ve-e no-ah" d="M60.0 121.0 L77.0 120.5 L94.0 119.7 L111.0 118.6 L128.0 117.0 L145.0 114.8 L162.0 112.0 L179.0 108.3 L196.0 103.8 L213.0 98.3 L230.0 91.9 L247.0 84.5 L264.0 76.4 L281.0 67.9 L298.0 59.2 L315.0 50.7 L332.0 42.9 L349.0 36.3 L366.0 31.3 L383.0 28.1 L400.0 27.0 L417.0 28.1 L434.0 31.3 L451.0 36.3 L468.0 42.9 L485.0 50.7 L502.0 59.2 L519.0 67.9 L536.0 76.4 L553.0 84.5 L570.0 91.9 L587.0 98.3 L604.0 103.8 L621.0 108.3 L638.0 112.0 L655.0 114.8 L672.0 117.0 L689.0 118.6 L706.0 119.7 L723.0 120.5 L740.0 121.0"/>
+            <path class="ve-grid" d="M60 124H740"/>
+            <text class="ve-tick l" x="20" y="168">uniform 4-bit grid</text>
+            <path class="ve-e no-ah" d="M60.0 176V204M105.3 176V204M150.7 176V204M196.0 176V204M241.3 176V204M286.7 176V204M332.0 176V204M377.3 176V204M422.7 176V204M468.0 176V204M513.3 176V204M558.7 176V204M604.0 176V204M649.3 176V204M694.7 176V204M740.0 176V204"/>
+            <path class="ve-grid" d="M60 214H740"/>
+            <text class="ve-tick l" x="20" y="252">NF4: 16 normal quantiles, exact zero</text>
+            <path class="ve-e no-ah is-hot" d="M60.0 260V288M163.3 260V288M221.5 260V288M265.7 260V288M303.3 260V288M337.2 260V288M369.0 260V288M400.0 260V288M427.1 260V288M454.7 260V288M483.7 260V288M514.9 260V288M549.8 260V288M591.3 260V288M645.8 260V288M740.0 260V288"/>
+            <path class="ve-grid" d="M60 298H740"/>
+            <text class="ve-tick" x="60" y="328">-1</text><text class="ve-tick" x="400" y="328">0</text><text class="ve-tick" x="740" y="328">1</text>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 13</span>Where the 16 levels sit. NF4 spends its levels where the weights are, so each level is used about equally often.</figcaption>
+      </figure>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$w \approx c \cdot \text{NF4}[\text{idx}],\qquad c = \max_{\text{block}} |w|\quad (\text{blocks of } 64)$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(c\)</dt><dd>absolute max of the block, stored in higher precision</dd></div>
+            <div><dt>idx</dt><dd>4-bit index into the 16 NF4 levels</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 6</span>Quantize: divide the block by c and take the nearest level. Dequantize on every forward and backward pass.</figcaption>
+      </figure>
+
+      <p><b>Double quantization.</b> One fp32 constant per 64 weights costs 0.5 bits per parameter. QLoRA quantizes the constants to 8 bits in blocks of 256, with one fp32 constant per block of constants.</p>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 210" role="img" aria-label="Overhead of the per-block constants. Without double quantization 0.5 bits per parameter. With it about 0.127 bits per parameter. The saving is about 0.37 bits per parameter, roughly 3 GB on a 65B model.">
+            <text class="ve-tick l" x="20" y="28">fp32 constant per 64 weights</text>
+            <rect class="ve-bar" x="20" y="38" width="300" height="22" rx="2"/><text class="ve-bar-v" x="330" y="49">0.5 bits/param</text>
+            <text class="ve-tick l" x="20" y="96">8-bit constants, + one fp32 per 256 constants</text>
+            <rect class="ve-bar hot" x="20" y="106" width="76" height="22" rx="2"/><text class="ve-bar-v" x="106" y="117">0.127 bits/param</text>
+            <g class="ve-dim is-key"><path class="ext" d="M96 132V168M320 132V168"/><path class="ln" d="M96 162H320"/><text x="208" y="156">saves 0.37 bits</text></g>
+            <text class="ve-tick l" x="20" y="198">about 3 GB on a 65B model</text>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 14</span>Overhead per parameter, without and with double quantization.</figcaption>
+      </figure>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$\frac{32}{64} = 0.5\qquad\qquad \frac{8}{64} + \frac{32}{64 \cdot 256} \approx 0.127$$
+          </div>
+          <dl class="symbols">
+            <div><dt>32/64</dt><dd>one fp32 constant per 64 weights</dd></div>
+            <div><dt>8/64</dt><dd>constants stored in 8 bits</dd></div>
+            <div><dt>32/(64·256)</dt><dd>one fp32 constant per 256 constants</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 7</span>Bits per parameter, without and with double quantization.</figcaption>
+      </figure>
+
+      <p><b>Paged optimizers.</b> Long sequences spike memory during gradient checkpointing and can OOM a job that otherwise fits. QLoRA keeps optimizer states in NVIDIA unified memory, so they page to CPU RAM under pressure, like virtual memory.</p>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 200" role="img" aria-label="Paged optimizers. Under a memory spike the Adam states page out from GPU memory to CPU RAM, and page back when needed.">
+            <g class="ve-zone"><rect x="10" y="20" width="330" height="160" rx="8"/><text x="26" y="44">GPU MEMORY</text></g>
+            <g class="ve-zone"><rect x="460" y="20" width="330" height="160" rx="8"/><text x="476" y="44">CPU RAM</text></g>
+            <path class="ve-e is-hot" d="M310 100H490"/><text class="ve-el" x="400" y="91">spike: pages out</text>
+            <path class="ve-e is-async" d="M490 135H310"/><text class="ve-el" x="400" y="156">later: pages in</text>
+            <g class="ve-n is-key" transform="translate(40 70)"><rect class="sh" width="270" height="60" rx="6"/><text x="135" y="22">Adam states</text><text class="sub" x="135" y="44">unified memory</text></g>
+            <g class="ve-n" transform="translate(490 70)"><rect class="sh" width="270" height="60" rx="6"/><text x="135" y="22">Adam states</text><text class="sub" x="135" y="44">paged out</text></g>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 15</span>The job survives a spike that would otherwise crash it.</figcaption>
+      </figure>
+      <p>Tradeoffs: QLoRA is slower per step than bf16 LoRA because every forward and backward dequantizes, and the adapter is trained against a quantized base. Deploy it on that base, or merge carefully (Fig. 9).</p>
+
+      <h3>DoRA: split magnitude from direction</h3>
+      <p>DoRA (Liu et al., 2024) found that full fine-tuning changes a weight's magnitude and direction in opposite proportions, while LoRA changes both together. It reparameterizes so that BA moves only direction and a trained vector m moves only magnitude. It usually beats LoRA at the same rank, especially at low rank, and merges to a plain matrix. The price is a norm recomputed every step.</p>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 -20 800 300" role="img" aria-label="DoRA. The LoRA-updated weight W0 plus BA is normalized per output channel into a direction. A trained magnitude vector m, initialized to the norm of W0, scales it. The product is the new weight W prime.">
+            <path class="ve-e" d="M170 135H250V60H330"/><text class="ve-el" x="290" y="51">unit norm</text>
+            <path class="ve-e" d="M490 60H575V125H650"/><text class="ve-el" x="532" y="51">orients</text>
+            <path class="ve-e is-hot" d="M490 220H575V155H650"/><text class="ve-el" x="532" y="211">scales</text>
+            <path class="ann" d="M410 30V14"/><g class="ve-co" transform="translate(410 3)"><circle r="11"/><text>1</text></g>
+            <path class="ann" d="M410 190V176"/><g class="ve-co" transform="translate(410 165)"><circle r="11"/><text>2</text></g>
+            <g class="ve-n" transform="translate(20 100)"><rect class="sh" width="150" height="70" rx="6"/><text x="75" y="26">W0 + BA</text><text class="sub" x="75" y="48">LoRA weight</text></g>
+            <g class="ve-n" transform="translate(330 30)"><rect class="sh" width="160" height="60" rx="6"/><text x="80" y="22">direction</text><text class="sub" x="80" y="44">÷ ‖·‖c</text></g>
+            <g class="ve-n is-key" transform="translate(330 190)"><rect class="sh" width="160" height="60" rx="6"/><text x="80" y="22">m</text><text class="sub" x="80" y="44">init ‖W0‖c</text></g>
+            <g class="ve-n is-key" transform="translate(650 100)"><rect class="sh" width="130" height="70" rx="6"/><text x="65" y="26">W'</text><text class="sub" x="65" y="48">m ⊙ dir</text></g>
+          </svg>
+        </div>
+        <ol class="callouts">
+          <li><span class="co-n">1</span>BA updates only the direction.</li>
+          <li><span class="co-n">2</span>m is one trained magnitude per output channel, so it updates only the magnitude.</li>
+        </ol>
+        <figcaption><span class="fig-n">Fig. 16</span>One norm per output channel; the division and the product broadcast per channel.</figcaption>
+      </figure>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$W' = m \odot \frac{W_0 + BA}{\lVert W_0 + BA \rVert_c}$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(\lVert\cdot\rVert_c\)</dt><dd>L2 norm of each output channel's weight vector</dd></div>
+            <div><dt>\(m\)</dt><dd>trained, one entry per channel, init \(\lVert W_0 \rVert_c\)</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 8</span>The paper writes weights transposed relative to PyTorch and calls this column-wise.</figcaption>
+      </figure>
+
+      <h3>LoRA+: give B a bigger learning rate</h3>
+      <p>A and B play asymmetric roles, so one shared learning rate makes feature learning inefficient in the large-width limit (Hayou et al., 2024). The fix is one line: \(\eta_B = \lambda\,\eta_A\) with \(\lambda\) around 16. They report up to about 2x faster convergence and small accuracy gains, at no extra cost.</p>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 190" role="img" aria-label="Learning rates. A trains at eta. B trains at lambda times eta, with lambda about 16, so its bar is 16 times longer.">
+            <text class="ve-tick l" x="20" y="28">A: learning rate η</text>
+            <rect class="ve-bar" x="20" y="38" width="30" height="22" rx="2"/><text class="ve-bar-v" x="60" y="49">η</text>
+            <text class="ve-tick l" x="20" y="96">B: learning rate λη, λ ≈ 16</text>
+            <rect class="ve-bar hot" x="20" y="106" width="480" height="22" rx="2"/><text class="ve-bar-v" x="510" y="117">16 η</text>
+            <text class="ve-tick l" x="20" y="170">up to about 2x faster convergence</text>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 17</span>In PEFT, <code>create_loraplus_optimizer</code> sets the two rates for you.</figcaption>
+      </figure>
+
+      <h3>Serving many adapters</h3>
+      <p>Adapters are small and the base is shared, so one GPU can serve many fine-tuned models. Keep W0 shared and give each request its own adapter; the big matmul is shared across the batch and the small ones use gather-style kernels (Punica's SGMV is the well-known one).</p>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 270" role="img" aria-label="Unmerged batched inference. One batch holds three requests that each use a different adapter. The shared W0 matmul runs once for the whole batch. A gather kernel applies each request's own A and B. The two results are summed per request.">
+            <path class="ve-e" d="M170 125H235V60H300"/><text class="ve-el" x="267" y="51">shares</text>
+            <path class="ve-e" d="M170 145H235V210H300"/><text class="ve-el" x="267" y="201">routes</text>
+            <path class="ve-e" d="M490 60H555V120H620"/><text class="ve-el" x="522" y="51">feeds</text>
+            <path class="ve-e is-hot" d="M490 210H555V150H620"/><text class="ve-el" x="522" y="201">adds</text>
+            <g class="ve-n" transform="translate(20 100)"><rect class="sh" width="150" height="70" rx="6"/><text x="75" y="26">batch</text><text class="sub" x="75" y="48">3 requests</text></g>
+            <g class="ve-n" transform="translate(300 30)"><rect class="sh" width="190" height="60" rx="6"/><text x="95" y="22">W0 matmul</text><text class="sub" x="95" y="44">shared by all</text></g>
+            <g class="ve-n is-key" transform="translate(300 170)"><rect class="sh" width="190" height="80" rx="6"/><text x="95" y="30">per-adapter</text><text class="sub" x="95" y="54">x A_i B_i, gathered</text></g>
+            <g class="ve-n" transform="translate(620 100)"><rect class="sh" width="160" height="70" rx="6"/><text x="80" y="26">outputs</text><text class="sub" x="80" y="48">one per request</text></g>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 18</span>Requests for different adapters batch together; only the cheap low-rank part differs.</figcaption>
+      </figure>
+      <p><b>S-LoRA</b> (Sheng et al., 2023) scales this to thousands of adapters: adapters live in CPU memory and page into GPU memory on demand, a unified pool manages adapter weights of varying rank together with the KV cache to avoid fragmentation, custom kernels batch heterogeneous ranks, and tensor parallelism is extended to adapters. It reported up to 4x throughput over vLLM with naive adapter support. <b>vLLM</b> and <b>SGLang</b> support multi-LoRA out of the box; in vLLM use <code>enable_lora=True</code> and pass a <code>LoRARequest</code> per request.</p>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 280" role="img" aria-label="S-LoRA memory layout. Adapters sit in CPU memory and are paged into a unified pool on the GPU, which holds adapter weights and the KV cache together. One copy of the base weights serves them all.">
+            <g class="ve-zone"><rect x="10" y="20" width="300" height="220" rx="8"/><text x="26" y="44">CPU MEMORY</text></g>
+            <g class="ve-zone"><rect x="400" y="20" width="390" height="220" rx="8"/><text x="416" y="44">GPU MEMORY</text></g>
+            <path class="ve-e is-hot" d="M270 86H430"/><text class="ve-el" x="350" y="77">pages in</text>
+            <g class="ve-n" transform="translate(40 64)"><rect class="sh" width="230" height="44" rx="6"/><text x="115" y="22">adapter 1</text></g>
+            <g class="ve-n" transform="translate(40 118)"><rect class="sh" width="230" height="44" rx="6"/><text x="115" y="22">adapter 2</text></g>
+            <g class="ve-n" transform="translate(40 172)"><rect class="sh" width="230" height="44" rx="6"/><text x="115" y="22">adapter N</text></g>
+            <g class="ve-n is-key" transform="translate(430 64)"><rect class="sh" width="330" height="90" rx="6"/><text x="165" y="34">unified pool</text><text class="sub" x="165" y="58">adapters + KV cache, paged</text></g>
+            <g class="ve-n" transform="translate(430 170)"><rect class="sh" width="330" height="54" rx="6"/><text x="165" y="27">shared base W0</text></g>
+            <text class="ve-tick" x="595" y="264">custom kernels batch mixed ranks</text>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 19</span>Paging adapters and KV cache from one pool avoids fragmentation.</figcaption>
+      </figure>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 180" role="img" aria-label="Memory for 500 customer fine-tunes of an 8B model. 500 merged bf16 copies take 8 terabytes. One shared 16 gigabyte base plus 500 rank-16 adapters of about 85 megabytes takes about 58 gigabytes.">
+            <text class="ve-tick l" x="20" y="28">500 merged copies of an 8B model, 16 GB each</text>
+            <rect class="ve-bar" x="20" y="38" width="720" height="22" rx="2"/><text class="ve-bar-v" x="748" y="49">8 TB</text>
+            <text class="ve-tick l" x="20" y="100">one shared base + 500 unmerged rank-16 adapters</text>
+            <rect class="ve-bar hot" x="20" y="110" width="5.2" height="22" rx="1"/><text class="ve-bar-v" x="36" y="121">~58 GB: 16 GB base + ~42 GB of adapters (~85 MB each)</text>
+            <text class="ve-tick l" x="20" y="164">with S-LoRA-style paging, only the active adapters need to sit on the GPU</text>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 20</span>Why "one fine-tuned model per customer" is affordable. Rough numbers for a Llama-3-8B-style model: 32 layers, seven linear projections each.</figcaption>
+      </figure>
+    </section>
+
+    <section class="sec" id="s05" aria-labelledby="s05-h">
+      <div class="sec-head"><p class="sec-num"><span class="n">05</span>Modern practice</p><h2 id="s05-h">LoRA matches full fine-tuning until the data outgrows the adapter</h2></div>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 250" role="img" aria-label="Where LoRA matches full fine-tuning. Left of the adapter capacity line: reinforcement learning, style and format tasks, instruction and preference tuning. Right of it, where there is more information than the adapter can hold: continued pretraining on code and a 20 billion token new language.">
+            <g class="ve-zone"><rect x="40" y="40" width="410" height="150" rx="8"/><text x="56" y="64">LORA MATCHES FULL FINE-TUNING</text></g>
+            <g class="ve-zone"><rect x="460" y="40" width="320" height="150" rx="8"/><text x="476" y="64">LORA FALLS SHORT</text></g>
+            <path class="ve-e no-ah is-async" d="M455 32V200"/><text class="ve-el" x="455" y="22">adapter capacity</text>
+            <g class="ve-n is-key" transform="translate(55 100)"><rect class="sh" width="120" height="50" rx="6"/><text x="60" y="25">RL, rank 1</text></g>
+            <g class="ve-n is-key" transform="translate(185 100)"><rect class="sh" width="125" height="50" rx="6"/><text x="62" y="25">style, format</text></g>
+            <g class="ve-n is-key" transform="translate(320 100)"><rect class="sh" width="120" height="50" rx="6"/><text x="60" y="25">SFT, DPO</text></g>
+            <g class="ve-n" transform="translate(475 80)"><rect class="sh" width="290" height="45" rx="6"/><text x="145" y="22">continued pretraining on code</text></g>
+            <g class="ve-n" transform="translate(475 133)"><rect class="sh" width="290" height="45" rx="6"/><text x="145" y="22">20B tokens, new language</text></g>
+            <path class="ve-e" d="M40 225H780"/><text class="ve-el" x="410" y="216">more information to absorb</text>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 21</span>Schematic, not measured: LoRA falls short once the dataset holds more information than the adapter can store.</figcaption>
+      </figure>
+
+      <h3>LoRA learns less and forgets less</h3>
+      <p>Biderman et al. (2024) compared LoRA and full fine-tuning on Llama-2 7B for continued pretraining and instruction tuning, in code and math.</p>
+      <ul>
+        <li><b>Learns less.</b> LoRA substantially underperformed on the target domain, most of all for continued pretraining on code; the gap was smaller for instruction tuning.</li>
+        <li><b>Forgets less.</b> It preserved out-of-domain skills better, acting as a regularizer stronger than weight decay or dropout.</li>
+        <li><b>Full updates are not low-rank.</b> The spectrum of ΔW from full fine-tuning has rank 10 to 100 times higher than typical LoRA configurations.</li>
+      </ul>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 170" role="img" aria-label="Rank of the weight change on a log scale relative to a typical LoRA configuration. LoRA sits at 1x. Full fine-tuning's delta W spans 10x to 100x.">
+            <path class="ve-grid" d="M40 90H700"/><path class="ve-grid" d="M40 82V98M370 82V98M700 82V98"/>
+            <rect class="ve-bar hot" x="36" y="76" width="8" height="28" rx="1"/>
+            <rect class="ve-bar" x="370" y="76" width="330" height="28" rx="2"/>
+            <text class="ve-tick l" x="40" y="60">typical LoRA rank</text>
+            <text class="ve-tick l" x="370" y="60">full fine-tuning ΔW: 10x to 100x</text>
+            <text class="ve-tick" x="40" y="126">1x</text><text class="ve-tick" x="370" y="126">10x</text><text class="ve-tick" x="700" y="126">100x</text>
+            <text class="ve-tick l" x="40" y="158">rank relative to a typical LoRA config, log scale</text>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 22</span>The low-rank hypothesis holds less well when the model must absorb a lot of new knowledge.</figcaption>
+      </figure>
+
+      <h3>LoRA Without Regret</h3>
+      <p>Thinking Machines (2025) refined this with careful sweeps. Apply LoRA to all layers, especially MLPs. LoRA is also less tolerant of large batch sizes than full fine-tuning.</p>
+      <figure>
+        <div class="cases">
+          <div class="case" data-st="ok"><span class="chip ok">Matches</span><h3>Typical post-training data</h3>
+            <svg class="ve-mini" viewBox="0 0 240 100" role="img" aria-label="Schematic: LoRA and full fine-tuning reach the same quality on typical SFT and preference sets.">
+              <text class="ve-tick l" x="6" y="24">full FT</text><g class="ve-n"><rect class="sh" x="80" y="6" width="140" height="26" rx="4"/></g>
+              <text class="ve-tick l" x="6" y="62">LoRA</text><g class="ve-n is-st"><rect class="sh" x="80" y="44" width="140" height="26" rx="4"/></g>
+              <text class="ve-tick" x="120" y="92">same sample efficiency</text>
+            </svg></div>
+          <div class="case" data-st="warn"><span class="chip warn">Falls short</span><h3>More information than capacity</h3>
+            <svg class="ve-mini" viewBox="0 0 240 100" role="img" aria-label="Schematic: LoRA ends below full fine-tuning once the data holds more information than the adapter can hold.">
+              <text class="ve-tick l" x="6" y="24">full FT</text><g class="ve-n"><rect class="sh" x="80" y="6" width="140" height="26" rx="4"/></g>
+              <text class="ve-tick l" x="6" y="62">LoRA</text><g class="ve-n is-st"><rect class="sh" x="80" y="44" width="90" height="26" rx="4"/></g>
+              <text class="ve-tick" x="120" y="92">the adapter is full</text>
+            </svg></div>
+          <div class="case" data-st="ok"><span class="chip ok">Matches</span><h3>Reinforcement learning</h3>
+            <svg class="ve-mini" viewBox="0 0 240 100" role="img" aria-label="Schematic: even rank-1 LoRA matches full fine-tuning for RL.">
+              <text class="ve-tick l" x="6" y="24">full FT</text><g class="ve-n"><rect class="sh" x="80" y="6" width="140" height="26" rx="4"/></g>
+              <text class="ve-tick l" x="6" y="62">LoRA r=1</text><g class="ve-n is-st"><rect class="sh" x="80" y="44" width="140" height="26" rx="4"/></g>
+              <text class="ve-tick" x="120" y="92">few bits per episode</text>
+            </svg></div>
+          <div class="case" data-st="ok"><span class="chip info">About 10x</span><h3>Best learning rate</h3>
+            <svg class="ve-mini" viewBox="0 0 240 100" role="img" aria-label="The best LoRA learning rate is about 10 times the full fine-tuning rate, and roughly independent of rank under 1 over r scaling.">
+              <text class="ve-tick l" x="6" y="24">full 1x</text><g class="ve-n"><rect class="sh" x="80" y="6" width="14" height="26" rx="3"/></g>
+              <text class="ve-tick l" x="6" y="62">LoRA 10x</text><g class="ve-n is-st"><rect class="sh" x="80" y="44" width="140" height="26" rx="4"/></g>
+              <text class="ve-tick" x="120" y="92">flat across rank</text>
+            </svg></div>
+        </div>
+        <figcaption><span class="fig-n">Fig. 23</span>Four findings drawn as schematics; bar lengths show the direction of each result, not measured values.</figcaption>
+      </figure>
+      <p>LoRA is an excellent default for instruction tuning, preference optimization, RL and style or format adaptation. To inject large volumes of new knowledge (a new language, a large codebase, continued pretraining), prefer full fine-tuning, or at least much larger ranks with rsLoRA, and measure.</p>
+
+      <h3>Practical hyperparameters</h3>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 438" role="img" aria-label="Starting ranges for LoRA settings, each on its own axis. target_modules: all-linear. r: 16 to 64 on a log axis from 1 to 256, with 1 to 8 enough for RL or small style tasks. lora_alpha: 16 to 32, or 2r. Learning rate: 1e-4 to 2e-4 for 7B-class models, about 10 times the full fine-tuning rate. lora_dropout: 0 to 0.05. Batch size: 32 to 128 sequences. Epochs: 1 to 3. Scheduler: cosine or linear with a short warmup.">
+            <text class="ve-tick l" x="20" y="39">target_modules</text>
+            <text class="ve-bar-v" x="210" y="34" style="fill:var(--text)">all-linear</text>
+            <text class="ve-tick l" x="210" y="56">MLP coverage matters more than rank</text>
+            <text class="ve-tick l" x="20" y="89">r</text>
+            <path class="ve-grid" d="M210 84H560"/>
+            <rect class="ve-bar" x="210.0" y="93" width="131.2" height="6" rx="1"/>
+            <rect class="ve-bar hot" x="385.0" y="76" width="87.5" height="16" rx="2"/>
+            <text class="ve-bar-v" x="576" y="84" style="fill:var(--text)">16 to 64</text>
+            <text class="ve-tick l" x="210" y="114">1</text>
+            <text class="ve-tick" style="text-anchor:end" x="560" y="114">256</text>
+            <text class="ve-tick l" x="20" y="139">lora_alpha</text>
+            <path class="ve-grid" d="M210 134H560"/>
+            <rect class="ve-bar hot" x="297.5" y="126" width="87.5" height="16" rx="2"/>
+            <text class="ve-bar-v" x="576" y="134" style="fill:var(--text)">16 to 32, or 2r</text>
+            <text class="ve-tick l" x="210" y="164">0</text>
+            <text class="ve-tick" style="text-anchor:end" x="560" y="164">64</text>
+            <text class="ve-tick l" x="20" y="189">learning rate</text>
+            <path class="ve-grid" d="M210 184H560"/>
+            <rect class="ve-bar hot" x="326.7" y="176" width="116.7" height="16" rx="2"/>
+            <text class="ve-bar-v" x="576" y="184" style="fill:var(--text)">1e-4 to 2e-4</text>
+            <text class="ve-tick l" x="210" y="214">0</text>
+            <text class="ve-tick" style="text-anchor:end" x="560" y="214">0.0003</text>
+            <text class="ve-tick l" x="20" y="239">lora_dropout</text>
+            <path class="ve-grid" d="M210 234H560"/>
+            <rect class="ve-bar hot" x="210.0" y="226" width="175.0" height="16" rx="2"/>
+            <text class="ve-bar-v" x="576" y="234" style="fill:var(--text)">0 to 0.05</text>
+            <text class="ve-tick l" x="210" y="264">0</text>
+            <text class="ve-tick" style="text-anchor:end" x="560" y="264">0.1</text>
+            <text class="ve-tick l" x="20" y="289">batch size</text>
+            <path class="ve-grid" d="M210 284H560"/>
+            <rect class="ve-bar hot" x="253.8" y="276" width="131.2" height="16" rx="2"/>
+            <text class="ve-bar-v" x="576" y="284" style="fill:var(--text)">32 to 128 sequences</text>
+            <text class="ve-tick l" x="210" y="314">0</text>
+            <text class="ve-tick" style="text-anchor:end" x="560" y="314">256</text>
+            <text class="ve-tick l" x="20" y="339">epochs</text>
+            <path class="ve-grid" d="M210 334H560"/>
+            <rect class="ve-bar hot" x="297.5" y="326" width="175.0" height="16" rx="2"/>
+            <text class="ve-bar-v" x="576" y="334" style="fill:var(--text)">1 to 3</text>
+            <text class="ve-tick l" x="210" y="364">0</text>
+            <text class="ve-tick" style="text-anchor:end" x="560" y="364">4</text>
+            <text class="ve-tick l" x="20" y="389">scheduler</text>
+            <text class="ve-bar-v" x="210" y="384" style="fill:var(--text)">cosine or linear, short warmup</text>
+            <text class="ve-tick l" x="210" y="406">as in the SFT recipe</text>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 24</span>Starting points, each bar on its own axis. Modest batches, 1 to 3 epochs, and a learning-rate sweep first.</figcaption>
+      </figure>
+      <p>Sebastian Raschka's experiments add three points: QLoRA saves about a third of memory versus LoRA at a moderate cost in runtime, \(\alpha = 2r\) is a reasonable heuristic, and results are consistent across random seeds, so one careful run is informative.</p>
+    </section>
+
+    <section class="sec" id="s06" aria-labelledby="s06-h">
+      <div class="sec-head"><p class="sec-num"><span class="n">06</span>Wrap-up</p><h2 id="s06-h">Check the ideas before the project</h2></div>
+
+      <div class="callout confusions">
+        <span class="chip warn">Common confusions</span>
+        <ul>
+          <li><p class="myth">LoRA makes inference faster.</p><p class="fact">A merged LoRA model is exactly as fast as the base; unmerged adapters add a small cost. LoRA saves training memory, storage and multi-tenant serving memory.</p></li>
+          <li><p class="myth">LoRA reduces activation memory.</p><p class="fact">Barely. Activations depend on the base width and sequence length, and backprop still flows through every frozen layer. Use gradient checkpointing.</p></li>
+          <li><p class="myth">Higher rank is always better.</p><p class="fact">With standard α/r scaling, very high ranks can train worse because the update is scaled down. Use rsLoRA, and remember module coverage usually matters more than rank.</p></li>
+          <li><p class="myth">Initializing B = 0 means nothing trains.</p><p class="fact">B's gradient depends on the random A, so B moves on step one and then A gets gradients too. Only initializing both to zero is broken.</p></li>
+          <li><p class="myth">QLoRA trains a 4-bit model.</p><p class="fact">The base is stored in 4-bit and frozen; adapters and all computation are bf16. The trainable parameters are never quantized.</p></li>
+          <li><p class="myth">Merging a QLoRA adapter is free.</p><p class="fact">Merging into 4-bit weights requires requantization and changes outputs. Merge into a bf16 copy of the base.</p></li>
+          <li><p class="myth">LoRA is just a cheaper approximation of full fine-tuning.</p><p class="fact">It is also a different inductive bias: it forgets less, which is sometimes exactly what you want.</p></li>
+        </ul>
+      </div>
+
+      <div class="callout quiz">
+        <span class="chip info">Check yourself</span>
+        <ol>
+          <li><p>For a \(4096 \times 14336\) MLP projection, how many trainable parameters does LoRA add at \(r = 16\), and what fraction of the full matrix is that?</p>
+            <details><summary>Show answer</summary><p>The adapter has \(r(d_{\text{in}} + d_{\text{out}})\) parameters: \(16 \times 18{,}432 = 294{,}912\). The full matrix has \(58{,}720{,}256\) entries, so about 0.5%.</p></details></li>
+          <li><p>Why does LoRA initialize B to zero and A randomly, rather than both random or both zero?</p>
+            <details><summary>Show answer</summary><p>B = 0 makes ΔW = 0 at the start, so training begins exactly at the pretrained model. A must be random so that B's gradient, proportional to \(Ax\), is nonzero; if both were zero all gradients would vanish. If both were random, the model would start at a randomly perturbed, worse point.</p></details></li>
+          <li><p>You raise \(r\) from 16 to 256 with standard scaling and keep \(\alpha = 16\). Training gets worse. Explain why, and give two fixes.</p>
+            <details><summary>Show answer</summary><p>The update is scaled by \(\alpha/r = 16/256 = 0.0625\) instead of 1, so its effective step shrinks and, per rsLoRA's analysis, learning at high rank slows or collapses. Fixes: use rsLoRA scaling \(\alpha/\sqrt{r}\); raise \(\alpha\) proportionally (for example \(\alpha = 2r\)); or re-tune the learning rate upward.</p></details></li>
+          <li><p>In QLoRA, what does NF4 optimize for, and what problem does double quantization solve? Do the overhead arithmetic with and without it.</p>
+            <details><summary>Show answer</summary><p>NF4 places its 16 levels at quantiles of a normal distribution, so for normally distributed weights each level is used equally often, minimizing information loss. Double quantization cuts the overhead of per-block scale constants. Without it: one fp32 constant per 64 weights is \(32/64 = 0.5\) bits per parameter. With it: 8-bit constants plus one fp32 constant per 256 constants gives \(8/64 + 32/16384 \approx 0.127\) bits per parameter, saving about 0.37 bits per parameter.</p></details></li>
+          <li><p>A team wants to serve 500 customer-specific fine-tunes of an 8B model. Compare memory for merged full checkpoints against a shared base with unmerged rank-16 adapters on all linear layers.</p>
+            <details><summary>Show answer</summary><p>Merged: \(500 \times 16\) GB \(= 8\) TB of bf16 weights, impossible to keep resident. Shared base: 16 GB once. A Llama-3-8B-style model has 32 layers with seven linear projections; at \(r = 16\) the adapter is roughly 40M to 45M parameters, about 85 MB in bf16. 500 of them is about 42 GB, and with S-LoRA-style paging only active adapters need to be on GPU.</p></details></li>
+          <li><p>Your LoRA fine-tune on 20B tokens of a new programming language underperforms full fine-tuning, but your LoRA chat fine-tune on 50k examples matches it. Explain using the two studies in section 05.</p>
+            <details><summary>Show answer</summary><p>Biderman et al. found LoRA learns less in high-information regimes like continued pretraining, because full fine-tuning's updates there are high-rank. Thinking Machines found that when the dataset's information fits within the adapter's capacity, as with typical instruction tuning, a well-tuned LoRA matches full fine-tuning. 20B tokens of a new language exceeds that capacity; 50k chat examples does not.</p></details></li>
+        </ol>
+      </div>
+
+      <h3>Resources</h3>
+      <div class="resources">
+        <div class="res-col">
+          <h3>Read</h3>
+          <ul class="res-list">
+            <li class="res-item is-start">
+              <div class="res-top"><a href="https://thinkingmachines.ai/blog/lora/">LoRA Without Regret</a><span class="start-here">Start here</span></div>
+              <div class="res-meta">Thinking Machines <span class="chip plain">blog</span></div>
+              <p>The most practical modern guide to when LoRA matches full fine-tuning and how to set it up.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://arxiv.org/abs/2106.09685">LoRA: Low-Rank Adaptation of Large Language Models</a></div>
+              <div class="res-meta">Hu et al., 2021 <span class="chip plain">paper</span></div>
+              <p>The original paper; sections 4 and 7 cover the method and the rank analysis.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://arxiv.org/abs/2012.13255">Intrinsic Dimensionality Explains the Effectiveness of Language Model Fine-Tuning</a></div>
+              <div class="res-meta">Aghajanyan et al., 2020 <span class="chip plain">paper</span></div>
+              <p>The empirical motivation; pair it with the LoRA paper.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://arxiv.org/abs/2305.14314">QLoRA: Efficient Finetuning of Quantized LLMs</a></div>
+              <div class="res-meta">Dettmers et al., 2023 <span class="chip plain">paper</span></div>
+              <p>NF4, double quantization, paged optimizers, and the all-linear-layers finding.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://arxiv.org/abs/2402.09353">DoRA</a></div>
+              <div class="res-meta">Liu et al., 2024 <span class="chip plain">paper</span></div>
+              <p>One of the three most useful refinements, each a small change.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://arxiv.org/abs/2402.12354">LoRA+</a></div>
+              <div class="res-meta">Hayou et al., 2024 <span class="chip plain">paper</span></div>
+              <p>Separate learning rates for A and B.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://arxiv.org/abs/2312.03732">rsLoRA</a></div>
+              <div class="res-meta">Kalajdzievski, 2023 <span class="chip plain">paper</span></div>
+              <p>The rank-stabilized scaling factor.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://arxiv.org/abs/2311.03285">S-LoRA: Serving Thousands of Concurrent LoRA Adapters</a></div>
+              <div class="res-meta">Sheng et al., 2023 <span class="chip plain">paper</span></div>
+              <p>Unified paging and batched heterogeneous adapters.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://arxiv.org/abs/2405.09673">LoRA Learns Less and Forgets Less</a></div>
+              <div class="res-meta">Biderman et al., 2024 <span class="chip plain">paper</span></div>
+              <p>The careful counterpoint on knowledge-heavy fine-tuning.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://magazine.sebastianraschka.com/p/practical-tips-for-finetuning-llms">Practical Tips for Finetuning LLMs Using LoRA</a></div>
+              <div class="res-meta">Sebastian Raschka <span class="chip plain">blog</span></div>
+              <p>Hands-on experiments.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://magazine.sebastianraschka.com/p/lora-and-dora-from-scratch">Improving LoRA: Implementing DoRA from Scratch</a></div>
+              <div class="res-meta">Sebastian Raschka <span class="chip plain">blog</span></div>
+              <p>From-scratch code.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://huggingface.co/docs/peft/developer_guides/lora">HuggingFace PEFT LoRA guide</a></div>
+              <div class="res-meta">Hugging Face <span class="chip plain">docs</span></div>
+              <p>Every <code>LoraConfig</code> option, initialization variants, merging and multi-adapter APIs.</p>
+            </li>
+          </ul>
+        </div>
+        <div class="res-col">
+          <h3>Watch</h3>
+          <ul class="res-list">
+            <li class="res-item">
+              <div class="res-top"><a href="https://www.youtube.com/watch?v=DhRoTONcyZE">What is Low-Rank Adaptation (LoRA), explained by the inventor</a></div>
+              <div class="res-meta">Edward Hu <span class="chip plain">video</span></div>
+              <p>Short, first-hand motivation for the design.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://www.youtube.com/watch?v=PXWYUTMt-AU">LoRA explained visually + PyTorch code from scratch</a></div>
+              <div class="res-meta">Umar Jamil <span class="chip plain">video</span></div>
+              <p>Derivation plus an implementation you can compare with the one above.</p>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="project">
+        <span class="chip info">Chapter project</span>
+        <h3>Find LoRA's capacity limit on a real model</h3>
+        <p>Compare full fine-tuning, your own LoRA and PEFT on a small instruct model (Llama-3.2-1B-Instruct or Qwen2.5-0.5B-Instruct), on a low-information task and a high-information one.</p>
+        <ol>
+          <li>Pick two datasets: (a) a small style or format task, such as 2k examples answering in a strict JSON schema; (b) a knowledge-heavy task, such as 50M+ tokens of a domain corpus (a language's documentation, legal texts, or a non-English Wikipedia subset).</li>
+          <li>Fine-tune with full fine-tuning; your <code>LoRALinear</code> on all linear layers at \(r \in \{4, 32, 256\}\); and PEFT LoRA at \(r = 256\) with <code>use_rslora=True</code>. Sweep the learning rate for each (at least three values) and keep the best.</li>
+          <li>Measure target-domain loss or accuracy, and forgetting on a held-out general benchmark (a few hundred MMLU or HellaSwag questions).</li>
+          <li>Plot target performance against forgetting for every run. Say where LoRA matches full fine-tuning and where it falls short.</li>
+          <li>Bonus: repeat the best LoRA configuration with QLoRA and DoRA and report memory, step time and quality. Then serve two adapters from one base with vLLM's multi-LoRA support and confirm each request gets its own behavior.</li>
+        </ol>
+        <ul class="done">
+          <li>One plot of target performance against forgetting, with a point per run.</li>
+          <li>A written link from your plot to "learns less, forgets less" and "LoRA Without Regret".</li>
+        </ul>
+        <p class="meta">uses sections 01–05 · bonus uses the Fig. 12 and Fig. 18 setups</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Linked highlighting: hovering any [data-ref], or focusing a prose term, lights every element that shares a ref.
+  const linked = [...document.querySelectorAll('[data-ref]')], refs = (el) => el.dataset.ref.split(' ');
+  let hovered = null, focused = null;
+  const paint = () => {
+    const keys = (hovered || focused)?.dataset.ref.split(' ') ?? [];
+    for (const t of linked) t.classList.toggle('is-lit', refs(t).some((k) => keys.includes(k)));
+    for (const svg of document.querySelectorAll('svg')) svg.classList.toggle('has-lit', !!svg.querySelector('.is-lit'));
+  };
+  for (const el of linked) {
+    el.addEventListener('pointerenter', () => { hovered = el; paint(); });
+    el.addEventListener('pointerleave', () => { hovered = null; paint(); });
+    el.addEventListener('focus', () => { focused = el; paint(); });
+    el.addEventListener('blur', () => { focused = null; paint(); });
+  }
+
+  // Stepper / scene player. Opens on the full picture, because the first view must show the answer.
+  for (const root of document.querySelectorAll('.ve-steps')) {
+    const parts = [...root.querySelectorAll('[data-s]')], caps = [...root.querySelectorAll('.ve-cap li')];
+    const range = root.querySelector('input[type=range]'), play = root.querySelector('[data-play]');
+    const n = caps.length; let i = 0, timer = null;
+    if (range) range.max = n - 1;
+    const show = (k) => {
+      i = Math.max(0, Math.min(n - 1, k));
+      for (const el of parts) { const s = el.dataset.s.trim().split(' ').map(Number); el.classList.toggle('on', s[0] <= i + 1); el.classList.toggle('now', s.includes(i + 1)); }
+      caps.forEach((c, j) => c.hidden = j !== i);
+      root.classList.toggle('is-full', i === n - 1);
+      if (range) range.value = i;
+    };
+    const stop = () => { clearInterval(timer); timer = null; if (play) play.textContent = 'Play'; };
+    root.addEventListener('click', (e) => { const b = e.target.closest('[data-go]'); if (b) { stop(); show(i + +b.dataset.go); } });
+    range?.addEventListener('input', () => { stop(); show(+range.value); });
+    play?.addEventListener('click', () => {
+      if (timer) return stop();
+      if (i === n - 1) show(0);
+      play.textContent = 'Pause';
+      timer = setInterval(() => (i < n - 1 ? show(i + 1) : stop()), 3500);
+    });
+    show(n - 1);
+    addEventListener('beforeprint', () => show(n - 1));
+  }
+
+  // Copy buttons: clipboard API, with a selection fallback for browsers that block it on file:// pages.
+  for (const btn of document.querySelectorAll('.code .copy')) {
+    btn.addEventListener('click', async () => {
+      const code = btn.closest('.code').querySelector('pre code');
+      try { await navigator.clipboard.writeText(code.innerText); }
+      catch { const r = document.createRange(); r.selectNodeContents(code); const s = getSelection(); s.removeAllRanges(); s.addRange(r); document.execCommand('copy'); s.removeAllRanges(); }
+      btn.textContent = 'Copied'; setTimeout(() => (btn.textContent = 'Copy'), 1500);
+    });
+  }
+
+  // TOC scroll-spy: the section crossing the top tenth of the viewport is the current one.
+  const tocLinks = new Map([...document.querySelectorAll('.toc a[href^="#"]')].map((a) => [a.getAttribute('href').slice(1), a]));
+  const spy = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      for (const a of tocLinks.values()) a.removeAttribute('aria-current');
+      tocLinks.get(e.target.id)?.setAttribute('aria-current', 'true');
+    }
+  }, { rootMargin: '-10% 0px -80% 0px' });
+  for (const id of tocLinks.keys()) { const s = document.getElementById(id); if (s) spy.observe(s); }
+
+  // Entrance: each block rises in once. Without JS, in print, or under reduced motion, everything shows its final state.
+  if (!still) {
+    document.documentElement.classList.add('js-motion');
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) if (e.isIntersecting) { io.unobserve(e.target); e.target.classList.add('in'); }
+    }, { rootMargin: '0px 0px -10% 0px' });
+    for (const el of document.querySelectorAll('.ch-head, .sec > *')) io.observe(el);
+  }
+
+  // Sidebar visibility is a per-reader preference; storage can be blocked, so it only seeds the initial state.
+  (() => {
+    const root = document.documentElement, b = document.getElementById('toc-toggle');
+    const apply = (hidden) => { root.classList.toggle('toc-hidden', hidden); b.setAttribute('aria-expanded', !hidden); b.setAttribute('aria-label', hidden ? 'Show sidebar' : 'Hide sidebar'); };
+    let hidden = false; try { hidden = localStorage.getItem('toc-hidden') === '1'; } catch (e) {}
+    apply(hidden);
+    b.addEventListener('click', () => { hidden = !hidden; apply(hidden); try { localStorage.setItem('toc-hidden', hidden ? '1' : '0'); } catch (e) {} });
+  })();
+  // Theme: explicit choice wins; with none saved the page follows the OS scheme.
+  (() => {
+    const root = document.documentElement, b = document.getElementById('theme-toggle'), mq = matchMedia('(prefers-color-scheme: light)');
+    const mode = () => root.dataset.theme || (mq.matches ? 'light' : 'dark');
+    const sync = () => { const m = mode(); b.dataset.mode = m; b.setAttribute('aria-label', m === 'light' ? 'Switch to dark mode' : 'Switch to light mode'); };
+    sync(); mq.addEventListener('change', sync);
+    b.addEventListener('click', () => { const next = mode() === 'light' ? 'dark' : 'light'; root.dataset.theme = next; try { localStorage.setItem('theme', next); } catch (e) {} sync(); });
+  })();
+</script>
+</body>
+</html>

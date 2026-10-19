@@ -1,0 +1,13 @@
+<figure>
+<div class="frame">
+<svg class="ve-svg" viewBox="0 0 800 200" role="img" aria-label="Paged optimizers. Under a memory spike the Adam states page out from GPU memory to CPU RAM, and page back when needed.">
+<g class="ve-zone"><rect x="10" y="20" width="330" height="160" rx="8"/><text x="26" y="44">GPU MEMORY</text></g>
+<g class="ve-zone"><rect x="460" y="20" width="330" height="160" rx="8"/><text x="476" y="44">CPU RAM</text></g>
+<path class="ve-e is-hot" d="M310 100H490"/><text class="ve-el" x="400" y="91">spike: pages out</text>
+<path class="ve-e is-async" d="M490 135H310"/><text class="ve-el" x="400" y="156">later: pages in</text>
+<g class="ve-n is-key" transform="translate(40 70)"><rect class="sh" width="270" height="60" rx="6"/><text x="135" y="22">Adam states</text><text class="sub" x="135" y="44">unified memory</text></g>
+<g class="ve-n" transform="translate(490 70)"><rect class="sh" width="270" height="60" rx="6"/><text x="135" y="22">Adam states</text><text class="sub" x="135" y="44">paged out</text></g>
+</svg>
+</div>
+<figcaption><span class="fig-n">Fig. 15</span>The job survives a spike that would otherwise crash it.</figcaption>
+</figure>

@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<!--
+  CHAPTER PAGE KIT (reference page, placeholder content).
+
+  How to build a chapter page from this file:
+  1. Copy everything from <!DOCTYPE html> through </head> verbatim (change only <title> and the meta description).
+  2. Copy the <svg class="ve-defs"> block at the top of <body> and the final <script> block verbatim.
+  3. Write only the body content: .topbar, .page > nav.toc + main (header + one section.sec per course section).
+  Do not add CSS. If a page needs something the kit lacks, add it to this kit first so every page stays identical.
+
+  Component class names:
+    chrome     .topbar .crumbs .pager  .page  nav.toc (scroll-spy: links point at section ids)
+    header     .ch-head .eyebrow h1 .lead .meta
+    section    section.sec#sNN > .sec-head > p.sec-num(span.n) + h2   (12-col grid; text spans 8, figures 12)
+    figure     figure > .frame > svg.ve-svg[role=img][aria-label] + figcaption > span.fig-n
+               svg parts: g.ve-n[.is-key] > rect.sh + text + text.sub   path.ve-e[.is-hot|.is-async|.no-ah]
+                          text.ve-el[.l|.r] (edge verb)  g.ve-dim[.is-key] (dimension)  g.ve-co + path.ann (callout)
+                          g.ve-zone (dashed boundary)  .ve-tick (axis text)  .ve-bar[.hot] + .ve-bar-v (inline bars)
+               ol.callouts > li > span.co-n   (one-line notes under a figure with callouts)
+               svg.ve-svg min-width: viewBox width x 0.86 (inline style) so 14-unit labels stay >= 12px.
+    stepper    figure.ve-steps: parts carry data-s="N"; .ve-player > ol.ve-cap > li[data-n="1/4"] + button[data-go] + input[type=range]
+    linked     .ve-ref[data-ref][tabindex=0] in prose + [data-ref] on svg parts
+    multiples  .cases > .case[data-st=ok|warn|risk] > .chip + h3 + svg.ve-mini (.is-st marks the changed part)
+    chips      .chip.ok (circle) .chip.warn (triangle) .chip.risk (square) .chip.info (diamond) .chip.plain (no shape)
+    equation   figure > .eq > .eq-math ($$ ... $$) + dl.symbols > div > dt + dd   (write < as &lt; inside math)
+    code       .code > .code-bar(span.ve-label + button.copy) + pre[tabindex=0] > code; tokens .tk-k .tk-s .tk-n .tk-f .tk-c
+    callouts   .callout.confusions > .chip.warn + ul > li > p.myth + p.fact
+               .callout.quiz > .chip.info + ol > li > p + details > summary + p
+    resources  .resources > .res-col > h3 + ul.res-list > li.res-item[.is-start] > .res-top(a + .start-here) + .res-meta(.chip.plain) + p
+    project    .project > .chip.info + h3 + p + ol + ul.done + p.meta
+    index only .ch-cards > a.ch-card (.pips > i)   ol.howto
+  Motion: JS adds .js-motion to <html> only when motion is allowed; without it every block shows its final state.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Knowledge Distillation</title>
+<meta name="description" content="Knowledge distillation for language models: soft targets, the T squared factor, forward and reverse KL, on-policy distillation, and modern recipes.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23282828'/%3E%3Cpath d='M14 20h14M36 20h14M14 44h14M36 44h14M28 20l8 24' stroke='%23fe8019' stroke-width='5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body, { delimiters: [{ left: '$$', right: '$$', display: true }, { left: '\\(', right: '\\)', display: false }], throwOnError: false })"></script>
+<script>
+  // Runs before first paint so a saved theme choice never flashes the other scheme.
+  try { const t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+<style>
+  /* tokens: gruvbox-dark by default, gruvbox-light when the reader's system asks for light */
+  :root {
+    color-scheme: dark;
+    --bg: #282828; --surface: #3c3836; --border: rgba(255,255,255,.08); --border-bright: #afa18e;
+    --text: #ebdbb2; --text-dim: #afa18e; --accent: #fe8019; --accent-dim: #fe80191f;
+    --ok: #b8bb26; --warn: #fabd2f; --risk: #fc7c6d; --info: #88a99c;
+    --syn-k: #fc7c6d; --syn-s: #b8bb26; --syn-n: #d3869b; --syn-f: #fabd2f; --syn-c: #afa18e;
+    --node-top: color-mix(in srgb, var(--text) 7%, var(--surface)); --lift: rgb(0 0 0 / .45); --halo: 32%;
+    --font-body: 'JetBrains Mono', ui-monospace, monospace;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+    --t-label: .75rem; --t-small: .875rem; --t-body: 1rem; --t-lead: 1.25rem; --t-h2: 1.625rem; --t-h1: clamp(2.25rem, 5.5vw, 4rem);
+    --s-1: .25rem; --s-2: .5rem; --s-3: .75rem; --s-4: 1rem; --s-5: 1.5rem; --s-6: 2rem; --s-7: 3rem; --s-8: 4.5rem;
+    --r-1: 4px; --r-2: 10px;
+    --ease: cubic-bezier(.16,1,.3,1); --fast: 150ms; --med: 300ms; --slow: 500ms;
+  }
+  :root[data-theme="light"] {
+      color-scheme: light;
+      --bg: #fbf1c7; --surface: #ebdbb2; --border: rgba(0,0,0,.08); --border-bright: #6b5f56;
+      --text: #3c3836; --text-dim: #6b5f56; --accent: #ad3903; --accent-dim: #ad39031f;
+      --ok: #67630c; --warn: #7a5200; --risk: #9d0006; --info: #076678;
+      --syn-k: #9d0006; --syn-s: #67630c; --syn-n: #8f3f71; --syn-f: #076678; --syn-c: #6b5f56;
+      --node-top: var(--surface); --lift: rgb(60 56 54 / .14); --halo: 22%;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      color-scheme: light;
+      --bg: #fbf1c7; --surface: #ebdbb2; --border: rgba(0,0,0,.08); --border-bright: #6b5f56;
+      --text: #3c3836; --text-dim: #6b5f56; --accent: #ad3903; --accent-dim: #ad39031f;
+      --ok: #67630c; --warn: #7a5200; --risk: #9d0006; --info: #076678;
+      --syn-k: #9d0006; --syn-s: #67630c; --syn-n: #8f3f71; --syn-f: #076678; --syn-c: #6b5f56;
+      --node-top: var(--surface); --lift: rgb(60 56 54 / .14); --halo: 22%;
+    }
+  }
+
+  /* base */
+  html { font-size: 17px; }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: var(--bg); color: var(--text); font: 400 var(--t-body)/1.6 var(--font-body); text-wrap: pretty; font-kerning: normal; font-synthesis: none; -webkit-font-smoothing: antialiased; }
+  ::selection { background: var(--accent-dim); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  a { color: var(--text); text-decoration: underline 1px var(--accent); text-underline-offset: .22em; transition: color var(--fast) var(--ease); }
+  a:hover { color: var(--accent); }
+  code { font: .875em var(--font-mono); font-variant-ligatures: none; }
+  h1, h2 { text-box: trim-both cap alphabetic; }
+  h1 { font-size: var(--t-h1); line-height: 1.08; font-weight: 600; letter-spacing: -.035em; text-wrap: balance; max-width: 20ch; }
+  h1 .num { color: var(--accent); font-variant-numeric: tabular-nums; }
+  h2 { font-size: var(--t-h2); line-height: 1.2; font-weight: 600; letter-spacing: -.015em; text-wrap: balance; }
+  h3 { font-size: var(--t-body); line-height: 1.3; font-weight: 600; }
+  p, li { max-width: 66ch; }
+  ul, ol { padding-left: 1.25em; }
+  .eyebrow { display: flex; align-items: center; gap: var(--s-2); font: 600 var(--t-label) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+  .eyebrow::before { content: ''; width: 1.25rem; height: 2px; background: currentColor; }
+  .ve-label { font: 600 var(--t-label) var(--font-mono); color: var(--text-dim); }
+  .caps { text-transform: uppercase; letter-spacing: .08em; }
+  .lead { font-size: var(--t-lead); line-height: 1.5; color: var(--text-dim); max-width: 48ch; }
+  .lead b { color: var(--text); font-weight: 600; }
+  .meta { font: 400 var(--t-label) var(--font-mono); color: var(--text-dim); font-variant-numeric: tabular-nums; }
+
+  /* top bar: course breadcrumb left, chapter pager right */
+  .topbar { border-bottom: 1px solid var(--border); }
+  .topbar-in { max-width: 82rem; margin: 0 auto; padding: var(--s-3) var(--s-5); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s-2) var(--s-5); font: 400 var(--t-small) var(--font-mono); }
+  .topbar a { text-decoration: none; }
+  .topbar a:hover { color: var(--accent); }
+  .crumbs { display: flex; flex-wrap: wrap; list-style: none; padding: 0; gap: var(--s-2); color: var(--text-dim); }
+  .crumbs li + li::before { content: '/'; margin-right: var(--s-2); color: var(--text-dim); }
+  .crumbs [aria-current] { color: var(--text); font-weight: 600; }
+  .pager { display: flex; flex-wrap: wrap; gap: var(--s-2) var(--s-5); }
+  .pager a { color: var(--text-dim); }
+
+  /* page: sticky TOC column + main; below 1000px the TOC becomes a sticky bar */
+  .page { max-width: 82rem; margin: 0 auto; padding: 0 var(--s-5); }
+  main { min-width: 0; max-width: 64rem; padding: var(--s-7) 0 var(--s-8); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s-8); }
+  .toc { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--border); margin: 0 calc(-1 * var(--s-5)); padding: var(--s-2) var(--s-5); }
+  .toc > .ve-label { display: none; }
+  .toc ol { list-style: none; padding: 0; display: flex; gap: var(--s-4); overflow-x: auto; scrollbar-width: none; mask-image: linear-gradient(90deg, #000 85%, transparent); }
+  .toc ol::-webkit-scrollbar { display: none; }
+  .toc li { max-width: none; }
+  .toc a { display: block; white-space: nowrap; font: 400 var(--t-small) var(--font-mono); color: var(--text-dim); text-decoration: none; padding: var(--s-1) 0; border-bottom: 2px solid transparent; }
+  .toc a .n { color: var(--text-dim); margin-right: var(--s-1); }
+  .toc a:hover { color: var(--text); }
+  .toc a[aria-current] { color: var(--text); border-color: var(--accent); }
+  .toc a[aria-current] .n { color: var(--accent); }
+  @media (min-width: 1000px) {
+    .page { display: grid; grid-template-columns: 12rem minmax(0, 1fr); column-gap: var(--s-7); }
+    .toc { align-self: start; margin: 0; padding: var(--s-7) 0 var(--s-5); border: 0; background: none; max-height: 100vh; overflow-y: auto; }
+    .toc > .ve-label { display: block; margin-bottom: var(--s-3); }
+    .toc ol { flex-direction: column; gap: 0; overflow: visible; mask-image: none; }
+    .toc a { white-space: normal; border-bottom: 0; border-left: 2px solid var(--border); padding: var(--s-1) 0 var(--s-1) var(--s-3); }
+    .toc a[aria-current] { border-left-color: var(--accent); }
+  }
+
+  /* chapter header */
+  .ch-head { display: grid; gap: var(--s-4); }
+  .ch-head h1 { margin-bottom: var(--s-2); }
+  .ch-head + figure { margin-top: calc(var(--s-6) - var(--s-8)); }
+
+  /* sections: a 12-column grid on one flush-left axis; prose spans 8 columns, figures all 12 */
+  .sec { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: var(--s-5); row-gap: var(--s-5); scroll-margin-top: 4rem; }
+  .sec > * { grid-column: 1 / -1; min-width: 0; }
+  @media (min-width: 52rem) { .sec > :is(p, ul, ol, h3) { grid-column: 1 / span 8; } }
+  .sec > h3 { margin-top: var(--s-5); }
+  /* section opener (kicker head): section number + name above the takeaway h2 */
+  .sec-head { display: grid; gap: var(--s-3); border-top: 1px solid var(--border); padding-top: var(--s-5); margin-bottom: var(--s-2); }
+  .sec-num { font: 600 var(--t-label) var(--font-mono); color: var(--text-dim); letter-spacing: .04em; }
+  .sec-num .n { color: var(--accent); margin-right: var(--s-2); font-variant-numeric: tabular-nums; }
+
+  /* figure: the stage is a faint dot grid, so nodes read as objects placed on it */
+  figure { min-width: 0; }
+  .frame { background: radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--text) 13%, transparent) 1px, transparent 1.5px) 0 0 / 20px 20px, var(--bg); border: 1px solid var(--border); border-radius: var(--r-2); padding: var(--s-5); overflow-x: auto; }
+  .ve-svg { overflow: visible; }
+  figcaption { font-size: var(--t-small); color: var(--text-dim); margin-top: var(--s-3); }
+  .fig-n { font: 600 var(--t-label) var(--font-mono); color: var(--text); margin-right: var(--s-2); }
+  .callouts { list-style: none; padding: 0; margin-top: var(--s-3); display: grid; gap: var(--s-2); color: var(--text-dim); }
+  .co-n { display: inline-grid; place-items: center; width: 1.4rem; height: 1.4rem; margin-right: var(--s-2); border: 1.5px solid var(--accent); border-radius: 50%; font: 600 var(--t-label) var(--font-mono); color: var(--accent); }
+
+  /* diagram kit */
+  /* min-width keeps 14-unit labels >= 12px as rendered; narrow screens scroll the frame instead. Wider viewBoxes set min-width inline (viewBox width x 0.86). */
+  .ve-svg { width: 100%; min-width: 700px; height: auto; display: block; font: 600 15px var(--font-mono); }
+  .ve-n .sh { fill: url(#ve-node); stroke: var(--border-bright); stroke-width: 1.5; filter: drop-shadow(0 6px 14px var(--lift)); transition: stroke var(--fast) var(--ease), opacity var(--med) var(--ease); }
+  .ve-n .lid { fill: var(--node-top); }
+  .ve-n.is-key .sh { fill: color-mix(in srgb, var(--accent) 11%, var(--surface)); stroke: var(--accent); stroke-width: 2; filter: drop-shadow(0 0 16px color-mix(in srgb, var(--accent) var(--halo), transparent)); }
+  .ve-n text { fill: var(--text); text-anchor: middle; dominant-baseline: central; font-weight: 600; }
+  .ve-n .sub { fill: var(--text-dim); font: 400 14px var(--font-mono); }
+  .ve-n .is-off { stroke-dasharray: 5 4; fill: none; filter: none; }
+  .ve-e { fill: none; stroke: var(--text-dim); stroke-width: 1.75; marker-end: url(#ve-ah); }
+  .ve-e.no-ah { marker-end: none; }
+  .ve-e.is-hot { stroke: var(--accent); stroke-width: 2.75; filter: drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 55%, transparent)); }
+  .ve-e.is-async { stroke-dasharray: 6 5; }
+  .ve-el { fill: var(--text-dim); font: 400 14px var(--font-mono); text-anchor: middle; paint-order: stroke; stroke: var(--bg); stroke-width: 5px; stroke-linejoin: round; }
+  .ve-el.l { text-anchor: end; } .ve-el.r { text-anchor: start; }
+  .ve-tick { fill: var(--text-dim); font: 400 14px var(--font-mono); text-anchor: middle; }
+  .ve-tick.l { text-anchor: start; }
+  .ve-grid { stroke: var(--border); stroke-width: 1; }
+  .ve-zone rect { fill: none; stroke: var(--border-bright); stroke-width: 1; stroke-dasharray: 4 4; }
+  .ve-zone text { fill: var(--text-dim); font: 600 14px var(--font-mono); letter-spacing: .08em; }
+  .ve-bar { fill: var(--border-bright); }
+  .ve-bar.hot { fill: var(--accent); }
+  .ve-bar-v { fill: var(--text-dim); font: 400 14px var(--font-mono); dominant-baseline: central; }
+  .ve-dim path { fill: none; stroke-width: 1; } .ve-dim .ext { stroke: var(--border-bright); } .ve-dim .ln { stroke: var(--text-dim); }
+  .ve-dim text { fill: var(--text); font: 600 14px var(--font-mono); text-anchor: middle; }
+  .ve-dim .ln { marker-start: url(#ve-ah2); marker-end: url(#ve-ah2); } .ve-dim .ln.ticks { marker-start: none; marker-end: none; }
+  .ve-dim.is-key .ln { stroke: var(--accent); } .ve-dim.is-key text { fill: var(--accent); }
+  .ann { fill: none; stroke: var(--text-dim); stroke-width: 1; }
+  .ve-co circle { fill: var(--surface); stroke: var(--accent); stroke-width: 1.75; }
+  .ve-co text { fill: var(--accent); font: 600 14px var(--font-mono); text-anchor: middle; dominant-baseline: central; }
+  .ve-co.now circle { fill: var(--accent); } .ve-co.now text { fill: var(--surface); }
+
+  /* linked highlighting: same data-ref lights up together; unlit labels drop to --text-dim instead of fading */
+  .ve-ref { text-decoration: underline dotted var(--text-dim) 1px; text-underline-offset: .22em; border-radius: var(--r-1); transition: background var(--fast) var(--ease); }
+  .ve-ref.is-lit { background: var(--accent-dim); text-decoration-color: var(--accent); }
+  svg [data-ref] { transition: opacity var(--med) var(--ease); }
+  svg.has-lit path[data-ref]:not(.is-lit), svg.has-lit g[data-ref]:not(.is-lit) .sh, svg.has-lit rect[data-ref]:not(.is-lit) { opacity: .25; }
+  svg.has-lit g[data-ref]:not(.is-lit) text, svg.has-lit text[data-ref]:not(.is-lit) { fill: var(--text-dim); }
+  .ve-n.is-lit .sh { stroke: var(--accent); }
+  .ve-e.is-lit { stroke: var(--accent); }
+  .ve-el.is-lit { fill: var(--text); }
+  .case.is-lit, .ch-card.is-lit { border-color: var(--accent); }
+
+  /* stepper / scene player: future parts stay a faint outline, their labels hidden */
+  .ve-steps [data-s] { transition: opacity var(--slow) var(--ease), stroke-dashoffset var(--slow) var(--ease); }
+  .ve-steps [data-s]:not(.on) { opacity: .15; }
+  .ve-steps g[data-s]:not(.on) text, .ve-steps text[data-s]:not(.on) { opacity: 0; }
+  .ve-steps path[pathLength][data-s] { stroke-dasharray: 1; stroke-dashoffset: 1; }
+  .ve-steps path[pathLength][data-s].on { stroke-dashoffset: 0; }
+  .ve-steps .ve-n.now > .sh { stroke: var(--accent); }
+  .ve-steps:not(.is-full) .ve-e.now { stroke: var(--accent); stroke-width: 2.75; }
+  .ve-player { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: center; gap: var(--s-2) var(--s-3); margin-top: var(--s-4); }
+  .ve-cap { grid-column: 1 / -1; list-style: none; padding: 0; min-height: 3.2em; }
+  .ve-cap li::before { content: attr(data-n); font: 600 var(--t-label) var(--font-mono); color: var(--accent); margin-right: var(--s-3); font-variant-numeric: tabular-nums; }
+  .ve-player input { accent-color: var(--accent); min-width: 0; }
+  button { font: 400 var(--t-small) var(--font-mono); color: var(--text); background: var(--surface); border: 1px solid var(--border-bright); border-radius: var(--r-1); padding: var(--s-2) var(--s-3); cursor: pointer; transition: border-color var(--fast) var(--ease); }
+  button:hover, button:focus-visible { border-color: var(--accent); }
+
+  /* small multiples: one mini diagram per case; the changed part takes the case's status color */
+  .cases { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14.5rem), 1fr)); gap: var(--s-4); }
+  .case { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-2); padding: var(--s-4); display: grid; gap: var(--s-3); align-content: start; min-width: 0; transition: border-color var(--fast) var(--ease); }
+  .case[data-st=ok] { --st: var(--ok); } .case[data-st=warn] { --st: var(--warn); } .case[data-st=risk] { --st: var(--risk); }
+  .ve-mini { width: 100%; height: auto; font: 600 15px var(--font-mono); }
+  .ve-mini .ve-n .sh { filter: none; }
+  .ve-mini .is-st.ve-e { stroke: var(--st); stroke-width: 2.75; }
+  .ve-mini .is-st .sh { stroke: var(--st); stroke-width: 2; }
+  .ve-mini .ve-el { stroke: var(--surface); }
+
+  /* chips: shape and word, never color alone */
+  .chip { display: inline-flex; align-items: center; gap: var(--s-2); font: 600 var(--t-label) var(--font-mono); padding: 2px var(--s-2); border: 1px solid currentColor; border-radius: var(--r-1); white-space: nowrap; justify-self: start; }
+  .chip::before { content: ''; width: .5rem; height: .5rem; background: currentColor; }
+  .chip.ok { color: var(--ok); } .chip.ok::before { border-radius: 50%; }
+  .chip.warn { color: var(--warn); } .chip.warn::before { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+  .chip.risk { color: var(--risk); }
+  .chip.info { color: var(--info); } .chip.info::before { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+  .chip.plain { color: var(--text-dim); font-weight: 400; } .chip.plain::before { display: none; }
+
+  /* equation + symbols legend */
+  .eq { display: grid; gap: var(--s-4) var(--s-6); background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-2); padding: var(--s-5); }
+  @media (min-width: 52rem) { .eq { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); align-items: center; } }
+  .eq-math { min-width: 0; overflow-x: auto; overflow-y: hidden; }
+  .eq-math .katex-display { margin: var(--s-2) 0; }
+  .symbols { display: grid; gap: var(--s-2); }
+  .symbols > div { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr); gap: var(--s-3); align-items: baseline; }
+  .symbols dd { margin: 0; color: var(--text-dim); }
+
+  /* code: scroll container, copy button, gruvbox syntax tokens; code sits on --bg so every token reaches 4.5:1 */
+  .code { border: 1px solid var(--border); border-radius: var(--r-2); background: var(--bg); min-width: 0; }
+  .code-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--s-3); padding: var(--s-2) var(--s-2) var(--s-2) var(--s-4); background: var(--surface); border-bottom: 1px solid var(--border); border-radius: var(--r-2) var(--r-2) 0 0; }
+  .code pre { margin: 0; padding: var(--s-4); overflow-x: auto; font: 400 var(--t-small)/1.6 var(--font-mono); font-variant-ligatures: none; tab-size: 4; }
+  .code pre code { font: inherit; }
+  .tk-k { color: var(--syn-k); } .tk-s { color: var(--syn-s); } .tk-n { color: var(--syn-n); } .tk-f { color: var(--syn-f); } .tk-c { color: var(--syn-c); }
+
+  /* callouts: common confusions and check yourself */
+  .callout { background: var(--surface); border-radius: var(--r-2); padding: var(--s-5); display: grid; gap: var(--s-4); }
+  .confusions ul { list-style: none; padding: 0; display: grid; gap: var(--s-4); }
+  .confusions p { padding-left: 1.5em; text-indent: -1.5em; }
+  .confusions .myth { color: var(--text-dim); }
+  .confusions .myth::before { content: '✕'; display: inline-block; width: 1.5em; text-indent: 0; color: var(--risk); font-weight: 600; }
+  .confusions .fact::before { content: '✓'; display: inline-block; width: 1.5em; text-indent: 0; color: var(--ok); font-weight: 600; }
+  .quiz ol { display: grid; gap: var(--s-4); padding-left: 1.75em; }
+  .quiz li::marker { font: 600 var(--t-label) var(--font-mono); color: var(--accent); }
+  .quiz details { margin-top: var(--s-2); }
+  .quiz summary { cursor: pointer; font: 600 var(--t-small) var(--font-mono); color: var(--accent); width: fit-content; }
+  .quiz details p { margin-top: var(--s-2); padding-left: var(--s-3); border-left: 1px solid var(--border-bright); }
+
+  /* resources: Read and Watch columns; "start here" = star shape + word + accent frame */
+  .resources { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: var(--s-5) var(--s-6); }
+  .res-col { min-width: 0; }
+  .res-col > h3 { font: 600 var(--t-label) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--text-dim); padding-bottom: var(--s-2); border-bottom: 1px solid var(--border-bright); }
+  .res-list { list-style: none; padding: 0; }
+  .res-item { padding: var(--s-3) 0; border-bottom: 1px solid var(--border); display: grid; gap: var(--s-1); }
+  .res-item.is-start { border: 1px solid var(--accent); border-radius: var(--r-2); padding: var(--s-3) var(--s-4); margin: var(--s-2) 0; }
+  .res-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-1) var(--s-3); }
+  .res-top a { font-weight: 600; overflow-wrap: anywhere; }
+  .res-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-2); font: 400 var(--t-label) var(--font-mono); color: var(--text-dim); }
+  .res-item p { color: var(--text-dim); }
+  .start-here { display: inline-flex; align-items: center; gap: var(--s-1); font: 600 var(--t-label) var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--accent); white-space: nowrap; }
+  .start-here::before { content: ''; width: .8rem; height: .8rem; background: currentColor; clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+
+  /* chapter project */
+  .project { border: 1px solid var(--border-bright); border-radius: var(--r-2); padding: var(--s-5); display: grid; gap: var(--s-4); }
+  .project h3 { font-size: var(--t-lead); }
+  .project ol, .project ul { display: grid; gap: var(--s-2); }
+  .project .done { list-style: none; padding: 0; }
+  .project .done li::before { content: '□'; color: var(--accent); margin-right: var(--s-2); }
+
+  /* index only: chapter cards and how-to steps */
+  .ch-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14.5rem), 1fr)); gap: var(--s-4); }
+  .ch-card { display: grid; gap: var(--s-3); align-content: start; min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-2); padding: var(--s-4); color: var(--text); text-decoration: none; transition: border-color var(--fast) var(--ease); }
+  .ch-card:hover, .ch-card:focus-visible { border-color: var(--accent); color: var(--text); }
+  .ch-card h3 { font-size: var(--t-lead); }
+  .ch-card p, .ch-card ol { color: var(--text-dim); }
+  .ch-card .go { font: 600 var(--t-label) var(--font-mono); color: var(--accent); }
+  .pips { display: flex; flex-wrap: wrap; gap: var(--s-1); }
+  .pips i { width: .55rem; height: .55rem; background: var(--text-dim); }
+  .howto { list-style: none; padding: 0; counter-reset: step; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); gap: var(--s-5) var(--s-4); }
+  .howto li { counter-increment: step; border-top: 1px solid var(--border-bright); padding-top: var(--s-3); }
+  .howto li::before { content: counter(step, decimal-leading-zero); display: block; font: 600 var(--t-label) var(--font-mono); color: var(--accent); margin-bottom: var(--s-2); }
+
+  /* entrance: blocks rise in once (JS adds .js-motion only when motion is allowed) */
+  .js-motion :is(.ch-head, .sec > *) { transition: opacity var(--slow) var(--ease), transform var(--slow) var(--ease); }
+  .js-motion :is(.ch-head, .sec > *):not(.in) { opacity: 0; transform: translateY(1rem); }
+  .topbar-in .pager { margin-left: auto; }
+  .icon-btn { background: none; border: 0; padding: var(--s-1); color: var(--text-dim); display: inline-flex; line-height: 0; }
+  .icon-btn:hover { color: var(--text); }
+  .icon-btn svg { width: 1.1rem; height: 1.1rem; }
+  .icon-btn .i-moon, .icon-btn[data-mode="light"] .i-sun { display: none; }
+  .icon-btn[data-mode="light"] .i-moon { display: block; }
+  .toc-head { display: none; }
+  .toc-btn { background: none; border: 0; padding: var(--s-1); color: var(--text-dim); display: inline-flex; line-height: 0; }
+  .toc-btn:hover { color: var(--text); }
+  .toc-btn svg { width: 1rem; height: 1rem; transition: transform var(--fast) var(--ease); }
+  @media (min-width: 1000px) {
+    .toc-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--s-3); }
+    .toc-head .ve-label { margin: 0; }
+    html.toc-hidden .page { grid-template-columns: 2rem minmax(0, 1fr); }
+    html.toc-hidden .toc-head .ve-label, html.toc-hidden .toc ol { display: none; }
+    html.toc-hidden .toc-btn svg { transform: rotate(180deg); }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  @media print {
+    :root { --bg: #fff; --surface: #fff; --border: #ebdbb2; --border-bright: #6b5f56; --text: #3c3836; --text-dim: #6b5f56; --accent: #ad3903; --ok: #67630c; --warn: #7a5200; --risk: #9d0006; --info: #076678;
+      --syn-k: #9d0006; --syn-s: #67630c; --syn-n: #8f3f71; --syn-f: #076678; --syn-c: #6b5f56; --node-top: #fff; }
+    .toc, .toc-btn, .icon-btn, .pager, .copy, .ve-player button, .ve-player input { display: none; }
+    .page { display: block; }
+    .frame { overflow: visible; background: #fff; } .ve-svg { min-width: 0 !important; }
+    .frame, .case, .ch-card, .callout, .project, .eq, .code { break-inside: avoid; } h2 { break-after: avoid; }
+    svg * { filter: none !important; }
+    .js-motion :is(.ch-head, .sec > *) { opacity: 1 !important; transform: none !important; }
+    .ve-steps [data-s]:not(.on), .ve-steps g[data-s]:not(.on) text, .ve-steps text[data-s]:not(.on) { opacity: 1; }
+    .ve-steps path[pathLength][data-s] { stroke-dashoffset: 0; }
+  }
+</style>
+</head>
+<body>
+<!-- Shared defs: one arrowhead (context-stroke follows each edge's color), the node fill, and the section pip. -->
+<svg class="ve-defs" width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <marker id="ve-ah" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker>
+    <marker id="ve-ah2" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="context-stroke"/></marker>
+    <linearGradient id="ve-node" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--node-top)"/><stop offset="1" style="stop-color:var(--surface)"/></linearGradient>
+    <pattern id="ve-pip" width="13" height="9" patternUnits="userSpaceOnUse"><rect width="9" height="9" style="fill:var(--text-dim)"/></pattern>
+  </defs>
+</svg>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <nav aria-label="Breadcrumb">
+      <ol class="crumbs">
+        <li><a href="index.html">Learn AI Fundamentals</a></li>
+        <li>LLM Advanced</li>
+        <li aria-current="page">Distillation</li>
+      </ol>
+    </nav>
+    <nav class="pager" aria-label="Chapters">
+      <a href="03-post-training.html" rel="prev">← Previous: Post-training</a>
+      <a href="05-linear-attention.html" rel="next">Next: Linear attention →</a>
+    </nav>
+    <button type="button" class="icon-btn" id="theme-toggle" aria-label="Switch to light mode"><svg class="i-sun" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1"/></svg><svg class="i-moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 9.6A5.8 5.8 0 0 1 6.4 2.5a5.8 5.8 0 1 0 7.1 7.1z"/></svg></button>
+  </div>
+</header>
+
+<div class="page">
+  <nav class="toc" aria-label="Sections">
+    <div class="toc-head"><p class="ve-label caps">On this page</p><button type="button" class="toc-btn" id="toc-toggle" aria-controls="toc-list" aria-expanded="true" aria-label="Hide sidebar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3L5 8l5 5"/></svg></button></div>
+    <ol id="toc-list">
+      <li><a href="#s01"><span class="n">01</span>Intuition</a></li>
+      <li><a href="#s02"><span class="n">02</span>The math</a></li>
+      <li><a href="#s03"><span class="n">03</span>Generative models</a></li>
+      <li><a href="#s04"><span class="n">04</span>In code</a></li>
+      <li><a href="#s05"><span class="n">05</span>Modern practice</a></li>
+      <li><a href="#s06"><span class="n">06</span>Wrap-up</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header class="ch-head">
+      <p class="eyebrow">Chapter 1 · LLM Advanced</p>
+      <h1>Small models learn from a teacher's <span class="num">distribution</span></h1>
+      <p class="lead">Gemma 2 2B, Llama 3.2 1B and 3B, Minitron and the R1 "distill" checkpoints were taught by a bigger model. The teacher sends <b>a score for every token</b>, not one label.</p>
+      <p class="meta">5 sections · needs: softmax and cross-entropy, GPT-2 logits shape (batch, seq_len, vocab), SFT and DPO basics</p>
+    </header>
+
+    <figure>
+      <div class="frame">
+        <svg class="ve-svg" viewBox="0 0 800 240" role="img" aria-label="For an image of a 2, the one-hot label puts 1.0 on the class 2 and nothing elsewhere. The teacher puts 0.90 on 2, 0.08 on 7, 0.01 on 3 and tiny values on the rest.">
+          <text class="ve-tick l" x="20" y="26">One-hot label</text>
+          <text class="ve-tick l" x="480" y="26">Teacher soft target</text>
+          <path class="ve-grid" d="M400 10V230"/>
+          <text class="ve-tick l" x="20" y="75">class 2</text><rect class="ve-bar" x="110" y="61" width="240" height="18" rx="2"/><text class="ve-bar-v" x="358" y="70">1.0</text>
+          <text class="ve-tick l" x="20" y="115">class 7</text><text class="ve-bar-v" x="116" y="110">0</text>
+          <text class="ve-tick l" x="20" y="155">class 3</text><text class="ve-bar-v" x="116" y="150">0</text>
+          <text class="ve-tick l" x="20" y="195">rest</text><text class="ve-bar-v" x="116" y="190">0</text>
+          <text class="ve-tick l" x="480" y="75">class 2</text><rect class="ve-bar" x="560" y="61" width="162" height="18" rx="2"/><text class="ve-bar-v" x="730" y="70">0.90</text>
+          <text class="ve-tick l" x="480" y="115">class 7</text><rect class="ve-bar hot" x="560" y="101" width="14" height="18" rx="2"/><text class="ve-bar-v" x="582" y="110">0.08</text>
+          <text class="ve-tick l" x="480" y="155">class 3</text><rect class="ve-bar" x="560" y="141" width="3" height="18" rx="1"/><text class="ve-bar-v" x="571" y="150">0.01</text>
+          <text class="ve-tick l" x="480" y="195">rest</text><rect class="ve-bar" x="560" y="181" width="2" height="18" rx="1"/><text class="ve-bar-v" x="570" y="190">tiny</text>
+          <path class="ann" d="M628 110H669"/><g class="ve-co" transform="translate(680 110)"><circle r="11"/><text>1</text></g>
+        </svg>
+      </div>
+      <figcaption><span class="fig-n">Fig. 1</span>The label says "2". The teacher also says how much this 2 looks like other digits.</figcaption>
+      <ol class="callouts">
+        <li><span class="co-n">1</span>The 0.08 on class 7 is dark knowledge: this 2 looks a bit like a 7. A one-hot label drops it.</li>
+      </ol>
+    </figure>
+
+    <section class="sec" id="s01" aria-labelledby="s01-h">
+      <div class="sec-head"><p class="sec-num"><span class="n">01</span>Intuition: dark knowledge and soft targets</p><h2 id="s01-h">The small probabilities carry the teacher's knowledge</h2></div>
+      <p>Hinton, Vinyals and Dean called this extra signal <b>dark knowledge</b>. A student trained on the whole distribution gets more bits per example. It generalizes better and needs fewer examples than one trained on hard labels alone.</p>
+
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 260" role="img" aria-label="After the prefix bought some, the corpus samples one token, milk. The teacher scores all plausible continuations, milk, eggs, bread and apples, with similar mass.">
+            <path class="ve-e" d="M190 110H250V45H330"/><text class="ve-el r" x="262" y="35">samples 1</text>
+            <path class="ve-e is-hot" d="M190 145H315"/><text class="ve-el" x="252" y="135">scores all</text>
+            <g class="ve-n" transform="translate(20 85)"><rect class="sh" width="170" height="80" rx="6"/><text x="85" y="30">bought some</text><text class="sub" x="85" y="54">prefix</text></g>
+            <g class="ve-n" transform="translate(330 20)"><rect class="sh" width="130" height="50" rx="6"/><text x="65" y="25">milk</text></g>
+            <text class="ve-el r" x="475" y="50">one noisy sample</text>
+            <text class="ve-tick l" x="330" y="135">milk</text><rect class="ve-bar hot" x="410" y="121" width="150" height="18" rx="2"/>
+            <text class="ve-tick l" x="330" y="165">eggs</text><rect class="ve-bar hot" x="410" y="151" width="150" height="18" rx="2"/>
+            <text class="ve-tick l" x="330" y="195">bread</text><rect class="ve-bar hot" x="410" y="181" width="150" height="18" rx="2"/>
+            <text class="ve-tick l" x="330" y="225">apples</text><rect class="ve-bar hot" x="410" y="211" width="150" height="18" rx="2"/>
+            <text class="ve-el r" x="575" y="180">all plausible</text>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 2</span>For language models the case is stronger: the corpus label is one sample from an uncertain distribution, and the teacher's distribution is a low-variance target.</figcaption>
+      </figure>
+
+      <p>One problem: a confident teacher puts almost all mass on the top token, so the small probabilities barely move the gradient. <b>Temperature</b> fixes this. Dividing the logits by <span class="ve-ref" tabindex="0">T &gt; 1</span> before the softmax flattens the distribution.</p>
+
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 210" role="img" aria-label="Teacher logits 8, 2, 1. At T equals 1 the probabilities are 0.997, 0.0025 and 0.0009. Dividing by 4 gives 0.71, 0.16 and 0.13.">
+            <text class="ve-tick l" x="20" y="26">Teacher, T = 1</text>
+            <text class="ve-tick l" x="460" y="26">Teacher, T = 4</text>
+            <path class="ve-e is-hot" d="M365 105H435"/><text class="ve-el" x="400" y="95">z / 4</text>
+            <text class="ve-tick l" x="20" y="75">z = 8</text><rect class="ve-bar" x="80" y="61" width="199" height="18" rx="2"/><text class="ve-bar-v" x="287" y="70">0.997</text>
+            <text class="ve-tick l" x="20" y="115">z = 2</text><rect class="ve-bar hot" x="80" y="101" width="2" height="18" rx="1"/><text class="ve-bar-v" x="90" y="110">0.0025</text>
+            <text class="ve-tick l" x="20" y="155">z = 1</text><rect class="ve-bar hot" x="80" y="141" width="2" height="18" rx="1"/><text class="ve-bar-v" x="90" y="150">0.0009</text>
+            <text class="ve-tick l" x="460" y="75">z = 8</text><rect class="ve-bar" x="520" y="61" width="142" height="18" rx="2"/><text class="ve-bar-v" x="670" y="70">0.71</text>
+            <text class="ve-tick l" x="460" y="115">z = 2</text><rect class="ve-bar hot" x="520" y="101" width="32" height="18" rx="2"/><text class="ve-bar-v" x="560" y="110">0.16</text>
+            <text class="ve-tick l" x="460" y="155">z = 1</text><rect class="ve-bar hot" x="520" y="141" width="26" height="18" rx="2"/><text class="ve-bar-v" x="554" y="150">0.13</text>
+            <path class="ann" d="M598 110H618V150H598M618 130H629"/><g class="ve-co" transform="translate(640 130)"><circle r="11"/><text>1</text></g>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 3</span>Temperature lifts the tail so the student can learn how the teacher ranks the wrong answers.</figcaption>
+        <ol class="callouts">
+          <li><span class="co-n">1</span>At T = 1, classes 2 and 3 differ in the fourth decimal. At T = 4 the gap (0.16 vs 0.13) gives a real gradient.</li>
+        </ol>
+      </figure>
+      <p>As T grows, both distributions approach uniform. As T shrinks to 0, they approach one-hot on the argmax. At inference the student always runs at T = 1.</p>
+    </section>
+
+    <section class="sec" id="s02" aria-labelledby="s02-h">
+      <div class="sec-head"><p class="sec-num"><span class="n">02</span>The math of classic knowledge distillation</p><h2 id="s02-h">The T² factor keeps the soft loss the same size at any temperature</h2></div>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$p_i^{(T)} = \frac{\exp(z_i / T)}{\sum_{j=1}^{V} \exp(z_j / T)}, \qquad q_i^{(T)} = \frac{\exp(v_i / T)}{\sum_{j=1}^{V} \exp(v_j / T)}$$
+            $$\mathcal{L} = \alpha \, T^2 \, \mathrm{KL}\!\left(p^{(T)} \,\|\, q^{(T)}\right) + (1 - \alpha)\, \mathrm{CE}\!\left(y, q^{(1)}\right)$$
+            $$\mathrm{KL}(p \,\|\, q) = \sum_{i=1}^{V} p_i \log \frac{p_i}{q_i}$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(z, v\)</dt><dd>teacher and student logits for one prediction</dd></div>
+            <div><dt>\(p^{(T)}, q^{(T)}\)</dt><dd>softened teacher and student distributions</dd></div>
+            <div><dt>\(T\)</dt><dd>temperature; \(T = 1\) is the ordinary softmax</dd></div>
+            <div><dt>\(\alpha\)</dt><dd>weight of the soft term against the hard term</dd></div>
+            <div><dt>\(y\)</dt><dd>ground-truth label; \(\mathrm{CE} = -\log q_y^{(1)}\)</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 1</span>The classic Hinton loss. KL and cross-entropy against soft labels differ only by the teacher's entropy, a constant for the student, so their gradients match.</figcaption>
+      </figure>
+
+      <h3>Why multiply by T²</h3>
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$\frac{\partial}{\partial v_i}\left(-\sum_j p_j^{(T)} \log q_j^{(T)}\right) = \frac{1}{T}\left(q_i^{(T)} - p_i^{(T)}\right)$$
+            $$\frac{\partial \mathcal{L}_{\text{soft}}}{\partial v_i} \approx \frac{1}{V T^2}\,(v_i - z_i)$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(1/T\)</dt><dd>from the chain rule through \(v_i / T\)</dd></div>
+            <div><dt>\(1/VT^2\)</dt><dd>high-T limit, zero-mean logits, after a Taylor step \(\exp(x/T) \approx 1 + x/T\)</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 2</span>At high T, distillation is logit matching with squared error, and the gradient shrinks as 1/T².</figcaption>
+      </figure>
+
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 290" role="img" aria-label="Soft-term gradient size relative to T equals 1. Without the T squared factor it is 1, 1/4, 1/16 and 1/64 for T equal to 1, 2, 4 and 8. With the factor it stays at 1.">
+            <rect class="ve-bar" x="20" y="14" width="14" height="14" rx="2"/><text class="ve-tick l" x="42" y="26">without T²</text>
+            <rect class="ve-bar hot" x="200" y="14" width="14" height="14" rx="2"/><text class="ve-tick l" x="222" y="26">with T²</text>
+            <text class="ve-tick l" x="20" y="82">T = 1</text><rect class="ve-bar" x="90" y="60" width="400" height="16" rx="2"/><text class="ve-bar-v" x="498" y="68">1</text><rect class="ve-bar hot" x="90" y="82" width="400" height="16" rx="2"/><text class="ve-bar-v" x="498" y="90">1</text>
+            <text class="ve-tick l" x="20" y="138">T = 2</text><rect class="ve-bar" x="90" y="116" width="100" height="16" rx="2"/><text class="ve-bar-v" x="198" y="124">1/4</text><rect class="ve-bar hot" x="90" y="138" width="400" height="16" rx="2"/><text class="ve-bar-v" x="498" y="146">1</text>
+            <text class="ve-tick l" x="20" y="194">T = 4</text><rect class="ve-bar" x="90" y="172" width="25" height="16" rx="2"/><text class="ve-bar-v" x="123" y="180">1/16</text><rect class="ve-bar hot" x="90" y="194" width="400" height="16" rx="2"/><text class="ve-bar-v" x="498" y="202">1</text>
+            <text class="ve-tick l" x="20" y="250">T = 8</text><rect class="ve-bar" x="90" y="228" width="6" height="16" rx="2"/><text class="ve-bar-v" x="104" y="236">1/64</text><rect class="ve-bar hot" x="90" y="250" width="400" height="16" rx="2"/><text class="ve-bar-v" x="498" y="258">1</text>
+            <text class="ve-el r" x="170" y="237">16× weaker than at T = 2</text>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 4</span>Go from T = 2 to T = 8 without T² and the soft term gets 16 times weaker, so your tuned α no longer means what you think.</figcaption>
+      </figure>
+
+      <h3>White-box versus black-box</h3>
+      <p>The loss needs the teacher's logits and a shared tokenizer, because p and q must live on the same vocabulary. Llama 3.1 8B can teach Llama 3.2 1B this way. GPT-4 cannot teach a Llama model this way.</p>
+      <figure>
+        <div class="cases">
+          <div class="case" data-st="ok"><span class="chip ok">Most bits per token</span><h3>White-box (logit)</h3>
+            <svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="The teacher sends its full distribution to the student, which must share its tokenizer.">
+              <path class="ve-e is-st" d="M120 40V66"/><text class="ve-el r" x="128" y="57">full p(V)</text>
+              <g class="ve-n"><rect class="sh" x="20" y="4" width="200" height="36" rx="5"/><text x="120" y="22">Teacher</text></g>
+              <g class="ve-n is-st"><rect class="sh" x="20" y="68" width="200" height="36" rx="5"/><text x="120" y="86">Student</text></g>
+            </svg><p>You run the teacher. Same tokenizer required.</p></div>
+          <div class="case" data-st="warn"><span class="chip info">In between</span><h3>Top-k log-probs</h3>
+            <svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="The teacher API sends the top k probabilities. The student renormalizes and treats the remainder as one bucket.">
+              <path class="ve-e is-st" d="M120 40V66"/><text class="ve-el r" x="128" y="57">top-k probs</text>
+              <g class="ve-n"><rect class="sh" x="20" y="4" width="200" height="36" rx="5"/><text x="120" y="22">Teacher API</text></g>
+              <g class="ve-n is-st"><rect class="sh" x="20" y="68" width="200" height="36" rx="5"/><text x="120" y="86">Student</text></g>
+            </svg><p>Renormalize the top k, treat the remainder as one bucket.</p></div>
+          <div class="case" data-st="risk"><span class="chip risk">Fewest bits per token</span><h3>Black-box (text)</h3>
+            <svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="A closed teacher sends only sampled text. The student fine-tunes with ordinary cross-entropy.">
+              <path class="ve-e is-st" d="M120 40V66"/><text class="ve-el r" x="128" y="57">1 sampled tok</text>
+              <g class="ve-n"><rect class="sh" x="20" y="4" width="200" height="36" rx="5"/><text x="120" y="22">Closed teacher</text></g>
+              <g class="ve-n is-st"><rect class="sh" x="20" y="68" width="200" height="36" rx="5"/><text x="120" y="86">Student</text></g>
+            </svg><p>Plain SFT on teacher text. Works across tokenizers. This is most "distillation from GPT-4".</p></div>
+        </div>
+        <figcaption><span class="fig-n">Fig. 5</span>Same teacher, three access levels. Each position collapses to fewer bits as you move right.</figcaption>
+      </figure>
+    </section>
+
+    <section class="sec" id="s03" aria-labelledby="s03-h">
+      <div class="sec-head"><p class="sec-num"><span class="n">03</span>Distilling generative models: which KL, and on whose samples</p><h2 id="s03-h">Reverse KL and student-made prefixes remove the blends</h2></div>
+      <p>A language model defines a distribution over whole sequences, \(p(y \mid x) = \prod_t p(y_t \mid y_{&lt;t}, x)\). That raises two questions classic KD never asked: which KL, and whose samples?</p>
+
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 250" role="img" aria-label="Teacher distribution has two modes. Under forward KL the small student spreads mass over both and between them. Under reverse KL the student covers one mode and ignores the other.">
+            <text class="ve-tick" x="200" y="24">Forward KL: mode-covering</text>
+            <text class="ve-tick" x="200" y="44">samples from the teacher p</text>
+            <path class="ve-grid" d="M20 200H380"/>
+            <path class="ve-e no-ah is-async" d="M30 200C70 200 80 90 110 90C140 90 150 200 200 200C230 200 250 90 290 90C320 90 330 200 370 200"/>
+            <path class="ve-e no-ah is-hot" d="M30 200C100 200 120 125 200 125C280 125 300 200 370 200"/>
+            <text class="ve-tick" x="290" y="78">teacher p</text>
+            <text class="ve-tick" x="200" y="113">student q</text>
+            <text class="ve-el" x="200" y="226">mass between modes: a blend</text>
+            <g transform="translate(400 0)">
+              <text class="ve-tick" x="200" y="24">Reverse KL: mode-seeking</text>
+              <text class="ve-tick" x="200" y="44">samples from the student q</text>
+              <path class="ve-grid" d="M20 200H380"/>
+              <path class="ve-e no-ah is-async" d="M30 200C70 200 80 90 110 90C140 90 150 200 200 200C230 200 250 90 290 90C320 90 330 200 370 200"/>
+              <path class="ve-e no-ah is-hot" d="M30 200C70 200 80 90 110 90C140 90 150 200 190 200H370"/>
+              <text class="ve-tick" x="290" y="78">teacher p</text>
+              <text class="ve-tick" x="110" y="78">student q</text>
+              <text class="ve-el" x="200" y="226">one mode, always plausible</text>
+            </g>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 6</span>A student that cannot hold every teacher mode either blends them (forward) or drops one and stays sharp (reverse). The price of reverse KL is lower diversity.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$\mathrm{KL}(p \,\|\, q_\theta) = \mathbb{E}_{y \sim p}\left[\log \frac{p(y)}{q_\theta(y)}\right]$$
+            $$\mathrm{KL}(q_\theta \,\|\, p) = \mathbb{E}_{y \sim q_\theta}\left[\log \frac{q_\theta(y)}{p(y)}\right]$$
+            $$\mathrm{JSD}_\beta(p \,\|\, q) = \beta\, \mathrm{KL}\!\left(p \,\|\, m\right) + (1 - \beta)\, \mathrm{KL}\!\left(q \,\|\, m\right), \quad m = \beta p + (1-\beta) q$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(p\)</dt><dd>teacher</dd></div>
+            <div><dt>\(q_\theta\)</dt><dd>student with parameters \(\theta\)</dd></div>
+            <div><dt>\(\beta\)</dt><dd>mixing weight; JSD acts like forward KL as \(\beta \to 0\), reverse KL as \(\beta \to 1\)</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 3</span>Forward KL, reverse KL, and the bounded interpolation between them. Hinton-style KD and SFT on teacher outputs both minimize forward KL.</figcaption>
+      </figure>
+      <p><b>MiniLLM</b> optimizes sequence-level reverse KL. The expectation is over student samples, so it uses a policy-gradient estimator with variance reduction (single-step decomposition, teacher-mixed sampling). The loop looks like RL where the reward is the teacher's log-likelihood. <b>Sequence-level KD</b> (Kim and Rush) instead runs beam search on the teacher and trains on its outputs with plain cross-entropy. That is SFT on synthetic data.</p>
+
+      <h3>Exposure bias and on-policy distillation</h3>
+      <figure>
+        <div class="cases">
+          <div class="case" data-st="warn"><span class="chip warn">Prefix from data</span><h3>Token-level KD, fixed data</h3>
+            <svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="The prefix comes from a fixed dataset, so the student trains on prefixes it will not see at inference.">
+              <path class="ve-e is-st" d="M120 40V66"/><text class="ve-el r" x="128" y="57">prefix</text>
+              <g class="ve-n is-st"><rect class="sh" x="20" y="4" width="200" height="36" rx="5"/><text x="120" y="22">Dataset</text></g>
+              <g class="ve-n"><rect class="sh" x="20" y="68" width="200" height="36" rx="5"/><text x="120" y="86">Student trains</text></g>
+            </svg><p>At inference the student sees its own prefix. One slip and errors compound.</p></div>
+          <div class="case" data-st="warn"><span class="chip warn">Prefix from teacher</span><h3>Sequence-level KD</h3>
+            <svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="The prefix comes from the teacher beam output, so the student still trains on prefixes it will not see at inference.">
+              <path class="ve-e is-st" d="M120 40V66"/><text class="ve-el r" x="128" y="57">prefix</text>
+              <g class="ve-n is-st"><rect class="sh" x="20" y="4" width="200" height="36" rx="5"/><text x="120" y="22">Teacher output</text></g>
+              <g class="ve-n"><rect class="sh" x="20" y="68" width="200" height="36" rx="5"/><text x="120" y="86">Student trains</text></g>
+            </svg><p>Same mismatch. It hurts small students most, since they slip most.</p></div>
+          <div class="case" data-st="ok"><span class="chip ok">Prefix from student</span><h3>On-policy (GKD)</h3>
+            <svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="The prefix comes from the student's own samples, which matches inference.">
+              <path class="ve-e is-st" d="M120 40V66"/><text class="ve-el r" x="128" y="57">prefix</text>
+              <g class="ve-n is-st"><rect class="sh" x="20" y="4" width="200" height="36" rx="5"/><text x="120" y="22">Student samples</text></g>
+              <g class="ve-n"><rect class="sh" x="20" y="68" width="200" height="36" rx="5"/><text x="120" y="86">Student trains</text></g>
+            </svg><p>Training visits the states inference will visit.</p></div>
+        </div>
+        <figcaption><span class="fig-n">Fig. 7</span>Where the prefix comes from decides whether training matches inference.</figcaption>
+      </figure>
+
+      <figure class="ve-steps">
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 210" role="img" aria-label="GKD loop. The student samples a response from the prompt. The teacher scores every position of that response. A per-token divergence compares teacher and student. The student is updated, with no gradient through the sampling.">
+            <path class="ve-e" data-s="1" pathLength="1" d="M140 100H200"/>
+            <path class="ve-e" data-s="1" pathLength="1" d="M330 100H400"/><text class="ve-el" data-s="1" x="365" y="90">samples</text>
+            <path class="ve-e" data-s="2" pathLength="1" d="M530 85H560V45H590"/><text class="ve-el" data-s="2" x="560" y="30">reads</text>
+            <path class="ve-e" data-s="3" pathLength="1" d="M530 115H560V150H590"/>
+            <path class="ve-e" data-s="3" pathLength="1" d="M685 75V130"/><text class="ve-el r" data-s="3" x="693" y="108">p vs q</text>
+            <path class="ve-e is-hot" data-s="4" pathLength="1" d="M590 175H265V130"/><text class="ve-el" data-s="4" x="430" y="166">updates θ</text>
+            <g class="ve-n" data-s="1" transform="translate(20 70)"><rect class="sh" width="120" height="60" rx="6"/><text x="60" y="22">Prompt x</text></g>
+            <g class="ve-n is-key" data-s="1" transform="translate(200 70)"><rect class="sh" width="130" height="60" rx="6"/><text x="65" y="22">Student</text><text class="sub" x="65" y="44">q_θ</text></g>
+            <g class="ve-n" data-s="1" transform="translate(400 70)"><rect class="sh" width="130" height="60" rx="6"/><text x="65" y="22">Response ŷ</text><text class="sub" x="65" y="44">student tokens</text></g>
+            <g class="ve-n" data-s="2" transform="translate(590 15)"><rect class="sh" width="190" height="60" rx="6"/><text x="95" y="22">Teacher p</text><text class="sub" x="95" y="44">every position</text></g>
+            <g class="ve-n" data-s="3" transform="translate(590 130)"><rect class="sh" width="190" height="60" rx="6"/><text x="95" y="22">D(p ‖ q)</text><text class="sub" x="95" y="44">per token</text></g>
+          </svg>
+        </div>
+        <div class="ve-player">
+          <ol class="ve-cap">
+            <li data-n="1/4">Sample a response ŷ from the current student for each prompt.</li>
+            <li data-n="2/4">Run the teacher on (x, ŷ). It gives a next-token distribution at every position.</li>
+            <li data-n="3/4">Compute a divergence D (forward KL, reverse KL or JSD) between teacher and student at each position, then average over the response length.</li>
+            <li data-n="4/4">Update the student. No gradient flows through the sampling step: the samples are a fixed dataset, refreshed each step.</li>
+          </ol>
+          <button data-go="-1" aria-label="Previous step">←</button>
+          <button data-play>Play</button>
+          <input type="range" min="0" value="0" aria-label="Step">
+          <button data-go="1" aria-label="Next step">→</button>
+        </div>
+        <figcaption><span class="fig-n">Fig. 8</span>The GKD loop. Every token gets a teacher signal, unlike RL with one scalar reward at the end.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="eq">
+          <div class="eq-math">
+            $$\mathcal{L}_{\text{GKD}}(\theta) = \mathbb{E}_{x}\, \mathbb{E}_{\hat{y} \sim q_\theta(\cdot \mid x)} \left[ \frac{1}{|\hat{y}|} \sum_{t=1}^{|\hat{y}|} D_t \right]$$
+            $$D_t = D\!\left( p(\cdot \mid \hat{y}_{&lt;t}, x) \,\|\, q_\theta(\cdot \mid \hat{y}_{&lt;t}, x) \right)$$
+          </div>
+          <dl class="symbols">
+            <div><dt>\(\hat{y}\)</dt><dd>response sampled from the current student</dd></div>
+            <div><dt>\(D_t\)</dt><dd>per-token divergence: forward KL, reverse KL or \(\mathrm{JSD}_\beta\)</dd></div>
+            <div><dt>\(\lambda\)</dt><dd>mix ratio of on-policy to off-policy data (not in the formula)</dd></div>
+          </dl>
+        </div>
+        <figcaption><span class="fig-n">Eq. 4</span>GKD (Agarwal et al., 2023). On-policy data with reverse KL or JSD often works best, and the best D depends on the task.</figcaption>
+      </figure>
+      <p>The cost: the teacher must be online during training and share the student's tokenizer, so on-policy distillation is mostly used inside one model family. The Thinking Machines post makes the same point: you get RL's on-policy benefit at a fraction of the sample cost, because each episode gives a gradient per token.</p>
+    </section>
+
+    <section class="sec" id="s04" aria-labelledby="s04-h">
+      <div class="sec-head"><p class="sec-num"><span class="n">04</span>Code: a token-level KD loss in PyTorch</p><h2 id="s04-h">A correct KD loss gets three details right</h2></div>
+      <p>The three details most buggy versions miss: the <code>T²</code> factor, masking padding and prompt tokens, and averaging over real tokens instead of the batch dimension.</p>
+      <div class="code">
+        <div class="code-bar"><span class="ve-label">kd_loss.py</span><button class="copy" type="button">Copy</button></div>
+<pre tabindex="0"><code><span class="tk-k">import</span> torch
+<span class="tk-k">import</span> torch.nn.functional <span class="tk-k">as</span> F
+
+
+<span class="tk-k">def</span> <span class="tk-f">kd_loss</span>(
+    student_logits: torch.Tensor,   <span class="tk-c"># (B, L, V)</span>
+    teacher_logits: torch.Tensor,   <span class="tk-c"># (B, L, V)</span>
+    labels: torch.Tensor,           <span class="tk-c"># (B, L), -100 marks positions to ignore</span>
+    temperature: float = <span class="tk-n">2.0</span>,
+    alpha: float = <span class="tk-n">0.5</span>,
+    reverse: bool = <span class="tk-k">False</span>,
+) -&gt; torch.Tensor:
+    mask = labels != -<span class="tk-n">100</span>                             <span class="tk-c"># (B, L)</span>
+    s = student_logits.<span class="tk-f">float</span>() / temperature          <span class="tk-c"># fp32: log_softmax over a 128k vocab underflows in bf16</span>
+    t = teacher_logits.<span class="tk-f">float</span>().<span class="tk-f">detach</span>() / temperature  <span class="tk-c"># teacher is a fixed target, never trained</span>
+
+    log_q = F.<span class="tk-f">log_softmax</span>(s, dim=-<span class="tk-n">1</span>)
+    log_p = F.<span class="tk-f">log_softmax</span>(t, dim=-<span class="tk-n">1</span>)
+
+    <span class="tk-k">if</span> reverse:
+        <span class="tk-c"># KL(q || p): penalizes student mass where the teacher has little (mode-seeking)</span>
+        kl = (log_q.<span class="tk-f">exp</span>() * (log_q - log_p)).<span class="tk-f">sum</span>(-<span class="tk-n">1</span>)
+    <span class="tk-k">else</span>:
+        <span class="tk-c"># KL(p || q): penalizes missing teacher mass (mode-covering), Hinton's original choice</span>
+        kl = (log_p.<span class="tk-f">exp</span>() * (log_p - log_q)).<span class="tk-f">sum</span>(-<span class="tk-n">1</span>)
+
+    <span class="tk-c"># Mean over real tokens only, so long padded batches do not dilute the signal</span>
+    soft = (kl * mask).<span class="tk-f">sum</span>() / mask.<span class="tk-f">sum</span>().<span class="tk-f">clamp</span>(min=<span class="tk-n">1</span>)
+    <span class="tk-c"># T^2 keeps the soft-term gradient scale independent of the chosen temperature</span>
+    soft = soft * temperature**<span class="tk-n">2</span>
+
+    <span class="tk-k">if</span> alpha &gt;= <span class="tk-n">1.0</span>:
+        <span class="tk-k">return</span> soft
+    hard = F.<span class="tk-f">cross_entropy</span>(
+        student_logits.<span class="tk-f">float</span>().<span class="tk-f">flatten</span>(<span class="tk-n">0</span>, <span class="tk-n">1</span>), labels.<span class="tk-f">flatten</span>(), ignore_index=-<span class="tk-n">100</span>
+    )
+    <span class="tk-k">return</span> alpha * soft + (<span class="tk-n">1</span> - alpha) * hard</code></pre>
+      </div>
+      <p>The chapter's self-test checks that identical logits give zero loss and that gradient norms stay in one range as T grows. Without the <code>temperature**2</code> line they fall about 16× from T = 4 to T = 16.</p>
+
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 220" role="img" aria-label="A logits tensor of shape batch 8 by length 4096 by vocab 128,256 in fp32 takes about 16 GB. Compute the loss in chunks along the sequence.">
+            <text class="ve-tick" x="170" y="28">B = 8 rows × L = 4,096 positions</text>
+            <path class="ve-e" d="M320 95H400"/><text class="ve-el" x="360" y="85">× 4 B</text>
+            <path class="ve-e is-hot" d="M550 95H620"/><text class="ve-el" x="585" y="85">chunk</text>
+            <g class="ve-n" transform="translate(20 40)"><rect class="sh" width="300" height="110" rx="6"/><text x="150" y="42">logits</text><text class="sub" x="150" y="68">(B, L, V) in fp32</text></g>
+            <g class="ve-n is-key" transform="translate(400 60)"><rect class="sh" width="150" height="70" rx="6"/><text x="75" y="26">≈ 16 GB</text><text class="sub" x="75" y="48">one tensor</text></g>
+            <g class="ve-n" transform="translate(620 30)"><rect class="sh" width="160" height="34" rx="5"/><text x="80" y="17">chunk 1</text></g>
+            <g class="ve-n" transform="translate(620 78)"><rect class="sh" width="160" height="34" rx="5"/><text x="80" y="17">chunk 2</text></g>
+            <g class="ve-n" transform="translate(620 126)"><rect class="sh" width="160" height="34" rx="5"/><text x="80" y="17">chunk n</text></g>
+            <g class="ve-dim is-key"><path class="ext" d="M20 158V192M320 158V192"/><path class="ln" d="M20 186H320"/><text x="170" y="178">V = 128,256</text></g>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 9</span>At the Llama 3 vocabulary, one fp32 logits tensor needs about 16 GB, and the loss needs several. Production code chunks along the sequence or uses a fused kernel (Liger Kernel ships one).</figcaption>
+      </figure>
+      <ul>
+        <li><b>Cache teacher logits as top-k.</b> Full distributions are 128k floats per token. Store the top few dozen to few hundred probabilities per position and renormalize.</li>
+        <li><b>Check the tokenizer first.</b> Compare <code>teacher_tok.get_vocab() == student_tok.get_vocab()</code> before training, not after a day of it.</li>
+      </ul>
+
+      <h3>The on-policy version reuses the same loss</h3>
+      <p>Only the source of the token sequences changes. Labels mask the prompt, and there are no hard labels, so <code>alpha=1</code>.</p>
+      <div class="code">
+        <div class="code-bar"><span class="ve-label">on_policy.py</span><button class="copy" type="button">Copy</button></div>
+<pre tabindex="0"><code>@torch.<span class="tk-f">no_grad</span>()
+<span class="tk-k">def</span> <span class="tk-f">sample_on_policy</span>(student, prompt_ids, max_new_tokens=<span class="tk-n">128</span>):
+    <span class="tk-c"># The student must see its own mistakes, so prefixes come from student samples</span>
+    <span class="tk-k">return</span> student.<span class="tk-f">generate</span>(prompt_ids, do_sample=<span class="tk-k">True</span>, max_new_tokens=max_new_tokens)
+
+
+<span class="tk-k">def</span> <span class="tk-f">on_policy_step</span>(student, teacher, prompt_ids, optimizer, temperature=<span class="tk-n">1.0</span>):
+    seq = <span class="tk-f">sample_on_policy</span>(student, prompt_ids)
+    labels = seq.<span class="tk-f">clone</span>()
+    labels[:, : prompt_ids.shape[<span class="tk-n">1</span>]] = -<span class="tk-n">100</span>  <span class="tk-c"># only distill the generated part</span>
+    <span class="tk-k">with</span> torch.<span class="tk-f">no_grad</span>():
+        t_logits = <span class="tk-f">teacher</span>(seq).logits
+    s_logits = <span class="tk-f">student</span>(seq).logits
+    <span class="tk-c"># alpha=1: no hard labels exist on-policy, the teacher distribution is the only target</span>
+    loss = <span class="tk-f">kd_loss</span>(s_logits[:, :-<span class="tk-n">1</span>], t_logits[:, :-<span class="tk-n">1</span>], labels[:, <span class="tk-n">1</span>:],
+                   temperature=temperature, alpha=<span class="tk-n">1.0</span>, reverse=<span class="tk-k">True</span>)
+    optimizer.<span class="tk-f">zero_grad</span>()
+    loss.<span class="tk-f">backward</span>()
+    optimizer.<span class="tk-f">step</span>()
+    <span class="tk-k">return</span> loss.<span class="tk-f">item</span>()</code></pre>
+      </div>
+      <p>A pair like <code>gpt2-large</code> (teacher) and <code>distilgpt2</code> (student) shares a tokenizer and runs on a laptop GPU. TRL ships a <code>GKDTrainer</code> with the λ and β knobs.</p>
+    </section>
+
+    <section class="sec" id="s05" aria-labelledby="s05-h">
+      <div class="sec-head"><p class="sec-num"><span class="n">05</span>Modern practice: where distillation shows up</p><h2 id="s05-h">Most small open models are taught by a bigger one</h2></div>
+
+      <h3>DistilBERT: the template</h3>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 170" role="img" aria-label="DistilBERT copies 6 of the 12 BERT-base layers as its initialization and trains with three losses: soft-target KD on the masked LM distribution, the MLM loss, and a cosine loss on hidden states.">
+            <path class="ve-e is-hot" d="M170 85H290"/><text class="ve-el" x="230" y="75">copies</text>
+            <path class="ve-e" d="M540 28H500V65H460"/><path class="ve-e" d="M540 84H460"/><text class="ve-el" x="500" y="76">trains</text><path class="ve-e" d="M540 140H500V105H460"/>
+            <g class="ve-n" transform="translate(20 50)"><rect class="sh" width="150" height="70" rx="6"/><text x="75" y="26">BERT-base</text><text class="sub" x="75" y="48">12 layers</text></g>
+            <g class="ve-n is-key" transform="translate(290 50)"><rect class="sh" width="170" height="70" rx="6"/><text x="85" y="26">DistilBERT</text><text class="sub" x="85" y="48">6 layers</text></g>
+            <g class="ve-n" transform="translate(540 10)"><rect class="sh" width="240" height="36" rx="5"/><text x="120" y="18">soft KD on MLM</text></g>
+            <g class="ve-n" transform="translate(540 66)"><rect class="sh" width="240" height="36" rx="5"/><text x="120" y="18">MLM loss</text></g>
+            <g class="ve-n" transform="translate(540 122)"><rect class="sh" width="240" height="36" rx="5"/><text x="120" y="18">cosine on hidden</text></g>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 10</span>Two ideas recur in every later recipe: start the student from a cut-down teacher, and add a soft target to the normal objective.</figcaption>
+      </figure>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 190" role="img" aria-label="Against BERT-base at 100, DistilBERT keeps 97 percent of the GLUE score, has 60 percent of the parameters, and runs at 160 percent speed.">
+            <path class="ve-grid" d="M420 12V160"/>
+            <text class="ve-tick l" x="20" y="45">GLUE score</text><rect class="ve-bar hot" x="170" y="31" width="242" height="18" rx="2"/><text class="ve-bar-v" x="428" y="40">97 kept</text>
+            <text class="ve-tick l" x="20" y="95">Parameters</text><rect class="ve-bar" x="170" y="81" width="150" height="18" rx="2"/><text class="ve-bar-v" x="328" y="90">60 (40% fewer)</text>
+            <text class="ve-tick l" x="20" y="145">Inference speed</text><rect class="ve-bar" x="170" y="131" width="400" height="18" rx="2"/><text class="ve-bar-v" x="578" y="140">160 (60% faster)</text>
+            <text class="ve-tick" x="420" y="180">BERT-base = 100</text>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 11</span>DistilBERT (Sanh et al., 2019) kept about 97% of the GLUE score at 40% fewer parameters and 60% faster inference.</figcaption>
+      </figure>
+
+      <h3>Synthetic-data distillation from frontier models</h3>
+      <p>The most common form in 2023 to 2025 is black-box sequence-level KD: a strong model writes responses, a smaller one gets SFT on them.</p>
+      <ul>
+        <li><b>Tulu 3</b> builds much of its SFT mixture from frontier-model answers (GPT-4o and others) plus persona-driven synthetic prompts. It is forward-KL distillation on sampled text.</li>
+        <li><b>Llama 3</b> uses rejection sampling from its own larger models for later SFT rounds. Llama 3.1 405B also improved the post-training data of the 8B and 70B: self-distillation inside a family.</li>
+        <li><b>DeepSeek-R1</b> released six R1-Distill models, shown below.</li>
+      </ul>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 170" role="img" aria-label="DeepSeek-R1 curates 800 thousand samples, which feed plain SFT, which yields six Qwen and Llama students from 1.5B to 70B. This beat running large-scale RL on the small model.">
+            <path class="ve-e" d="M155 85H225"/><text class="ve-el" x="190" y="75">curates</text>
+            <path class="ve-e" d="M365 85H435"/><text class="ve-el" x="400" y="75">feeds</text>
+            <path class="ve-e is-hot" d="M575 85H645"/><text class="ve-el" x="610" y="75">yields</text>
+            <g class="ve-n" transform="translate(15 50)"><rect class="sh" width="140" height="70" rx="6"/><text x="70" y="26">DeepSeek-R1</text><text class="sub" x="70" y="48">teacher</text></g>
+            <g class="ve-n" transform="translate(225 50)"><rect class="sh" width="140" height="70" rx="6"/><text x="70" y="26">800k</text><text class="sub" x="70" y="48">samples</text></g>
+            <g class="ve-n" transform="translate(435 50)"><rect class="sh" width="140" height="70" rx="6"/><text x="70" y="26">Plain SFT</text><text class="sub" x="70" y="48">no RL</text></g>
+            <g class="ve-n is-key" transform="translate(645 50)"><rect class="sh" width="140" height="70" rx="6"/><text x="70" y="26">6 students</text><text class="sub" x="70" y="48">1.5B to 70B</text></g>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 12</span>Distilling R1's reasoning traces into a small model beat running large-scale RL on that small model. Reasoning transfers well through text.</figcaption>
+      </figure>
+      <p>Caveats: black-box distillation inherits the teacher's errors and style, is capped by the teacher on the prompts you chose, and many providers' terms of service restrict it. It also carries no dense per-token signal.</p>
+
+      <h3>Logit distillation in pretraining</h3>
+      <ul>
+        <li><b>Gemma 2</b> 2B and 9B train against a larger teacher's next-token distribution during pretraining, on far more tokens than compute-optimal (the 2B saw 2T). The 27B was trained from scratch.</li>
+        <li><b>Llama 3.2 1B and 3B</b> were pruned from Llama 3.1 8B, then used logits from Llama 3.1 8B and 70B as token-level targets to recover quality.</li>
+      </ul>
+      <p>This is the most information-dense form, and it needs a large teacher with the same tokenizer.</p>
+
+      <h3>Pruning plus distillation: Minitron</h3>
+      <figure>
+        <div class="frame">
+          <svg class="ve-svg" viewBox="0 0 800 250" role="img" aria-label="Minitron estimates importance on about 1k calibration samples, prunes width or depth, then retrains with logit KL from the unpruned teacher. This uses up to 40 times fewer tokens than training from scratch.">
+            <path class="ve-e" d="M210 55H305"/><text class="ve-el" x="257" y="45">ranks</text>
+            <path class="ve-e is-hot" d="M495 55H590"/><text class="ve-el" x="542" y="45">retrains</text>
+            <g class="ve-n" transform="translate(20 20)"><rect class="sh" width="190" height="70" rx="6"/><text x="95" y="26">Estimate</text><text class="sub" x="95" y="48">~1k samples</text></g>
+            <g class="ve-n" transform="translate(305 20)"><rect class="sh" width="190" height="70" rx="6"/><text x="95" y="26">Prune</text><text class="sub" x="95" y="48">width beats depth</text></g>
+            <g class="ve-n is-key" transform="translate(590 20)"><rect class="sh" width="190" height="70" rx="6"/><text x="95" y="26">Distill</text><text class="sub" x="95" y="48">logit KL</text></g>
+            <text class="ve-tick l" x="20" y="135">Training tokens for the 8B and 4B models</text>
+            <text class="ve-tick l" x="20" y="177">From scratch</text><rect class="ve-bar" x="190" y="163" width="400" height="18" rx="2"/><text class="ve-bar-v" x="598" y="172">40×</text>
+            <text class="ve-tick l" x="20" y="222">Prune + distill</text><rect class="ve-bar hot" x="190" y="208" width="10" height="18" rx="2"/><text class="ve-bar-v" x="208" y="217">1×, up to 40× fewer</text>
+          </svg>
+        </div>
+        <figcaption><span class="fig-n">Fig. 13</span>Train the largest model once, then cut smaller siblings. From Nemotron-4 15B, NVIDIA derived 8B and 4B models with quality comparable to or better than similar-size open models.</figcaption>
+      </figure>
+      <p>Importance covers attention heads, MLP neurons, embedding channels and whole layers. Llama-3.1-Minitron 4B applied the same recipe to Llama 3.1 8B, with a short "teacher correction" fine-tune so the teacher matched the distillation corpus.</p>
+
+      <h3>Choosing a recipe</h3>
+      <figure>
+        <div class="cases">
+          <div class="case" data-st="ok"><span class="chip info">Black-box SFT</span><h3>Teacher is a closed API</h3>
+            <svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="A closed API teacher sends text to the student.">
+              <path class="ve-e is-st" d="M120 40V66"/><text class="ve-el r" x="128" y="57">text</text>
+              <g class="ve-n"><rect class="sh" x="20" y="4" width="200" height="36" rx="5"/><text x="120" y="22">Closed API</text></g>
+              <g class="ve-n is-st"><rect class="sh" x="20" y="68" width="200" height="36" rx="5"/><text x="120" y="86">Student SFT</text></g>
+            </svg><p>Sequence-level KD. Filter aggressively.</p></div>
+          <div class="case" data-st="ok"><span class="chip info">Logit KD, top-k</span><h3>Own teacher, same tokenizer, pretraining scale</h3>
+            <svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="An owned teacher sends cached top-k targets to the student.">
+              <path class="ve-e is-st" d="M120 40V66"/><text class="ve-el r" x="128" y="57">top-k probs</text>
+              <g class="ve-n"><rect class="sh" x="20" y="4" width="200" height="36" rx="5"/><text x="120" y="22">Own teacher</text></g>
+              <g class="ve-n is-st"><rect class="sh" x="20" y="68" width="200" height="36" rx="5"/><text x="120" y="86">Student</text></g>
+            </svg><p>Gemma 2 style, with cached top-k targets.</p></div>
+          <div class="case" data-st="ok"><span class="chip info">Prune, then KD</span><h3>Own teacher, smaller sibling cheaply</h3>
+            <svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="The big model is pruned into a copy that logit KD then retrains.">
+              <path class="ve-e is-st" d="M120 40V66"/><text class="ve-el r" x="128" y="57">prune+KL</text>
+              <g class="ve-n"><rect class="sh" x="20" y="4" width="200" height="36" rx="5"/><text x="120" y="22">Big model</text></g>
+              <g class="ve-n is-st"><rect class="sh" x="20" y="68" width="200" height="36" rx="5"/><text x="120" y="86">Pruned copy</text></g>
+            </svg><p>Minitron style.</p></div>
+          <div class="case" data-st="ok"><span class="chip info">On-policy KD</span><h3>Post-training a small model on a narrow skill</h3>
+            <svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="Student rollouts are scored by the teacher at every token.">
+              <path class="ve-e is-st" d="M120 40V66"/><text class="ve-el r" x="128" y="57">scores</text>
+              <g class="ve-n"><rect class="sh" x="20" y="4" width="200" height="36" rx="5"/><text x="120" y="22">Student rollout</text></g>
+              <g class="ve-n is-st"><rect class="sh" x="20" y="68" width="200" height="36" rx="5"/><text x="120" y="86">Teacher</text></g>
+            </svg><p>GKD, with reverse KL or JSD.</p></div>
+        </div>
+        <figcaption><span class="fig-n">Fig. 14</span>Pick the recipe by what access you have to the teacher and how much compute you have.</figcaption>
+      </figure>
+    </section>
+
+    <section class="sec" id="s06" aria-labelledby="s06-h">
+      <div class="sec-head"><p class="sec-num"><span class="n">06</span>Wrap-up</p><h2 id="s06-h">Check the ideas before the project</h2></div>
+
+      <div class="callout confusions">
+        <span class="chip warn">Common confusions</span>
+        <ul>
+          <li><p class="myth">Temperature is applied at inference too.</p><p class="fact">T &gt; 1 only softens both distributions inside the training loss. The deployed student runs at T = 1, or whatever sampling temperature you choose, which is unrelated.</p></li>
+          <li><p class="myth">The T² factor is a magic constant.</p><p class="fact">It cancels the 1/T² gradient scaling derived above. Drop it and α silently depends on T.</p></li>
+          <li><p class="myth">KL and cross-entropy against soft labels give different gradients.</p><p class="fact">They differ by the teacher's entropy, constant with respect to the student. The gradients are identical.</p></li>
+          <li><p class="myth">Fine-tuning on GPT-4 outputs is not distillation.</p><p class="fact">It is black-box, sequence-level, forward-KL distillation. It transfers fewer bits per token than logit distillation.</p></li>
+          <li><p class="myth">Reverse KL is always better for LMs.</p><p class="fact">It avoids low-quality blends when the student is much smaller, but it reduces diversity. GKD found the best divergence is task-dependent.</p></li>
+          <li><p class="myth">On-policy distillation is RL.</p><p class="fact">It shares the sampling loop, but the signal is a dense per-token divergence, not a scalar reward. GKD needs no policy-gradient estimator: it differentiates the divergence on fixed samples.</p></li>
+          <li><p class="myth">Any teacher can teach any student via logits.</p><p class="fact">Only with a shared vocabulary. Cross-tokenizer logit distillation is an open research area.</p></li>
+        </ul>
+      </div>
+
+      <div class="callout quiz">
+        <span class="chip info">Check yourself</span>
+        <ol>
+          <li><p>A teacher outputs logits <code>[8, 2, 1]</code>. Compute roughly the teacher distribution at \(T=1\) and \(T=4\). Which teaches the student more about class 2 versus class 3?</p>
+            <details><summary>Show answer</summary><p>At \(T=1\): \(e^8 \approx 2981\), \(e^2 \approx 7.4\), \(e^1 \approx 2.7\), so about <code>[0.997, 0.0025, 0.0009]</code>. At \(T=4\) the logits become <code>[2, 0.5, 0.25]</code>, giving about <code>[0.71, 0.16, 0.13]</code>. The \(T=4\) distribution makes the 2-versus-3 ranking large enough for a meaningful gradient. At \(T=1\) it is buried in the third decimal place.</p></details></li>
+          <li><p>You double the temperature from 2 to 4 but forget the \(T^2\) factor. What happens to the soft and hard loss balance, and how would you notice?</p>
+            <details><summary>Show answer</summary><p>The soft-term gradient shrinks by about 4×, so the hard-label term dominates and training behaves more like ordinary SFT. The KD loss plateaus higher and the student's agreement with the teacher's top-k drops, while the hard cross-entropy trains normally.</p></details></li>
+          <li><p>A 1B student is distilled from a 70B teacher with forward KL on teacher samples. Its outputs are fluent but sometimes mix two unrelated plausible answers. Why, and name two fixes.</p>
+            <details><summary>Show answer</summary><p>Forward KL is mode-covering: the student is penalized for giving low probability to anything the teacher might say, so a capacity-limited student spreads mass between modes and blends. Switch to reverse KL or \(\mathrm{JSD}_\beta\) with large \(\beta\), and/or train on-policy so the teacher can penalize the student's blended outputs. Sequence-level KD with low-temperature teacher samples also helps by giving one mode per prompt.</p></details></li>
+          <li><p>Why does GKD sample from the student rather than the teacher, and what extra infrastructure does that need compared with SFT on synthetic data?</p>
+            <details><summary>Show answer</summary><p>Training on teacher or dataset prefixes leaves a mismatch: at inference the student conditions on its own, possibly wrong, prefixes. Sampling from the student trains on the states it will visit. It needs the student's generation loop inside training and the teacher online to score every generated sequence, typically on a separate inference server or engine.</p></details></li>
+          <li><p>Why could Llama 3.2 1B use logit distillation from Llama 3.1 70B, while most open models distilled from GPT-4 could not?</p>
+            <details><summary>Show answer</summary><p>Logit distillation needs both models to output distributions over the same vocabulary. Llama 3.2 and 3.1 share a tokenizer, and Meta owns the 70B weights. GPT-4 is a closed API with a different tokenizer that at most exposes top-k logprobs, so only black-box text distillation is possible.</p></details></li>
+          <li><p>In Minitron, why distill the pruned model instead of fine-tuning it with ordinary next-token cross-entropy on the same small token budget?</p>
+            <details><summary>Show answer</summary><p>The pruned model is damaged but still close to the teacher. The teacher's full distribution tells it exactly how to recover the original function, with far more signal per token than one-hot labels. That is how Minitron recovers quality with a tiny fraction of the original token budget.</p></details></li>
+        </ol>
+      </div>
+
+      <h3>Resources</h3>
+      <div class="resources">
+        <div class="res-col">
+          <h3>Read</h3>
+          <ul class="res-list">
+            <li class="res-item is-start">
+              <div class="res-top"><a href="https://arxiv.org/abs/1503.02531">Distilling the Knowledge in a Neural Network</a><span class="start-here">Start here</span></div>
+              <div class="res-meta">Hinton, Vinyals, Dean, 2015 <span class="chip plain">paper</span></div>
+              <p>The original paper. Short, and the T² derivation is in section 2.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://arxiv.org/abs/1606.07947">Sequence-Level Knowledge Distillation</a></div>
+              <div class="res-meta">Kim and Rush, 2016 <span class="chip plain">paper</span></div>
+              <p>The bridge from classification KD to training on teacher-generated sequences.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://arxiv.org/abs/1910.01108">DistilBERT</a></div>
+              <div class="res-meta">Sanh et al., 2019 <span class="chip plain">paper</span></div>
+              <p>Layer-skipping initialization plus a triple loss; the template for later recipes.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://arxiv.org/abs/2306.08543">MiniLLM: Knowledge Distillation of Large Language Models</a></div>
+              <div class="res-meta">Gu et al., 2023 <span class="chip plain">paper</span></div>
+              <p>The case for reverse KL and a policy-gradient way to optimize it.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://arxiv.org/abs/2306.13649">On-Policy Distillation of Language Models: Learning from Self-Generated Mistakes</a></div>
+              <div class="res-meta">Agarwal et al., 2023 <span class="chip plain">paper</span></div>
+              <p>GKD, the cleanest formulation of on-policy distillation.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://thinkingmachines.ai/blog/on-policy-distillation/">On-Policy Distillation</a></div>
+              <div class="res-meta">Thinking Machines <span class="chip plain">blog</span></div>
+              <p>A practitioner's view of why dense per-token teacher signal beats sparse RL rewards for post-training.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://arxiv.org/abs/2407.14679">Compact Language Models via Pruning and Knowledge Distillation</a></div>
+              <div class="res-meta">Minitron <span class="chip plain">paper</span></div>
+              <p>The prune-then-distill recipe with careful ablations.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://arxiv.org/abs/2408.00118">Gemma 2 technical report</a></div>
+              <div class="res-meta">Gemma 2 <span class="chip plain">report</span></div>
+              <p>The section on distillation as the pretraining objective for small models.</p>
+            </li>
+            <li class="res-item">
+              <div class="res-top"><a href="https://arxiv.org/abs/2501.12948">DeepSeek-R1</a></div>
+              <div class="res-meta">DeepSeek <span class="chip plain">paper</span></div>
+              <p>See the "Distillation" section for why SFT on R1 traces beat RL on small models.</p>
+            </li>
+          </ul>
+        </div>
+        <div class="res-col">
+          <h3>Watch</h3>
+          <ul class="res-list">
+            <li class="res-item">
+              <div class="res-top"><a href="https://www.youtube.com/watch?v=1RvdM-q6kDQ">Knowledge Distillation in Large Language Models</a></div>
+              <div class="res-meta">John Olafenwa <span class="chip plain">video</span></div>
+              <p>An overview of KD applied to LLMs; a good refresher after reading Hinton.</p>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="project">
+        <span class="chip info">Chapter project</span>
+        <h3>Distill a small GPT-2 two ways and compare</h3>
+        <p>Train three students from one initialization and one token budget, then explain the gaps with forward versus reverse KL and exposure bias.</p>
+        <ol>
+          <li>Pick a teacher and student that share a tokenizer: <code>gpt2-large</code> (774M) and <code>distilgpt2</code> (82M), or <code>Qwen2.5-1.5B-Instruct</code> and <code>Qwen2.5-0.5B</code> on a bigger GPU.</li>
+          <li>Choose a narrow task with an automatic metric, such as GSM8K-style arithmetic word problems, or short story continuation scored by the teacher's perplexity.</li>
+          <li>Train (a) SFT on teacher-sampled responses, (b) off-policy logit KD with <code>kd_loss</code> and forward KL on the same sequences, (c) on-policy KD with <code>on_policy_step</code> and reverse KL.</li>
+          <li>Report the task metric, the teacher's average per-token log-likelihood of each student's samples, and diversity (distinct-2 n-grams over 100 samples per prompt).</li>
+          <li>Write a paragraph explaining the results in terms of forward versus reverse KL and exposure bias.</li>
+        </ol>
+        <ul class="done">
+          <li>Three students share the same initialization and token budget.</li>
+          <li>The report has all three measures for each student.</li>
+          <li>The paragraph links the results to forward versus reverse KL and exposure bias.</li>
+        </ul>
+        <p class="meta">Bonus: sweep T in {1, 2, 4} for (b) with and without the T² factor and plot the training curves.</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Linked highlighting: hovering any [data-ref], or focusing a prose term, lights every element that shares a ref.
+  const linked = [...document.querySelectorAll('[data-ref]')], refs = (el) => el.dataset.ref.split(' ');
+  let hovered = null, focused = null;
+  const paint = () => {
+    const keys = (hovered || focused)?.dataset.ref.split(' ') ?? [];
+    for (const t of linked) t.classList.toggle('is-lit', refs(t).some((k) => keys.includes(k)));
+    for (const svg of document.querySelectorAll('svg')) svg.classList.toggle('has-lit', !!svg.querySelector('.is-lit'));
+  };
+  for (const el of linked) {
+    el.addEventListener('pointerenter', () => { hovered = el; paint(); });
+    el.addEventListener('pointerleave', () => { hovered = null; paint(); });
+    el.addEventListener('focus', () => { focused = el; paint(); });
+    el.addEventListener('blur', () => { focused = null; paint(); });
+  }
+
+  // Stepper / scene player. Opens on the full picture, because the first view must show the answer.
+  for (const root of document.querySelectorAll('.ve-steps')) {
+    const parts = [...root.querySelectorAll('[data-s]')], caps = [...root.querySelectorAll('.ve-cap li')];
+    const range = root.querySelector('input[type=range]'), play = root.querySelector('[data-play]');
+    const n = caps.length; let i = 0, timer = null;
+    if (range) range.max = n - 1;
+    const show = (k) => {
+      i = Math.max(0, Math.min(n - 1, k));
+      for (const el of parts) { const s = el.dataset.s.trim().split(' ').map(Number); el.classList.toggle('on', s[0] <= i + 1); el.classList.toggle('now', s.includes(i + 1)); }
+      caps.forEach((c, j) => c.hidden = j !== i);
+      root.classList.toggle('is-full', i === n - 1);
+      if (range) range.value = i;
+    };
+    const stop = () => { clearInterval(timer); timer = null; if (play) play.textContent = 'Play'; };
+    root.addEventListener('click', (e) => { const b = e.target.closest('[data-go]'); if (b) { stop(); show(i + +b.dataset.go); } });
+    range?.addEventListener('input', () => { stop(); show(+range.value); });
+    play?.addEventListener('click', () => {
+      if (timer) return stop();
+      if (i === n - 1) show(0);
+      play.textContent = 'Pause';
+      timer = setInterval(() => (i < n - 1 ? show(i + 1) : stop()), 3500);
+    });
+    show(n - 1);
+    addEventListener('beforeprint', () => show(n - 1));
+  }
+
+  // Copy buttons: clipboard API, with a selection fallback for browsers that block it on file:// pages.
+  for (const btn of document.querySelectorAll('.code .copy')) {
+    btn.addEventListener('click', async () => {
+      const code = btn.closest('.code').querySelector('pre code');
+      try { await navigator.clipboard.writeText(code.innerText); }
+      catch { const r = document.createRange(); r.selectNodeContents(code); const s = getSelection(); s.removeAllRanges(); s.addRange(r); document.execCommand('copy'); s.removeAllRanges(); }
+      btn.textContent = 'Copied'; setTimeout(() => (btn.textContent = 'Copy'), 1500);
+    });
+  }
+
+  // TOC scroll-spy: the section crossing the top tenth of the viewport is the current one.
+  const tocLinks = new Map([...document.querySelectorAll('.toc a[href^="#"]')].map((a) => [a.getAttribute('href').slice(1), a]));
+  const spy = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      for (const a of tocLinks.values()) a.removeAttribute('aria-current');
+      tocLinks.get(e.target.id)?.setAttribute('aria-current', 'true');
+    }
+  }, { rootMargin: '-10% 0px -80% 0px' });
+  for (const id of tocLinks.keys()) { const s = document.getElementById(id); if (s) spy.observe(s); }
+
+  // Entrance: each block rises in once. Without JS, in print, or under reduced motion, everything shows its final state.
+  if (!still) {
+    document.documentElement.classList.add('js-motion');
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) if (e.isIntersecting) { io.unobserve(e.target); e.target.classList.add('in'); }
+    }, { rootMargin: '0px 0px -10% 0px' });
+    for (const el of document.querySelectorAll('.ch-head, .sec > *')) io.observe(el);
+  }
+
+  // Sidebar visibility is a per-reader preference; storage can be blocked, so it only seeds the initial state.
+  (() => {
+    const root = document.documentElement, b = document.getElementById('toc-toggle');
+    const apply = (hidden) => { root.classList.toggle('toc-hidden', hidden); b.setAttribute('aria-expanded', !hidden); b.setAttribute('aria-label', hidden ? 'Show sidebar' : 'Hide sidebar'); };
+    let hidden = false; try { hidden = localStorage.getItem('toc-hidden') === '1'; } catch (e) {}
+    apply(hidden);
+    b.addEventListener('click', () => { hidden = !hidden; apply(hidden); try { localStorage.setItem('toc-hidden', hidden ? '1' : '0'); } catch (e) {} });
+  })();
+  // Theme: explicit choice wins; with none saved the page follows the OS scheme.
+  (() => {
+    const root = document.documentElement, b = document.getElementById('theme-toggle'), mq = matchMedia('(prefers-color-scheme: light)');
+    const mode = () => root.dataset.theme || (mq.matches ? 'light' : 'dark');
+    const sync = () => { const m = mode(); b.dataset.mode = m; b.setAttribute('aria-label', m === 'light' ? 'Switch to dark mode' : 'Switch to light mode'); };
+    sync(); mq.addEventListener('change', sync);
+    b.addEventListener('click', () => { const next = mode() === 'light' ? 'dark' : 'light'; root.dataset.theme = next; try { localStorage.setItem('theme', next); } catch (e) {} sync(); });
+  })();
+</script>
+</body>
+</html>

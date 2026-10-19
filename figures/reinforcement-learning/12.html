@@ -1,0 +1,20 @@
+<figure>
+<div class="cases">
+<div class="case" data-st="warn"><span class="chip warn">Fixed pairs</span><h3>DPO: offline</h3>
+<svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="A fixed dataset of preference pairs trains the policy in one direction. The data never reflects the current policy.">
+<path class="ve-e is-st" d="M86 48H154"/><text class="ve-el" x="120" y="39">trains</text>
+<g class="ve-n"><rect class="sh" x="10" y="26" width="76" height="44" rx="5"/><text x="48" y="48">pairs</text></g>
+<g class="ve-n"><rect class="sh" x="154" y="26" width="76" height="44" rx="5"/><text x="192" y="48">policy</text></g>
+<text class="ve-tick l" x="10" y="98">data fixed at collection</text>
+</svg></div>
+<div class="case" data-st="ok"><span class="chip ok">Fresh samples</span><h3>PPO, GRPO: online</h3>
+<svg class="ve-mini" viewBox="0 0 240 110" role="img" aria-label="The policy samples responses, a judge scores them, and the score trains the policy, so feedback reflects what the model does now.">
+<path class="ve-e" d="M86 38H154"/><text class="ve-el" x="120" y="29">samples</text>
+<path class="ve-e is-st" d="M154 60H86"/><text class="ve-el" x="120" y="75">scores</text>
+<g class="ve-n"><rect class="sh" x="10" y="26" width="76" height="44" rx="5"/><text x="48" y="48">policy</text></g>
+<g class="ve-n"><rect class="sh" x="154" y="26" width="76" height="44" rx="5"/><text x="192" y="48">judge</text></g>
+<text class="ve-tick l" x="10" y="98">data follows the policy</text>
+</svg></div>
+</div>
+<figcaption><span class="fig-n">Fig. 12</span>Same KL-regularized objective, different data. Well-tuned online methods tend to edge out DPO, at higher cost. Tulu 3 used both: DPO for preferences, then RLVR for verifiable skills.</figcaption>
+</figure>
