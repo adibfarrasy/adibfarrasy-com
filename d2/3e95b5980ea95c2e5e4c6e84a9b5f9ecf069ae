@@ -1,0 +1,39 @@
+static/css/figures.css
+  s_927eecb2b42a58::t_c6773ed0316a8e 92
+static/learn-ai/01-architecture.html
+  s_927eecb2b42a58::t_f2240f108ffc00 96,100,106,123,225,294,302
+static/learn-ai/02-pretraining.html
+  s_927eecb2b42a58::t_64c56d88d9470b 96,100,106,123,225,294,302
+static/learn-ai/03-post-training.html
+  s_927eecb2b42a58::t_68c3403b09c0e5 96,100,106,123,225,294,302
+static/learn-ai/04-distillation.html
+  s_927eecb2b42a58::t_ae3c8e0e12e4f1 96,100,106,123,225,294,302
+static/learn-ai/05-linear-attention.html
+  s_927eecb2b42a58::t_e2de5f606af856 96,100,106,123,225,294,302
+static/learn-ai/06-lora.html
+  s_927eecb2b42a58::t_3bcd28a62f1098 96,100,106,123,225,294,302
+static/learn-ai/07-mixture-of-experts.html
+  s_927eecb2b42a58::t_4e9864bc241a00 96,100,106,123,225,294,302
+static/learn-ai/08-optimizers.html
+  s_927eecb2b42a58::t_11de5f7290b7a7 96,100,106,123,225,294,302
+static/learn-ai/09-reinforcement-learning.html
+  s_927eecb2b42a58::t_2c5b725945d2a9 96,100,106,123,225,294,302
+static/learn-ai/index.html
+  s_927eecb2b42a58::t_4cab5ac8c21548 64,68,74,91,193,242,281-282,519-520,523-525
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.11",
+  "base_commit_sha": "d23e95b5980ea95c2e5e4c6e84a9b5f9ecf069ae",
+  "prompts": {},
+  "sessions": {
+    "s_927eecb2b42a58": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ee6493ae-c2fb-4016-b1cd-da0bbf490c4d",
+        "model": "unknown"
+      },
+      "human_author": "Adib Farrasy <adibfarrasy@gmail.com>"
+    }
+  }
+}
