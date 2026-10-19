@@ -1,0 +1,19 @@
+static/learn-ai/index.html
+  s_927eecb2b42a58::t_d6de2703f0ac19 272-274
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.11",
+  "base_commit_sha": "a8ca1dce3f02bc1ea98a7b286386052817c8ca55",
+  "prompts": {},
+  "sessions": {
+    "s_927eecb2b42a58": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ee6493ae-c2fb-4016-b1cd-da0bbf490c4d",
+        "model": "unknown"
+      },
+      "human_author": "Adib Farrasy <adibfarrasy@gmail.com>"
+    }
+  }
+}
