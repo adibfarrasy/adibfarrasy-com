@@ -1,0 +1,1 @@
+{{- printf "%s?v=%s" (. | relURL) (substr (md5 (readFile (printf "static/%s" .))) 0 8) -}}

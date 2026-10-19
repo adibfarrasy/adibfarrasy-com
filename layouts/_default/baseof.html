@@ -12,18 +12,18 @@
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="{{ "css/chroma-light.css" | relURL }}" />
-    <link rel="stylesheet" href="{{ "css/chroma-dark.css" | relURL }}" />
-    <link rel="stylesheet" href="{{ "css/style.css" | relURL }}" />
+    <link rel="stylesheet" href="{{ partial "asset.html" "css/chroma-light.css" }}" />
+    <link rel="stylesheet" href="{{ partial "asset.html" "css/chroma-dark.css" }}" />
+    <link rel="stylesheet" href="{{ partial "asset.html" "css/style.css" }}" />
     {{ if .Params.figures }}
-    <link rel="stylesheet" href="{{ "css/figures.css" | relURL }}" />
-    <script defer src="{{ "js/figures.js" | relURL }}"></script>
+    <link rel="stylesheet" href="{{ partial "asset.html" "css/figures.css" }}" />
+    <script defer src="{{ partial "asset.html" "js/figures.js" }}"></script>
     {{ end }}
     {{ if .Params.math }}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
-    <script defer src="{{ "js/katex-init.js" | relURL }}"></script>
+    <script defer src="{{ partial "asset.html" "js/katex-init.js" }}"></script>
     {{ end }}
     <script>
       (function () {
@@ -67,6 +67,6 @@
       © {{ now.Format "2006" }} adibfarrasy
     </footer>
 
-    <script src="{{ "js/theme.js" | relURL }}" defer></script>
+    <script src="{{ partial "asset.html" "js/theme.js" }}" defer></script>
   </body>
 </html>
