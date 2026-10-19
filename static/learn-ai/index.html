@@ -269,7 +269,9 @@
   .project .done li::before { content: '□'; color: var(--accent); margin-right: var(--s-2); }
 
   /* index only: chapter cards and how-to steps */
-  .ch-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14.5rem), 1fr)); gap: var(--s-4); }
+  .ch-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--s-4); }
+  @media (max-width: 62rem) { .ch-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 36rem) { .ch-cards { grid-template-columns: minmax(0, 1fr); } }
   .ch-card { display: grid; gap: var(--s-3); align-content: start; min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-2); padding: var(--s-4); color: var(--text); text-decoration: none; transition: border-color var(--fast) var(--ease); }
   .ch-card:hover, .ch-card:focus-visible { border-color: var(--accent); color: var(--text); }
   .ch-card h3 { font-size: var(--t-lead); }
