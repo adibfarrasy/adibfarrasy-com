@@ -1,0 +1,555 @@
+content/_index.md
+  s_927eecb2b42a58::t_d195324032423a 2,5
+content/bio.md
+  s_927eecb2b42a58::t_a4fabf6b22f0e7 2,162,164,166,168-169,171,173,175-178,180,182-183
+content/posts/learn-ai-01-architecture.md
+  s_927eecb2b42a58::t_721806845ec8d5 1-1528
+content/posts/learn-ai-02-pretraining.md
+  s_927eecb2b42a58::t_ec4f4df7dc8860 1-1309
+content/posts/learn-ai-03-post-training.md
+  s_927eecb2b42a58::t_233d02c12d16fe 1-1108
+content/posts/learn-ai-04-distillation.md
+  s_927eecb2b42a58::t_d7f9a5fde8ec79 1-404
+content/posts/learn-ai-05-linear-attention.md
+  s_927eecb2b42a58::t_32565919f0763b 1-436
+content/posts/learn-ai-06-lora.md
+  s_927eecb2b42a58::t_b2ca8c44bff40c 1-418
+content/posts/learn-ai-07-mixture-of-experts.md
+  s_927eecb2b42a58::t_6ff09cea330b3a 1-431
+content/posts/learn-ai-08-optimizers.md
+  s_927eecb2b42a58::t_0f86b847a2097a 1-557
+content/posts/learn-ai-09-reinforcement-learning.md
+  s_927eecb2b42a58::t_48d7bf5819f54b 1-803
+figures/architecture/01.html
+  s_927eecb2b42a58::t_9b822d9a29640e 1
+figures/architecture/02.html
+  s_927eecb2b42a58::t_bc71c0c209bfaa 1
+figures/architecture/03.html
+  s_927eecb2b42a58::t_5deb9f38d08ae0 1
+figures/architecture/04.html
+  s_927eecb2b42a58::t_e044446873c553 1
+figures/architecture/05.html
+  s_927eecb2b42a58::t_365b73a34a7740 1
+figures/architecture/06.html
+  s_927eecb2b42a58::t_ec2f5708dd849e 1
+figures/architecture/07.html
+  s_927eecb2b42a58::t_1eeeb037030283 1
+figures/architecture/08.html
+  s_927eecb2b42a58::t_9e7b380f38543b 1
+figures/architecture/09.html
+  s_927eecb2b42a58::t_9502559559932b 1
+figures/architecture/10.html
+  s_927eecb2b42a58::t_7fee69bb6f8c9b 1
+figures/architecture/11.html
+  s_927eecb2b42a58::t_a09c1df1b61b9b 1
+figures/architecture/12.html
+  s_927eecb2b42a58::t_ff08767fb63b0b 1
+figures/architecture/13.html
+  s_927eecb2b42a58::t_163291f3e6bf02 1
+figures/architecture/14.html
+  s_927eecb2b42a58::t_40cde9db974149 1
+figures/architecture/15.html
+  s_927eecb2b42a58::t_b4bc5039648bf7 1
+figures/architecture/16.html
+  s_927eecb2b42a58::t_3c966e93794e56 1
+figures/architecture/17.html
+  s_927eecb2b42a58::t_14b28478ce4f5e 1
+figures/architecture/18.html
+  s_927eecb2b42a58::t_37413886a27a4c 1
+figures/architecture/19.html
+  s_927eecb2b42a58::t_a37433b0dc96d5 1
+figures/architecture/20.html
+  s_927eecb2b42a58::t_bc3b78d6e2d816 1
+figures/architecture/21.html
+  s_927eecb2b42a58::t_7fce7769afd823 1
+figures/architecture/22.html
+  s_927eecb2b42a58::t_cc803fabc435d5 1
+figures/architecture/23.html
+  s_927eecb2b42a58::t_32437fc1886e32 1
+figures/architecture/24.html
+  s_927eecb2b42a58::t_7254992e0b36ed 1
+figures/architecture/25.html
+  s_927eecb2b42a58::t_5f6774d844da6d 1
+figures/architecture/26.html
+  s_927eecb2b42a58::t_9ab98f9c6a4fe3 1
+figures/architecture/27.html
+  s_927eecb2b42a58::t_4c3191c9eb919b 1
+figures/architecture/28.html
+  s_927eecb2b42a58::t_4b50a320d697ca 1
+figures/architecture/29.html
+  s_927eecb2b42a58::t_3ecf9a442317fb 1
+figures/architecture/30.html
+  s_927eecb2b42a58::t_b3a21182e16bc0 1
+figures/architecture/31.html
+  s_927eecb2b42a58::t_d070a2e04f98c9 1
+figures/architecture/32.html
+  s_927eecb2b42a58::t_a98e7dc419f7fc 1
+figures/architecture/33.html
+  s_927eecb2b42a58::t_e832888958428f 1
+figures/architecture/34.html
+  s_927eecb2b42a58::t_8c5825a277ac98 1
+figures/architecture/35.html
+  s_927eecb2b42a58::t_e845478dbe1c13 1
+figures/architecture/36.html
+  s_927eecb2b42a58::t_86c680de4d59de 1
+figures/architecture/37.html
+  s_927eecb2b42a58::t_ea829e2ba5a822 1
+figures/architecture/38.html
+  s_927eecb2b42a58::t_a42ccc24e1d877 1
+figures/architecture/39.html
+  s_927eecb2b42a58::t_45fe082d69bfe3 1
+figures/architecture/40.html
+  s_927eecb2b42a58::t_072d320d1463be 1
+figures/architecture/41.html
+  s_927eecb2b42a58::t_d0e7bb15f89373 1
+figures/architecture/42.html
+  s_927eecb2b42a58::t_cee367de4c9716 1
+figures/architecture/43.html
+  s_927eecb2b42a58::t_27a4f7fe85cecb 1
+figures/architecture/44.html
+  s_927eecb2b42a58::t_803de9008309c1 1
+figures/architecture/45.html
+  s_927eecb2b42a58::t_5c1a4f41157e3d 1
+figures/architecture/46.html
+  s_927eecb2b42a58::t_b5a42f4b532d72 1
+figures/architecture/47.html
+  s_927eecb2b42a58::t_f9157b97b64c8a 1
+figures/distillation/01.html
+  s_927eecb2b42a58::t_32c55da6850d77 1-22
+figures/distillation/02.html
+  s_927eecb2b42a58::t_ce47d98343b5d8 1-17
+figures/distillation/03.html
+  s_927eecb2b42a58::t_2b5e92d4f0ae21 1-20
+figures/distillation/04.html
+  s_927eecb2b42a58::t_b2faded4290d61 1-14
+figures/distillation/05.html
+  s_927eecb2b42a58::t_5a8501f8ae652e 1-23
+figures/distillation/06.html
+  s_927eecb2b42a58::t_ca11003911d207 1-25
+figures/distillation/07.html
+  s_927eecb2b42a58::t_c295b55265a049 1-23
+figures/distillation/08.html
+  s_927eecb2b42a58::t_3481b034935de7 1-30
+figures/distillation/09.html
+  s_927eecb2b42a58::t_148bb591d23bbe 1-16
+figures/distillation/10.html
+  s_927eecb2b42a58::t_c250b7bb822347 1-14
+figures/distillation/11.html
+  s_927eecb2b42a58::t_f93767de238ef2 1-12
+figures/distillation/12.html
+  s_927eecb2b42a58::t_8fb2ab75f4668a 1-14
+figures/distillation/13.html
+  s_927eecb2b42a58::t_e695fca3cdb75e 1-15
+figures/distillation/14.html
+  s_927eecb2b42a58::t_eeef28320cf543 1-29
+figures/linear-attention/01.html
+  s_927eecb2b42a58::t_b7ab23d4aebe87 1-27
+figures/linear-attention/02.html
+  s_927eecb2b42a58::t_3f5c72b46abbb9 1-15
+figures/linear-attention/03.html
+  s_927eecb2b42a58::t_43f26c6384328f 1-28
+figures/linear-attention/04.html
+  s_927eecb2b42a58::t_514b739b45d811 1-30
+figures/linear-attention/05.html
+  s_927eecb2b42a58::t_618168200141cd 1-26
+figures/linear-attention/06.html
+  s_927eecb2b42a58::t_66dc2487b9c937 1-26
+figures/linear-attention/07.html
+  s_927eecb2b42a58::t_fc9685d52f8204 1-28
+figures/linear-attention/08.html
+  s_927eecb2b42a58::t_33e778c9735d78 1-129
+figures/linear-attention/09.html
+  s_927eecb2b42a58::t_09cf11ef65b5d7 1-24
+figures/linear-attention/10.html
+  s_927eecb2b42a58::t_e00ba120ce64ad 1-67
+figures/linear-attention/11.html
+  s_927eecb2b42a58::t_9931ec5f19c648 1-19
+figures/linear-attention/12.html
+  s_927eecb2b42a58::t_c76d2356c16f68 1-12
+figures/linear-attention/13.html
+  s_927eecb2b42a58::t_9b9635ee10e519 1-8
+figures/linear-attention/14.html
+  s_927eecb2b42a58::t_3a1f70c7d6b9f5 1-20
+figures/linear-attention/15.html
+  s_927eecb2b42a58::t_d0da518e0c99e1 1-26
+figures/lora/01.html
+  s_927eecb2b42a58::t_350f07e49e4e9a 1-18
+figures/lora/02.html
+  s_927eecb2b42a58::t_d7dade4135ad9d 1-20
+figures/lora/03.html
+  s_927eecb2b42a58::t_3e04bbff0b81da 1-14
+figures/lora/04.html
+  s_927eecb2b42a58::t_bdcf5c1925fa53 1-20
+figures/lora/05.html
+  s_927eecb2b42a58::t_a1f4b62aac954d 1-29
+figures/lora/06.html
+  s_927eecb2b42a58::t_a291d570f4100a 1-17
+figures/lora/07.html
+  s_927eecb2b42a58::t_0e022fdf4de1a1 1-49
+figures/lora/08.html
+  s_927eecb2b42a58::t_618a1651b14b9f 1-15
+figures/lora/09.html
+  s_927eecb2b42a58::t_f6ea0b103ff9a9 1-19
+figures/lora/10.html
+  s_927eecb2b42a58::t_a2537a03ae6a3f 1-16
+figures/lora/11.html
+  s_927eecb2b42a58::t_d74281c97730f7 1-32
+figures/lora/12.html
+  s_927eecb2b42a58::t_58f2aab5ebeccd 1-15
+figures/lora/13.html
+  s_927eecb2b42a58::t_b82e87da87dc6d 1-17
+figures/lora/14.html
+  s_927eecb2b42a58::t_041027d9fc2be9 1-13
+figures/lora/15.html
+  s_927eecb2b42a58::t_e95be258fd04cf 1-13
+figures/lora/16.html
+  s_927eecb2b42a58::t_da600d05902b0c 1-20
+figures/lora/17.html
+  s_927eecb2b42a58::t_5e7d4d1fdd1a2c 1-12
+figures/lora/18.html
+  s_927eecb2b42a58::t_d35c2d7e4e3ffb 1-15
+figures/lora/19.html
+  s_927eecb2b42a58::t_50aff4a6b747ac 1-16
+figures/lora/20.html
+  s_927eecb2b42a58::t_65f1aae18d383b 1-12
+figures/lora/21.html
+  s_927eecb2b42a58::t_6f260fc98dd11a 1-16
+figures/lora/22.html
+  s_927eecb2b42a58::t_ff64b061e91feb 1-14
+figures/lora/23.html
+  s_927eecb2b42a58::t_db39960f25a9ab 1-29
+figures/lora/24.html
+  s_927eecb2b42a58::t_a6d22e1a5f4742 1-50
+figures/mixture-of-experts/01.html
+  s_927eecb2b42a58::t_14549e83caf4c9 1
+figures/mixture-of-experts/02.html
+  s_927eecb2b42a58::t_cf159e744cf317 1
+figures/mixture-of-experts/03.html
+  s_927eecb2b42a58::t_322cba7eb951b2 1
+figures/mixture-of-experts/04.html
+  s_927eecb2b42a58::t_9673c4de854c2c 1
+figures/mixture-of-experts/05.html
+  s_927eecb2b42a58::t_e0d28405f07b40 1
+figures/mixture-of-experts/06.html
+  s_927eecb2b42a58::t_55131ce572a85d 1
+figures/mixture-of-experts/07.html
+  s_927eecb2b42a58::t_dc287e800b141e 1
+figures/mixture-of-experts/08.html
+  s_927eecb2b42a58::t_9060745609b021 1
+figures/mixture-of-experts/09.html
+  s_927eecb2b42a58::t_b536f11039c490 1
+figures/mixture-of-experts/10.html
+  s_927eecb2b42a58::t_2a1b403096a9e7 1
+figures/mixture-of-experts/11.html
+  s_927eecb2b42a58::t_f851656e4d233f 1
+figures/mixture-of-experts/12.html
+  s_927eecb2b42a58::t_70738a3a693ce1 1
+figures/mixture-of-experts/13.html
+  s_927eecb2b42a58::t_2a50881798e9da 1
+figures/mixture-of-experts/14.html
+  s_927eecb2b42a58::t_8b28ba24d0202c 1
+figures/mixture-of-experts/15.html
+  s_927eecb2b42a58::t_65fce701076970 1
+figures/mixture-of-experts/16.html
+  s_927eecb2b42a58::t_ae4d6cefa2aecf 1
+figures/mixture-of-experts/17.html
+  s_927eecb2b42a58::t_a6c55d5bf6c6db 1
+figures/mixture-of-experts/18.html
+  s_927eecb2b42a58::t_e1f9a6d7f020d4 1
+figures/mixture-of-experts/19.html
+  s_927eecb2b42a58::t_d312c1e09cf0e0 1
+figures/optimizers/01.html
+  s_927eecb2b42a58::t_aea38738366e29 1
+figures/optimizers/02.html
+  s_927eecb2b42a58::t_13e7baabf833b7 1
+figures/optimizers/03.html
+  s_927eecb2b42a58::t_4f55a667806cac 1
+figures/optimizers/04.html
+  s_927eecb2b42a58::t_62aa3039cbbc25 1
+figures/optimizers/05.html
+  s_927eecb2b42a58::t_092e0a8151cf95 1
+figures/optimizers/06.html
+  s_927eecb2b42a58::t_88061231705b76 1
+figures/optimizers/07.html
+  s_927eecb2b42a58::t_800a1309094321 1
+figures/optimizers/08.html
+  s_927eecb2b42a58::t_a31a496c688c89 1
+figures/optimizers/09.html
+  s_927eecb2b42a58::t_a24cb2f0978662 1
+figures/optimizers/10.html
+  s_927eecb2b42a58::t_beb8fa00b849c8 1
+figures/optimizers/11.html
+  s_927eecb2b42a58::t_789081bda2cb10 1
+figures/optimizers/12.html
+  s_927eecb2b42a58::t_0a38c5e2771f9a 1
+figures/optimizers/13.html
+  s_927eecb2b42a58::t_eb658e0b21afc3 1
+figures/optimizers/14.html
+  s_927eecb2b42a58::t_8501479e316e9d 1
+figures/optimizers/15.html
+  s_927eecb2b42a58::t_af03f0ca71a34d 1
+figures/optimizers/16.html
+  s_927eecb2b42a58::t_0e83bedda2f4e1 1
+figures/optimizers/17.html
+  s_927eecb2b42a58::t_25fe14ef2e7cdc 1
+figures/optimizers/18.html
+  s_927eecb2b42a58::t_3acc20f70f6d76 1
+figures/optimizers/19.html
+  s_927eecb2b42a58::t_f71cd3c5f0911c 1
+figures/optimizers/20.html
+  s_927eecb2b42a58::t_259aa9d5480a7d 1
+figures/optimizers/21.html
+  s_927eecb2b42a58::t_924f0eb5ff40db 1
+figures/post-training/01.html
+  s_927eecb2b42a58::t_c95e445a0478c5 1
+figures/post-training/02.html
+  s_927eecb2b42a58::t_d08a56531e34ba 1
+figures/post-training/03.html
+  s_927eecb2b42a58::t_ad8f35050476dc 1
+figures/post-training/04.html
+  s_927eecb2b42a58::t_b1c9c25dcdccc3 1
+figures/post-training/05.html
+  s_927eecb2b42a58::t_f84b5f56b2a453 1
+figures/post-training/06.html
+  s_927eecb2b42a58::t_d2c5b3c0a955f6 1
+figures/post-training/07.html
+  s_927eecb2b42a58::t_dbc0b67bc92412 1
+figures/post-training/08.html
+  s_927eecb2b42a58::t_84db401405a366 1
+figures/post-training/09.html
+  s_927eecb2b42a58::t_2d8f57a8a11f3b 1
+figures/post-training/10.html
+  s_927eecb2b42a58::t_66d5c570976f87 1
+figures/post-training/11.html
+  s_927eecb2b42a58::t_6895bb36dd0217 1
+figures/post-training/12.html
+  s_927eecb2b42a58::t_e5f3756bb5b60c 1
+figures/post-training/13.html
+  s_927eecb2b42a58::t_7873067206cef5 1
+figures/post-training/14.html
+  s_927eecb2b42a58::t_d688ee9418da0a 1
+figures/post-training/15.html
+  s_927eecb2b42a58::t_60cd7eb7786f79 1
+figures/post-training/16.html
+  s_927eecb2b42a58::t_1b75d99386efb5 1
+figures/post-training/17.html
+  s_927eecb2b42a58::t_b36203fc51179c 1
+figures/post-training/18.html
+  s_927eecb2b42a58::t_6cab2fae00211f 1
+figures/post-training/19.html
+  s_927eecb2b42a58::t_9bb02f4df0f9a5 1
+figures/post-training/20.html
+  s_927eecb2b42a58::t_47f4fbb19f0547 1
+figures/post-training/21.html
+  s_927eecb2b42a58::t_cc0d94d8e2a63f 1
+figures/post-training/22.html
+  s_927eecb2b42a58::t_92b283e2fd2be8 1
+figures/post-training/23.html
+  s_927eecb2b42a58::t_67eb45baeb6e9c 1
+figures/post-training/24.html
+  s_927eecb2b42a58::t_1e3c9d0245ac97 1
+figures/post-training/25.html
+  s_927eecb2b42a58::t_d24a15033746fb 1
+figures/post-training/26.html
+  s_927eecb2b42a58::t_04e80d40384d93 1
+figures/post-training/27.html
+  s_927eecb2b42a58::t_acfa392cff5c9c 1
+figures/post-training/28.html
+  s_927eecb2b42a58::t_d9ef3b8748730f 1
+figures/post-training/29.html
+  s_927eecb2b42a58::t_11902c70069945 1
+figures/post-training/30.html
+  s_927eecb2b42a58::t_dc092c44b59a24 1
+figures/post-training/31.html
+  s_927eecb2b42a58::t_b389e5497831e0 1
+figures/pretraining/01.html
+  s_927eecb2b42a58::t_0c8d1a1536a042 1
+figures/pretraining/02.html
+  s_927eecb2b42a58::t_410956b0a08e1c 1
+figures/pretraining/03.html
+  s_927eecb2b42a58::t_e182f8e0e5987b 1
+figures/pretraining/04.html
+  s_927eecb2b42a58::t_9f35a9aeb0c83d 1
+figures/pretraining/05.html
+  s_927eecb2b42a58::t_d10c3ceee00cc0 1
+figures/pretraining/06.html
+  s_927eecb2b42a58::t_4728f9fff82c54 1
+figures/pretraining/07.html
+  s_927eecb2b42a58::t_4f7760d9eda51c 1
+figures/pretraining/08.html
+  s_927eecb2b42a58::t_464c7994439eff 1
+figures/pretraining/09.html
+  s_927eecb2b42a58::t_58baa2a6ba6fe1 1
+figures/pretraining/10.html
+  s_927eecb2b42a58::t_5113e57b19ec77 1
+figures/pretraining/11.html
+  s_927eecb2b42a58::t_2feedaf71d4b15 1
+figures/pretraining/12.html
+  s_927eecb2b42a58::t_a29eb4e91a746f 1
+figures/pretraining/13.html
+  s_927eecb2b42a58::t_81de96faa9b181 1
+figures/pretraining/14.html
+  s_927eecb2b42a58::t_9dfb45505d8877 1
+figures/pretraining/15.html
+  s_927eecb2b42a58::t_7fb43096f847fb 1
+figures/pretraining/16.html
+  s_927eecb2b42a58::t_91b65ecff66464 1
+figures/pretraining/17.html
+  s_927eecb2b42a58::t_713be58068ebb0 1
+figures/pretraining/18.html
+  s_927eecb2b42a58::t_0300d2c0be5538 1
+figures/pretraining/19.html
+  s_927eecb2b42a58::t_283dc25457b776 1
+figures/pretraining/20.html
+  s_927eecb2b42a58::t_007acd661fe7d3 1
+figures/pretraining/21.html
+  s_927eecb2b42a58::t_f339f84995fc7c 1
+figures/pretraining/22.html
+  s_927eecb2b42a58::t_01fc4af13612aa 1
+figures/pretraining/23.html
+  s_927eecb2b42a58::t_b5ee819218ed75 1
+figures/pretraining/24.html
+  s_927eecb2b42a58::t_37a56c7ad4cf22 1
+figures/pretraining/25.html
+  s_927eecb2b42a58::t_c40b9cde71d4fb 1
+figures/pretraining/26.html
+  s_927eecb2b42a58::t_c68b4af0181dfd 1
+figures/pretraining/27.html
+  s_927eecb2b42a58::t_55690e9c533adb 1
+figures/pretraining/28.html
+  s_927eecb2b42a58::t_3b498b40acdb38 1
+figures/pretraining/29.html
+  s_927eecb2b42a58::t_4ae685865b376d 1
+figures/pretraining/30.html
+  s_927eecb2b42a58::t_13e1c99d012fca 1
+figures/pretraining/31.html
+  s_927eecb2b42a58::t_4dbf2184ee15b1 1
+figures/pretraining/32.html
+  s_927eecb2b42a58::t_437236060a1e89 1
+figures/pretraining/33.html
+  s_927eecb2b42a58::t_bc6cf052c80706 1
+figures/pretraining/34.html
+  s_927eecb2b42a58::t_d4528216df246b 1
+figures/pretraining/35.html
+  s_927eecb2b42a58::t_dfa04ff616841e 1
+figures/pretraining/36.html
+  s_927eecb2b42a58::t_9e65a5dcb65bbf 1
+figures/pretraining/37.html
+  s_927eecb2b42a58::t_c93dc8b3bf2a45 1
+figures/pretraining/38.html
+  s_927eecb2b42a58::t_817766b79372fc 1
+figures/pretraining/39.html
+  s_927eecb2b42a58::t_11301d4d2f4384 1
+figures/pretraining/40.html
+  s_927eecb2b42a58::t_ba9f61cc3756ca 1
+figures/pretraining/41.html
+  s_927eecb2b42a58::t_4caae9e8305ae8 1
+figures/reinforcement-learning/01.html
+  s_927eecb2b42a58::t_7e6e3095107cca 1-21
+figures/reinforcement-learning/02.html
+  s_927eecb2b42a58::t_88052f28b13570 1-28
+figures/reinforcement-learning/03.html
+  s_927eecb2b42a58::t_9d64d5f718a78d 1-21
+figures/reinforcement-learning/04.html
+  s_927eecb2b42a58::t_b028853bab3b86 1-29
+figures/reinforcement-learning/05.html
+  s_927eecb2b42a58::t_f831f76f9a061f 1-21
+figures/reinforcement-learning/06.html
+  s_927eecb2b42a58::t_783185c369c7d0 1-23
+figures/reinforcement-learning/07.html
+  s_927eecb2b42a58::t_be5278a5d67209 1-26
+figures/reinforcement-learning/08.html
+  s_927eecb2b42a58::t_a372934b86701d 1-16
+figures/reinforcement-learning/09.html
+  s_927eecb2b42a58::t_3116bef8c592ce 1-19
+figures/reinforcement-learning/10.html
+  s_927eecb2b42a58::t_9da21d46e762bd 1-16
+figures/reinforcement-learning/11.html
+  s_927eecb2b42a58::t_0ed23f18590f07 1-36
+figures/reinforcement-learning/12.html
+  s_927eecb2b42a58::t_14d61287963966 1-20
+figures/reinforcement-learning/13.html
+  s_927eecb2b42a58::t_faf990d74468e8 1-17
+figures/reinforcement-learning/14.html
+  s_927eecb2b42a58::t_42d517381f26b1 1-17
+figures/reinforcement-learning/15.html
+  s_927eecb2b42a58::t_8930cf59835505 1-17
+figures/reinforcement-learning/16.html
+  s_927eecb2b42a58::t_a7a0a909ea76ab 1-45
+figures/reinforcement-learning/17.html
+  s_927eecb2b42a58::t_58c1ddd62ee9d7 1-19
+figures/reinforcement-learning/18.html
+  s_927eecb2b42a58::t_5ddafd2e11b522 1-19
+figures/reinforcement-learning/19.html
+  s_927eecb2b42a58::t_11d697f9bb7a88 1-17
+figures/reinforcement-learning/20.html
+  s_927eecb2b42a58::t_544a19b37ef73a 1-13
+figures/reinforcement-learning/21.html
+  s_927eecb2b42a58::t_5f1f3dc19ebd7f 1-28
+figures/reinforcement-learning/22.html
+  s_927eecb2b42a58::t_170b12db14c590 1-22
+figures/reinforcement-learning/23.html
+  s_927eecb2b42a58::t_503101810875dd 1-23
+figures/reinforcement-learning/24.html
+  s_927eecb2b42a58::t_3fa55073ad9ffd 1-11
+hugo.toml
+  s_927eecb2b42a58::t_dd4829674d190e 11-16
+layouts/_default/baseof.html
+  s_927eecb2b42a58::t_defdca8d4dd454 8,18-27,40,43
+layouts/index.html
+  s_927eecb2b42a58::t_fa63133b2ac5ff 10,14,21,23,25
+layouts/partials/figure-defs.html
+  s_927eecb2b42a58::t_8626db49f5a49a 1-8
+layouts/shortcodes/fig.html
+  s_927eecb2b42a58::t_a966a9fa7a8315 1
+static/css/chroma-dark.css
+  s_927eecb2b42a58::t_829fe684bcc5e1 1,3-8,17-160
+static/css/chroma-light.css
+  s_927eecb2b42a58::t_534a457061e178 1,3-8,17-160
+static/css/figures.css
+  s_927eecb2b42a58::t_fc527cb82436f0 1-108
+static/css/style.css
+  s_927eecb2b42a58::t_9ebebf677541ce 1,3-12,33-42,47-56,76,83-87,89,97,100-102,105,107,109,121,125-129,133,138,143-144,147-149,152,154-158,162-164,166,173-174,178-179,186,212,221-228,235-239,245-250,261,264,269,273,283-286,308,310,317,320-322,327,337-341,343-344,347,354,361,383,396-410,425-430,444,455,461-494,498,501,557-593
+static/favicon.svg
+  s_927eecb2b42a58::t_ce5f52d7c4602e 2-3
+static/js/figures.js
+  s_927eecb2b42a58::t_05117d92926d11 1-44
+static/js/katex-init.js
+  s_927eecb2b42a58::t_04d9d65904a407 1-9
+static/learn-ai/01-architecture.html
+  s_927eecb2b42a58::t_55741d7805579d 1-983
+static/learn-ai/02-pretraining.html
+  s_927eecb2b42a58::t_11e35f0226a917 1-739
+static/learn-ai/03-post-training.html
+  s_927eecb2b42a58::t_929d7f51bc6f10 1-656
+static/learn-ai/04-distillation.html
+  s_927eecb2b42a58::t_9b3fc53eded235 1-1076
+static/learn-ai/05-linear-attention.html
+  s_927eecb2b42a58::t_9d778cd0ba0989 1-1422
+static/learn-ai/06-lora.html
+  s_927eecb2b42a58::t_cfb423a7d4ccfa 1-1409
+static/learn-ai/07-mixture-of-experts.html
+  s_927eecb2b42a58::t_e59e2b6866e2e3 1-574
+static/learn-ai/08-optimizers.html
+  s_927eecb2b42a58::t_a9cc91270d1d53 1-610
+static/learn-ai/09-reinforcement-learning.html
+  s_927eecb2b42a58::t_ebad18992d7838 1-1544
+static/learn-ai/index.html
+  s_927eecb2b42a58::t_45f72cb2927c1d 1-676
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.11",
+  "base_commit_sha": "7f3631030f6e5c3bd278bbe9f4e971379ac63b23",
+  "prompts": {},
+  "sessions": {
+    "s_927eecb2b42a58": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ee6493ae-c2fb-4016-b1cd-da0bbf490c4d",
+        "model": "unknown"
+      },
+      "human_author": "Adib Farrasy <adibfarrasy@gmail.com>"
+    }
+  }
+}
