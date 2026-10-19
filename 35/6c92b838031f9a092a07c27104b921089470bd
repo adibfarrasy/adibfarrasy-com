@@ -1,0 +1,21 @@
+layouts/_default/baseof.html
+  s_927eecb2b42a58::t_f7fad7320a5c62 15-17,19-20,26,70
+layouts/partials/asset.html
+  s_927eecb2b42a58::t_b4917842abd063 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.11",
+  "base_commit_sha": "356c92b838031f9a092a07c27104b921089470bd",
+  "prompts": {},
+  "sessions": {
+    "s_927eecb2b42a58": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ee6493ae-c2fb-4016-b1cd-da0bbf490c4d",
+        "model": "unknown"
+      },
+      "human_author": "Adib Farrasy <adibfarrasy@gmail.com>"
+    }
+  }
+}
