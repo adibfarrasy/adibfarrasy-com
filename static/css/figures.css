@@ -89,7 +89,7 @@
   button:hover, button:focus-visible { border-color: var(--accent); }
 
   /* small multiples: one mini diagram per case; the changed part takes the case's status color */
-  .cases { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14.5rem), 1fr)); gap: var(--s-4); }
+  .cases { display: grid; grid-template-columns: repeat(auto-fit, minmax(max(min(100%, 14.5rem), calc((100% - 2 * var(--s-4)) / 3)), 1fr)); gap: var(--s-4); }
   .case { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-2); padding: var(--s-4); display: grid; gap: var(--s-3); align-content: start; min-width: 0; transition: border-color var(--fast) var(--ease); }
   .case[data-st=ok] { --st: var(--ok); } .case[data-st=warn] { --st: var(--warn); } .case[data-st=risk] { --st: var(--risk); }
   .ve-mini { width: 100%; height: auto; font: 600 15px var(--font-mono); }
