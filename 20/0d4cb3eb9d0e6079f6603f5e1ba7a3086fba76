@@ -1,0 +1,27 @@
+content/posts/learn-ai-03-post-training.md
+  s_161d97b3cd7be9::t_fd6a8f48aa9314 689,698
+content/posts/learn-ai-04-distillation.md
+  s_161d97b3cd7be9::t_fd6a8f48aa9314 308
+content/posts/learn-ai-01-architecture.md
+  s_161d97b3cd7be9::t_fd6a8f48aa9314 542
+content/posts/learn-ai-05-linear-attention.md
+  s_161d97b3cd7be9::t_fd6a8f48aa9314 62
+content/posts/learn-ai-02-pretraining.md
+  s_161d97b3cd7be9::t_fd6a8f48aa9314 525
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.11",
+  "base_commit_sha": "200d4cb3eb9d0e6079f6603f5e1ba7a3086fba76",
+  "prompts": {},
+  "sessions": {
+    "s_161d97b3cd7be9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "95efb760-6079-4d40-b058-72efff66278a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Adib Farrasy <adibfarrasy@gmail.com>"
+    }
+  }
+}
