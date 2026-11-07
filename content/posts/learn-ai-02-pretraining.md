@@ -522,7 +522,7 @@ Heuristics only catch junk. To find **good** documents, train a classifier:
 - **LLM-annotated**: ask a strong LLM to grade a sample of documents (FineWeb-Edu prompted Llama 3 70B for 0 to 5 "educational value" on 450K documents), train a small classifier on those labels, and run it on everything. FineWeb-Edu keeps score 3 and above, yielding 1.3T tokens from 15T.
 - **Instruction-like positives**: DCLM's best filter was a fastText classifier with positives from OpenHermes 2.5 instruction data and r/ExplainLikeImFive answers. It beat more elaborate approaches.
 
-Model filters are powerful and dangerous. They encode the biases of their positives: a filter trained on Wikipedia-like text may delete dialects, informal writing, or whole topics. Keep track of what you remove.
+Model filters also encode the biases of their positives: a filter trained on Wikipedia-like text may delete dialects, informal writing, or whole topics. Keep track of what you remove.
 
 ### Deduplication
 

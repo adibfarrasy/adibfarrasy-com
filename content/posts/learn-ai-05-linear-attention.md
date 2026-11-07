@@ -59,7 +59,7 @@ o_i = \frac{\sum_{j \le i} \phi(q_i)^\top \phi(k_j)\, v_j^\top}{\sum_{j \le i} \
 = \frac{\phi(q_i)^\top \overbrace{\left(\sum_{j \le i} \phi(k_j) v_j^\top\right)}^{S_i \,\in\, \mathbb{R}^{d_k \times d_v}}}{\phi(q_i)^\top \underbrace{\left(\sum_{j \le i} \phi(k_j)\right)}_{z_i \,\in\, \mathbb{R}^{d_k}}}
 $$
 
-(here $o_i$ is written as a row vector). The query has been pulled outside the sum. The quantity inside, $S_i$, is a sum of outer products that does not depend on $q_i$ at all, and it can be updated incrementally. That is the kernel trick, and it is the whole engine of this chapter.
+(here $o_i$ is written as a row vector). The query has been pulled outside the sum. The quantity inside, $S_i$, is a sum of outer products that does not depend on $q_i$ at all, and it can be updated incrementally. This is the kernel trick, and the rest of the chapter builds on it.
 
 A useful mental model: $S$ is a tiny **associative memory**. Writing $\phi(k)v^\top$ stores the value $v$ "at address" $\phi(k)$. Reading with $\phi(q)^\top S$ retrieves a mix of stored values weighted by how well $q$ matches each stored key. Softmax attention keeps every key and value around and does exact lookups; linear attention compresses them all into a $d_k \times d_v$ matrix. Everything good and bad about these models follows from that compression.
 

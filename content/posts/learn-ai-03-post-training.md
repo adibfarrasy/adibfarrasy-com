@@ -686,7 +686,7 @@ The most pervasive hack is **length**. Human and LLM judges prefer longer answer
 
 1. Under Bradley-Terry, what is the preference probability when two responses' rewards differ by 0? By 2? Why does adding a constant to all rewards change nothing?
 2. Why does the RLHF objective include a KL penalty to a reference policy?
-3. In the DPO derivation, where does the partition function $Z(x)$ go, and why is that the crucial step?
+3. In the DPO derivation, where does the partition function $Z(x)$ go, and why does the derivation depend on it?
 4. Name one problem each that IPO, KTO, ORPO and SimPO address.
 5. Give two reasons offline DPO can underperform online RLHF, and one way to narrow the gap without running PPO.
 
@@ -695,7 +695,7 @@ The most pervasive hack is **length**. Human and LLM judges prefer longer answer
 
 1. $\sigma(0) = 0.5$; $\sigma(2) \approx 0.88$. Only the difference $r(y_w) - r(y_l)$ enters, so a shared constant cancels.
 2. The reward model is only reliable near the distribution it was trained on. The penalty keeps the policy close to the reference, limiting reward hacking and preserving fluency and knowledge.
-3. It cancels when the implicit rewards of two responses to the same prompt are subtracted inside Bradley-Terry. That is crucial because $Z(x)$ sums over all possible responses and is intractable; without the cancellation the loss could not be computed.
+3. It cancels when the implicit rewards of two responses to the same prompt are subtracted inside Bradley-Terry. The derivation needs this because $Z(x)$ sums over all possible responses and is intractable; without the cancellation the loss could not be computed.
 4. IPO: with deterministic preferences DPO's optimum ignores the KL regularization; IPO regresses to a finite margin. KTO: needs only unpaired thumbs-up/down labels. ORPO: removes the reference model and the separate SFT stage. SimPO: removes the reference model and uses length-normalized rewards to counter length bias.
 5. Offline pairs are off-policy, so the model learns to rank responses it would not generate; and it cannot find and correct its current mistakes. Narrow the gap with on-policy pair generation (sample from your own model, then judge) or iterative rounds of DPO.
 

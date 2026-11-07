@@ -305,7 +305,7 @@ The caveats: black-box distillation inherits the teacher's errors and stylistic 
 
 ### Logit distillation in pretraining: Gemma 2 and Llama 3.2
 
-Distillation is no longer only a post-training trick.
+Several labs now distill during pretraining as well as post-training.
 
 - **Gemma 2** trains its 2B and 9B models with knowledge distillation during **pretraining**: instead of one-hot next tokens, the student minimizes cross-entropy against the next-token distribution of a larger teacher, over many more tokens than would be compute-optimal for its size (the 2B saw 2T tokens). The report frames it as replacing the noisy one-hot target with a richer one so a small model can keep improving past the point where raw-token training saturates. The 27B model was trained from scratch.
 - **Llama 3.2 1B and 3B** were built by pruning Llama 3.1 8B, then using logits from Llama 3.1 8B and 70B as token-level targets during pretraining to recover performance after pruning.

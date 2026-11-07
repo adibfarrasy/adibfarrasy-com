@@ -539,7 +539,7 @@ $$
 \langle q e^{i m\theta},\; k e^{i n\theta} \rangle = \text{Re}\!\left[ q \, \overline{k} \, e^{i (m-n)\theta} \right]
 $$
 
-where $\overline{k}$ is the complex conjugate and $\text{Re}$ takes the real part. The absolute positions $m$ and $n$ appear only as $m - n$. That is the whole trick.
+where $\overline{k}$ is the complex conjugate and $\text{Re}$ takes the real part. The absolute positions $m$ and $n$ appear only as $m - n$.
 
 {{< fig "architecture/20" >}}
 
