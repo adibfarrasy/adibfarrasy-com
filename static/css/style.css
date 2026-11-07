@@ -1,15 +1,19 @@
-/* gruvbox, terminal-flavoured: monospace everywhere, flat surfaces, one accent for state */
+/* gruvbox per visual-explainer themes.md, terminal-flavoured: monospace everywhere, flat surfaces, one accent for state */
 :root {
   --bg: #fbf1c7;
   --fg: #3c3836;
-  --muted: #7c6f64;
+  --muted: #6b5f56;
   --muted-bg: #ebdbb2;
   --surface-alt: #ebdbb2;
-  --border: #7c6f64;
-  --muted-border: #d5c4a1;
-  --accent: #af3a03;
+  --border: #6b5f56;
+  --muted-border: rgba(0, 0, 0, 0.08);
+  --accent: #ad3903;
   --link: #076678;
-  --ok: #79740e;
+  --ok: #67630c;
+  --warn: #ad3903;
+  --risk: #9d0006;
+  --info: #076678;
+  --node-a: #076678;
 
   --s1: 4px;
   --s2: 8px;
@@ -32,28 +36,36 @@
 :root[data-theme='dark'] {
   --bg: #282828;
   --fg: #ebdbb2;
-  --muted: #a89984;
+  --muted: #afa18e;
   --muted-bg: #3c3836;
   --surface-alt: #3c3836;
-  --border: #a89984;
-  --muted-border: #504945;
+  --border: #afa18e;
+  --muted-border: rgba(255, 255, 255, 0.08);
   --accent: #fe8019;
-  --link: #83a598;
+  --link: #88a99c;
   --ok: #b8bb26;
+  --warn: #fe8019;
+  --risk: #fc7c6d;
+  --info: #88a99c;
+  --node-a: #83a598;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     --bg: #282828;
     --fg: #ebdbb2;
-    --muted: #a89984;
+    --muted: #afa18e;
     --muted-bg: #3c3836;
     --surface-alt: #3c3836;
-    --border: #a89984;
-    --muted-border: #504945;
+    --border: #afa18e;
+    --muted-border: rgba(255, 255, 255, 0.08);
     --accent: #fe8019;
-    --link: #83a598;
+    --link: #88a99c;
     --ok: #b8bb26;
+    --warn: #fe8019;
+    --risk: #fc7c6d;
+    --info: #88a99c;
+    --node-a: #83a598;
   }
 }
 
@@ -146,7 +158,7 @@ a:hover {
 
 .wf-nav a::before {
   content: './';
-  color: var(--muted-border);
+  color: color-mix(in srgb, var(--muted) 50%, transparent);
 }
 
 .wf-nav a:hover,

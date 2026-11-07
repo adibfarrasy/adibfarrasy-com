@@ -21,7 +21,7 @@
   :root {
     color-scheme: dark;
     --bg: #282828; --surface: #3c3836; --border: rgba(255,255,255,.08); --border-bright: #afa18e;
-    --text: #ebdbb2; --text-dim: #afa18e; --accent: #fe8019; --accent-dim: #fe80191f;
+    --text: #ebdbb2; --text-dim: #afa18e; --accent: #fe8019; --accent-dim: #fe80191f; --node-a: #83a598;
     --ok: #b8bb26; --warn: #fabd2f; --risk: #fc7c6d; --info: #88a99c;
     --syn-k: #fc7c6d; --syn-s: #b8bb26; --syn-n: #d3869b; --syn-f: #fabd2f; --syn-c: #afa18e;
     --node-top: color-mix(in srgb, var(--text) 7%, var(--surface)); --lift: rgb(0 0 0 / .45); --halo: 32%;
@@ -35,7 +35,7 @@
   :root[data-theme="light"] {
       color-scheme: light;
       --bg: #fbf1c7; --surface: #ebdbb2; --border: rgba(0,0,0,.08); --border-bright: #6b5f56;
-      --text: #3c3836; --text-dim: #6b5f56; --accent: #ad3903; --accent-dim: #ad39031f;
+      --text: #3c3836; --text-dim: #6b5f56; --accent: #ad3903; --accent-dim: #ad39031f; --node-a: #076678;
       --ok: #67630c; --warn: #7a5200; --risk: #9d0006; --info: #076678;
       --syn-k: #9d0006; --syn-s: #67630c; --syn-n: #8f3f71; --syn-f: #076678; --syn-c: #6b5f56;
       --node-top: var(--surface); --lift: rgb(60 56 54 / .14); --halo: 22%;
@@ -44,7 +44,7 @@
     :root:not([data-theme="dark"]) {
       color-scheme: light;
       --bg: #fbf1c7; --surface: #ebdbb2; --border: rgba(0,0,0,.08); --border-bright: #6b5f56;
-      --text: #3c3836; --text-dim: #6b5f56; --accent: #ad3903; --accent-dim: #ad39031f;
+      --text: #3c3836; --text-dim: #6b5f56; --accent: #ad3903; --accent-dim: #ad39031f; --node-a: #076678;
       --ok: #67630c; --warn: #7a5200; --risk: #9d0006; --info: #076678;
       --syn-k: #9d0006; --syn-s: #67630c; --syn-n: #8f3f71; --syn-f: #076678; --syn-c: #6b5f56;
       --node-top: var(--surface); --lift: rgb(60 56 54 / .14); --halo: 22%;
@@ -129,20 +129,20 @@
   figcaption { font-size: var(--t-small); color: var(--text-dim); margin-top: var(--s-3); }
   .fig-n { font: 600 var(--t-label) var(--font-mono); color: var(--text); margin-right: var(--s-2); }
   .callouts { list-style: none; padding: 0; margin-top: var(--s-3); display: grid; gap: var(--s-2); color: var(--text-dim); }
-  .co-n { display: inline-grid; place-items: center; width: 1.4rem; height: 1.4rem; margin-right: var(--s-2); border: 1.5px solid var(--accent); border-radius: 50%; font: 600 var(--t-label) var(--font-mono); color: var(--accent); }
+  .co-n { display: inline-grid; place-items: center; width: 1.4rem; height: 1.4rem; margin-right: var(--s-2); border: 1.5px solid var(--node-a); border-radius: 50%; font: 600 var(--t-label) var(--font-mono); color: var(--node-a); }
 
   /* diagram kit */
   /* min-width keeps 14-unit labels >= 12px as rendered; narrow screens scroll the frame instead. Wider viewBoxes set min-width inline (viewBox width x 0.86). */
   .ve-svg { width: 100%; min-width: 700px; height: auto; display: block; font: 600 15px var(--font-mono); }
   .ve-n .sh { fill: url(#ve-node); stroke: var(--border-bright); stroke-width: 1.5; filter: drop-shadow(0 6px 14px var(--lift)); transition: stroke var(--fast) var(--ease), opacity var(--med) var(--ease); }
   .ve-n .lid { fill: var(--node-top); }
-  .ve-n.is-key .sh { fill: color-mix(in srgb, var(--accent) 11%, var(--surface)); stroke: var(--accent); stroke-width: 2; filter: drop-shadow(0 0 16px color-mix(in srgb, var(--accent) var(--halo), transparent)); }
+  .ve-n.is-key .sh { fill: color-mix(in srgb, var(--node-a) 11%, var(--surface)); stroke: var(--node-a); stroke-width: 2; filter: drop-shadow(0 0 16px color-mix(in srgb, var(--node-a) var(--halo), transparent)); }
   .ve-n text { fill: var(--text); text-anchor: middle; dominant-baseline: central; font-weight: 600; }
   .ve-n .sub { fill: var(--text-dim); font: 400 14px var(--font-mono); }
   .ve-n .is-off { stroke-dasharray: 5 4; fill: none; filter: none; }
   .ve-e { fill: none; stroke: var(--text-dim); stroke-width: 1.75; marker-end: url(#ve-ah); }
   .ve-e.no-ah { marker-end: none; }
-  .ve-e.is-hot { stroke: var(--accent); stroke-width: 2.75; filter: drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 55%, transparent)); }
+  .ve-e.is-hot { stroke: var(--node-a); stroke-width: 2.75; filter: drop-shadow(0 0 5px color-mix(in srgb, var(--node-a) 55%, transparent)); }
   .ve-e.is-async { stroke-dasharray: 6 5; }
   .ve-el { fill: var(--text-dim); font: 400 14px var(--font-mono); text-anchor: middle; paint-order: stroke; stroke: var(--bg); stroke-width: 5px; stroke-linejoin: round; }
   .ve-el.l { text-anchor: end; } .ve-el.r { text-anchor: start; }
@@ -152,16 +152,16 @@
   .ve-zone rect { fill: none; stroke: var(--border-bright); stroke-width: 1; stroke-dasharray: 4 4; }
   .ve-zone text { fill: var(--text-dim); font: 600 14px var(--font-mono); letter-spacing: .08em; }
   .ve-bar { fill: var(--border-bright); }
-  .ve-bar.hot { fill: var(--accent); }
+  .ve-bar.hot { fill: var(--node-a); }
   .ve-bar-v { fill: var(--text-dim); font: 400 14px var(--font-mono); dominant-baseline: central; }
   .ve-dim path { fill: none; stroke-width: 1; } .ve-dim .ext { stroke: var(--border-bright); } .ve-dim .ln { stroke: var(--text-dim); }
   .ve-dim text { fill: var(--text); font: 600 14px var(--font-mono); text-anchor: middle; }
   .ve-dim .ln { marker-start: url(#ve-ah2); marker-end: url(#ve-ah2); } .ve-dim .ln.ticks { marker-start: none; marker-end: none; }
-  .ve-dim.is-key .ln { stroke: var(--accent); } .ve-dim.is-key text { fill: var(--accent); }
+  .ve-dim.is-key .ln { stroke: var(--node-a); } .ve-dim.is-key text { fill: var(--node-a); }
   .ann { fill: none; stroke: var(--text-dim); stroke-width: 1; }
-  .ve-co circle { fill: var(--surface); stroke: var(--accent); stroke-width: 1.75; }
-  .ve-co text { fill: var(--accent); font: 600 14px var(--font-mono); text-anchor: middle; dominant-baseline: central; }
-  .ve-co.now circle { fill: var(--accent); } .ve-co.now text { fill: var(--surface); }
+  .ve-co circle { fill: var(--surface); stroke: var(--node-a); stroke-width: 1.75; }
+  .ve-co text { fill: var(--node-a); font: 600 14px var(--font-mono); text-anchor: middle; dominant-baseline: central; }
+  .ve-co.now circle { fill: var(--node-a); } .ve-co.now text { fill: var(--surface); }
 
   /* linked highlighting: same data-ref lights up together; unlit labels drop to --text-dim instead of fading */
   .ve-ref { text-decoration: underline dotted var(--text-dim) 1px; text-underline-offset: .22em; border-radius: var(--r-1); transition: background var(--fast) var(--ease); }
@@ -169,8 +169,8 @@
   svg [data-ref] { transition: opacity var(--med) var(--ease); }
   svg.has-lit path[data-ref]:not(.is-lit), svg.has-lit g[data-ref]:not(.is-lit) .sh, svg.has-lit rect[data-ref]:not(.is-lit) { opacity: .25; }
   svg.has-lit g[data-ref]:not(.is-lit) text, svg.has-lit text[data-ref]:not(.is-lit) { fill: var(--text-dim); }
-  .ve-n.is-lit .sh { stroke: var(--accent); }
-  .ve-e.is-lit { stroke: var(--accent); }
+  .ve-n.is-lit .sh { stroke: var(--node-a); }
+  .ve-e.is-lit { stroke: var(--node-a); }
   .ve-el.is-lit { fill: var(--text); }
   .case.is-lit, .ch-card.is-lit { border-color: var(--accent); }
 
@@ -180,11 +180,11 @@
   .ve-steps g[data-s]:not(.on) text, .ve-steps text[data-s]:not(.on) { opacity: 0; }
   .ve-steps path[pathLength][data-s] { stroke-dasharray: 1; stroke-dashoffset: 1; }
   .ve-steps path[pathLength][data-s].on { stroke-dashoffset: 0; }
-  .ve-steps .ve-n.now > .sh { stroke: var(--accent); }
-  .ve-steps:not(.is-full) .ve-e.now { stroke: var(--accent); stroke-width: 2.75; }
+  .ve-steps .ve-n.now > .sh { stroke: var(--node-a); }
+  .ve-steps:not(.is-full) .ve-e.now { stroke: var(--node-a); stroke-width: 2.75; }
   .ve-player { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; align-items: center; gap: var(--s-2) var(--s-3); margin-top: var(--s-4); }
   .ve-cap { grid-column: 1 / -1; list-style: none; padding: 0; min-height: 3.2em; }
-  .ve-cap li::before { content: attr(data-n); font: 600 var(--t-label) var(--font-mono); color: var(--accent); margin-right: var(--s-3); font-variant-numeric: tabular-nums; }
+  .ve-cap li::before { content: attr(data-n); font: 600 var(--t-label) var(--font-mono); color: var(--node-a); margin-right: var(--s-3); font-variant-numeric: tabular-nums; }
   .ve-player input { accent-color: var(--accent); min-width: 0; }
   button { font: 400 var(--t-small) var(--font-mono); color: var(--text); background: var(--surface); border: 1px solid var(--border-bright); border-radius: var(--r-1); padding: var(--s-2) var(--s-3); cursor: pointer; transition: border-color var(--fast) var(--ease); }
   button:hover, button:focus-visible { border-color: var(--accent); }
