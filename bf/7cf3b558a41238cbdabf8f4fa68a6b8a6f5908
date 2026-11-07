@@ -1,0 +1,58 @@
+figures/pretraining/25.html
+  s_161d97b3cd7be9::t_bcbb212419bbc6 1
+static/css/figures.css
+  s_161d97b3cd7be9::t_4a580250606e82 12,14
+  s_161d97b3cd7be9::t_bcbb212419bbc6 30,37,43,53,58,60-62,70-71,81-82,85
+figures/architecture/04.html
+  s_161d97b3cd7be9::t_bcbb212419bbc6 1
+figures/architecture/19.html
+  s_161d97b3cd7be9::t_bcbb212419bbc6 1
+figures/pretraining/23.html
+  s_161d97b3cd7be9::t_bcbb212419bbc6 1
+static/learn-ai/05-linear-attention.html
+  s_161d97b3cd7be9::t_bcbb212419bbc6 56,70,79,164,171,177,187,192,194-196,204-205,215-216,219
+static/css/style.css
+  s_161d97b3cd7be9::t_025dbdba2e757d 16,50,68
+  s_161d97b3cd7be9::t_4a580250606e82 1,5,8-10,12-15,39,42-43,45,47-49,57,60-61,63,65-67
+  s_161d97b3cd7be9::t_ef847084fa90e1 161
+static/learn-ai/02-pretraining.html
+  s_161d97b3cd7be9::t_bcbb212419bbc6 56,70,79,164,171,177,187,192,194-196,204-205,215-216,219,538,628
+static/learn-ai/09-reinforcement-learning.html
+  s_161d97b3cd7be9::t_bcbb212419bbc6 56,70,79,164,171,177,187,192,194-196,204-205,215-216,219
+figures/pretraining/39.html
+  s_161d97b3cd7be9::t_bcbb212419bbc6 1
+static/learn-ai/01-architecture.html
+  s_161d97b3cd7be9::t_bcbb212419bbc6 56,70,79,164,171,177,187,192,194-196,204-205,215-216,219,389,487,530
+static/learn-ai/03-post-training.html
+  s_161d97b3cd7be9::t_bcbb212419bbc6 56,70,79,164,171,177,187,192,194-196,204-205,215-216,219
+figures/architecture/27.html
+  s_161d97b3cd7be9::t_bcbb212419bbc6 1
+static/learn-ai/04-distillation.html
+  s_161d97b3cd7be9::t_bcbb212419bbc6 56,70,79,164,171,177,187,192,194-196,204-205,215-216,219
+static/learn-ai/07-mixture-of-experts.html
+  s_161d97b3cd7be9::t_bcbb212419bbc6 56,70,79,164,171,177,187,192,194-196,204-205,215-216,219
+static/learn-ai/08-optimizers.html
+  s_161d97b3cd7be9::t_bcbb212419bbc6 56,70,79,164,171,177,187,192,194-196,204-205,215-216,219
+static/learn-ai/06-lora.html
+  s_161d97b3cd7be9::t_bcbb212419bbc6 56,70,79,164,171,177,187,192,194-196,204-205,215-216,219
+static/learn-ai/index.html
+  s_161d97b3cd7be9::t_bcbb212419bbc6 24,38,47,132,139,145,155,160,162-164,172-173,183-184,187
+figures/pretraining/38.html
+  s_161d97b3cd7be9::t_bcbb212419bbc6 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.11",
+  "base_commit_sha": "bf7cf3b558a41238cbdabf8f4fa68a6b8a6f5908",
+  "prompts": {},
+  "sessions": {
+    "s_161d97b3cd7be9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "95efb760-6079-4d40-b058-72efff66278a",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Adib Farrasy <adibfarrasy@gmail.com>"
+    }
+  }
+}
